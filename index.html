@@ -55,6 +55,14 @@
       margin-bottom: 14px;
     }
 
+    .form-row {
+      display: flex;
+      gap: 10px;
+    }
+    .form-row .form-group {
+      flex: 1;
+    }
+
     label {
       display: block;
       margin-bottom: 6px;
@@ -123,7 +131,7 @@
     }
 
     .badge {
-      padding: 6px 10px;
+      padding: 4px 8px;
       border-radius: 6px;
       color: white;
       font-weight: 600;
@@ -178,15 +186,15 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 480px;
       background: white;
     }
 
     th, td {
-      padding: 12px 10px;
+      padding: 10px 12px;
       text-align: left;
       font-size: 13px;
       border-bottom: 1px solid var(--border-color);
+      vertical-align: top;
     }
 
     th {
@@ -200,6 +208,21 @@
 
     tr:last-child td {
       border-bottom: none;
+    }
+
+    /* Stijlen voor overzicht over twee regels */
+    .row-line-1 {
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 3px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .row-line-2 {
+      font-size: 12px;
+      color: var(--text-muted);
     }
 
     .modal {
@@ -296,9 +319,20 @@
     <input type="date" id="taxiDatum">
   </div>
 
+  <div class="form-row">
+    <div class="form-group">
+      <label for="taxiTijd">Ophaaltijd</label>
+      <input type="time" id="taxiTijd">
+    </div>
+    <div class="form-group">
+      <label for="taxiStartTijd">Starttijd (Optioneel)</label>
+      <input type="time" id="taxiStartTijd">
+    </div>
+  </div>
+
   <div class="form-group">
-    <label for="taxiTijd">Ophaaltijd</label>
-    <input type="time" id="taxiTijd">
+    <label for="taxiStopTijd">Stoptijd (Optioneel)</label>
+    <input type="time" id="taxiStopTijd">
   </div>
 
   <div class="form-group">
@@ -361,16 +395,7 @@
     <h2>📅 Geplande Ritten</h2>
     <div class="table-container">
       <table id="actiefTable">
-        <thead>
-          <tr>
-            <th>Status</th>
-            <th>Datum</th>
-            <th>Tijd</th>
-            <th>Bestemming</th>
-            <th>Actie</th>
-          </tr>
-        </thead>
-        <tbody id="actiefBody"><tr><td colspan="5" style="text-align:center; color: var(--text-muted);">Gegevens laden...</td></tr></tbody>
+        <tbody id="actiefBody"><tr><td style="text-align:center; color: var(--text-muted); padding: 15px;">Gegevens laden...</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -388,16 +413,7 @@
 
     <div class="table-container">
       <table id="gereedTable">
-        <thead>
-          <tr>
-            <th>Datum</th>
-            <th>Tijd</th>
-            <th>Bestemming</th>
-            <th>Start / Stop</th>
-            <th>Opmerking</th>
-          </tr>
-        </thead>
-        <tbody id="gereedBody"><tr><td colspan="5" style="text-align:center; color: var(--text-muted);">Gegevens laden...</td></tr></tbody>
+        <tbody id="gereedBody"><tr><td style="text-align:center; color: var(--text-muted); padding: 15px;">Gegevens laden...</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -413,9 +429,19 @@
       <label for="editDatum">Datum</label>
       <input type="date" id="editDatum">
     </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="editTijd">Ophaaltijd</label>
+        <input type="time" id="editTijd">
+      </div>
+      <div class="form-group">
+        <label for="editStartTijd">Starttijd</label>
+        <input type="time" id="editStartTijd">
+      </div>
+    </div>
     <div class="form-group">
-      <label for="editTijd">Ophaaltijd</label>
-      <input type="time" id="editTijd">
+      <label for="editStopTijd">Stoptijd</label>
+      <input type="time" id="editStopTijd">
     </div>
     
     <div class="form-group">
@@ -449,14 +475,14 @@
       <input type="text" id="editOpmerking">
     </div>
 
-    <label>Tijden vastleggen</label>
+    <label>Snelle Tijd vastleggen</label>
     <div class="time-buttons-container">
       <button type="button" class="big-btn btn-start" onclick="legStartTijdVastInModal()">
-        ▶ Start Tijd
+        ▶ Huidige Start Tijd
         <div class="time-display" id="modalDisplayStart">Nog niet ingesteld</div>
       </button>
       <button type="button" class="big-btn btn-stop" onclick="legStopTijdVastInModal()">
-        ⏹ Stop Tijd
+        ⏹ Huidige Stop Tijd
         <div class="time-display" id="modalDisplayStop">Nog niet ingesteld</div>
       </button>
     </div>
@@ -555,6 +581,8 @@
   function slaTaxiOp() {
     const startDatum = document.getElementById('taxiDatum').value;
     const tijd = document.getElementById('taxiTijd').value;
+    const startTijd = document.getElementById('taxiStartTijd').value;
+    const stopTijd = document.getElementById('taxiStopTijd').value;
     const bestemming = getGekozenWaarde('bestemmingSelect', 'nieuweBestemmingInput');
     const bedrijf = getGekozenWaarde('bedrijfSelect', 'nieuwBedrijfInput');
     const herhaling = document.getElementById('herhaling').value;
@@ -574,7 +602,7 @@
     }
 
     slaDatumsReeksOp(datumsLijst, {
-      tijd, bestemming, bedrijf, herhaling, herhalingEinddatum, opmerking, startTijd: '', stopTijd: ''
+      tijd, startTijd, stopTijd, bestemming, bedrijf, herhaling, herhalingEinddatum, opmerking
     });
   }
 
@@ -644,6 +672,8 @@
     alert(successCount + " rit(ten) succesvol ingepland!");
     
     document.getElementById('taxiTijd').value = '';
+    document.getElementById('taxiStartTijd').value = '';
+    document.getElementById('taxiStopTijd').value = '';
     document.getElementById('opmerking').value = '';
     document.getElementById('herhalingEinddatum').value = '';
     document.getElementById('nieuweBestemmingInput').value = '';
@@ -668,7 +698,7 @@
         tbody.innerHTML = '';
         
         if (!regels || regels.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: var(--text-muted);">Geen geplande ritten gevonden</td></tr>';
+          tbody.innerHTML = '<tr><td style="text-align:center; color: var(--text-muted); padding: 15px;">Geen geplande ritten gevonden</td></tr>';
           return;
         }
 
@@ -678,11 +708,16 @@
           if (item.status === 'Bezig') badgeClass = 'badge-bezig';
           
           tr.innerHTML = `
-            <td><span class="badge ${badgeClass}">${item.status}</span></td>
-            <td>${item.datum}</td>
-            <td>${formatteerTijd(item.tijd)}</td>
-            <td>${item.bestemming || ''}</td>
-            <td><button class="secondary-button" style="padding: 6px 10px; font-size:11px;" onclick="openBewerkModal('${item.id}')">Bewerk</button></td>
+            <td>
+              <div class="row-line-1">
+                <span>📅 ${item.datum} &nbsp;|&nbsp; ⏰ ${formatteerTijd(item.tijd) || 'Geen tijd'}</span>
+                <span class="badge ${badgeClass}">${item.status}</span>
+              </div>
+              <div class="row-line-2" style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                <span>📍 <strong>${item.bestemming || ''}</strong> (${item.bedrijf || ''}) ${item.opmerking ? '• ' + item.opmerking : ''}</span>
+                <button class="secondary-button" style="padding: 5px 10px; font-size:11px; margin:0;" onclick="openBewerkModal('${item.id}')">Bewerk</button>
+              </div>
+            </td>
           `;
           tbody.appendChild(tr);
         });
@@ -699,18 +734,22 @@
         tbody.innerHTML = '';
         
         if (!regels || regels.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: var(--text-muted);">Geen gereed ritten gevonden</td></tr>';
+          tbody.innerHTML = '<tr><td style="text-align:center; color: var(--text-muted); padding: 15px;">Geen gereed ritten gevonden</td></tr>';
           return;
         }
 
         regels.forEach(item => {
           const tr = document.createElement('tr');
           tr.innerHTML = `
-            <td>${item.datum}</td>
-            <td>${formatteerTijd(item.tijd)}</td>
-            <td>${item.bestemming || ''}</td>
-            <td>Start: ${formatteerTijd(item.startTijd) || '-'}<br>Stop: ${formatteerTijd(item.stopTijd) || '-'}</td>
-            <td>${item.opmerking || ''}</td>
+            <td>
+              <div class="row-line-1">
+                <span>📅 ${item.datum} &nbsp;|&nbsp; ⏰ ${formatteerTijd(item.tijd) || ''}</span>
+                <span style="font-size: 11px; color: var(--text-muted);">Start: ${formatteerTijd(item.startTijd) || '-'} | Stop: ${formatteerTijd(item.stopTijd) || '-'}</span>
+              </div>
+              <div class="row-line-2" style="margin-top: 4px;">
+                📍 <strong>${item.bestemming || ''}</strong> (${item.bedrijf || ''}) ${item.opmerking ? '• ' + item.opmerking : ''}
+              </div>
+            </td>
           `;
           tbody.appendChild(tr);
         });
@@ -725,6 +764,8 @@
     document.getElementById('editId').value = rit.id;
     document.getElementById('editDatum').value = rit.datum;
     document.getElementById('editTijd').value = formatteerTijd(rit.tijd);
+    document.getElementById('editStartTijd').value = formatteerTijd(rit.startTijd);
+    document.getElementById('editStopTijd').value = formatteerTijd(rit.stopTijd);
     document.getElementById('editOpmerking').value = rit.opmerking;
 
     setSelectNaarWaarde('editBestemmingSelect', 'editNieuweBestemmingDiv', 'editNieuweBestemmingInput', rit.bestemming);
@@ -733,8 +774,8 @@
     modalStartTijd = formatteerTijd(rit.startTijd) || '';
     modalStopTijd = formatteerTijd(rit.stopTijd) || '';
     
-    document.getElementById('modalDisplayStart').textContent = modalStartTijd ? 'Vastgelegd: ' + modalStartTijd : 'Nog niet ingesteld';
-    document.getElementById('modalDisplayStop').textContent = modalStopTijd ? 'Vastgelegd: ' + modalStopTijd : 'Nog niet ingesteld';
+    document.getElementById('modalDisplayStart').textContent = modalStartTijd ? 'Ingesteld: ' + modalStartTijd : 'Nog niet ingesteld';
+    document.getElementById('modalDisplayStop').textContent = modalStopTijd ? 'Ingesteld: ' + modalStopTijd : 'Nog niet ingesteld';
 
     document.getElementById('editModal').style.display = 'block';
   }
@@ -768,13 +809,15 @@
   function legStartTijdVastInModal() {
     const nu = new Date();
     modalStartTijd = nu.toTimeString().split(' ')[0].substring(0, 5);
-    document.getElementById('modalDisplayStart').textContent = 'Vastgelegd: ' + modalStartTijd;
+    document.getElementById('editStartTijd').value = modalStartTijd;
+    document.getElementById('modalDisplayStart').textContent = 'Ingesteld: ' + modalStartTijd;
   }
 
   function legStopTijdVastInModal() {
     const nu = new Date();
     modalStopTijd = nu.toTimeString().split(' ')[0].substring(0, 5);
-    document.getElementById('modalDisplayStop').textContent = 'Vastgelegd: ' + modalStopTijd;
+    document.getElementById('editStopTijd').value = modalStopTijd;
+    document.getElementById('modalDisplayStop').textContent = 'Ingesteld: ' + modalStopTijd;
   }
 
   function bewerkRitOpslaan() {
@@ -783,11 +826,11 @@
       id: document.getElementById('editId').value,
       datum: document.getElementById('editDatum').value,
       tijd: document.getElementById('editTijd').value,
+      startTijd: document.getElementById('editStartTijd').value || modalStartTijd,
+      stopTijd: document.getElementById('editStopTijd').value || modalStopTijd,
       bestemming: getGekozenWaarde('editBestemmingSelect', 'editNieuweBestemmingInput'),
       bedrijf: getGekozenWaarde('editBedrijfSelect', 'editNieuwBedrijfInput'),
-      opmerking: document.getElementById('editOpmerking').value,
-      startTijd: modalStartTijd,
-      stopTijd: modalStopTijd
+      opmerking: document.getElementById('editOpmerking').value
     };
 
     fetch(WEB_APP_URL, {
