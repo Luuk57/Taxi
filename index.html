@@ -5,31 +5,43 @@
   <title>Tasker - Taxi Module</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; background: #f4f6f9; color: #333; }
-    .container { max-width: 700px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
     h2 { color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 5px; }
     .form-group { margin-bottom: 15px; }
     label { display: block; margin-bottom: 5px; font-weight: bold; }
     input, select, textarea { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
     
-    /* Grote knoppen voor Start en Stop */
-    .time-buttons-container { display: flex; gap: 10px; margin-bottom: 15px; }
-    .big-btn { flex: 1; padding: 15px; font-size: 18px; font-weight: bold; color: white; border: none; border-radius: 6px; cursor: pointer; text-align: center; transition: background 0.3s; }
-    .btn-start { background: #27ae60; }
-    .btn-start:hover { background: #219653; }
-    .btn-stop { background: #c0392b; }
-    .btn-stop:hover { background: #a93226; }
-    .time-display { font-size: 14px; margin-top: 5px; color: #555; font-weight: normal; }
-
+    /* Knoppen en badges */
     .primary-button { background: #3498db; color: white; border: none; padding: 12px 15px; border-radius: 4px; cursor: pointer; font-size: 16px; width: 100%; transition: background 0.3s; }
     .primary-button:hover { background: #2980b9; }
+    .secondary-button { background: #2ecc71; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 14px; margin-right: 5px; }
+    .secondary-button:hover { background: #27ae60; }
     
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    .badge { padding: 4px 8px; border-radius: 4px; color: white; font-weight: bold; font-size: 12px; display: inline-block; }
+    .badge-gepland { background: #3498db; } /* Blauw */
+    .badge-bezig { background: #f39c12; }   /* Amber */
+    .badge-gereed { background: #27ae60; }  /* Groen */
+
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
     th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 14px; }
     th { background: #f2f2f2; }
+
+    /* Pop-up modal */
+    .modal { display: none; position: fixed; z-index: 10; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+    .modal-content { background: white; margin: 10% auto; padding: 20px; width: 90%; max-width: 500px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+    .close { float: right; font-size: 24px; font-weight: bold; cursor: pointer; color: #aaa; }
+    .close:hover { color: black; }
+    
+    .time-buttons-container { display: flex; gap: 10px; margin-bottom: 15px; }
+    .big-btn { flex: 1; padding: 15px; font-size: 16px; font-weight: bold; color: white; border: none; border-radius: 6px; cursor: pointer; text-align: center; }
+    .btn-start { background: #27ae60; }
+    .btn-stop { background: #c0392b; }
+    .time-display { font-size: 13px; margin-top: 5px; color: #eee; font-weight: normal; }
   </style>
 </head>
 <body>
 
+<!-- FORMULIER VOOR NIEUWE TAXIRIT -->
 <div class="container">
   <h2>Taxi Afspraak Inplannen</h2>
   
@@ -46,19 +58,6 @@
   <div class="form-group">
     <label for="bestemming">Bestemming (bijv. Ziekenhuis):</label>
     <input type="text" id="bestemming" placeholder="Waar naartoe?">
-  </div>
-
-  <!-- Grote Start en Stop knoppen -->
-  <label>Tijden vastleggen:</label>
-  <div class="time-buttons-container">
-    <button type="button" class="big-btn btn-start" onclick="legStartTijdVast()">
-      Start Tijd
-      <div class="time-display" id="displayStart">Nog niet ingesteld</div>
-    </button>
-    <button type="button" class="big-btn btn-stop" onclick="legStopTijdVast()">
-      Stop Tijd
-      <div class="time-display" id="displayStop">Nog niet ingesteld</div>
-    </button>
   </div>
 
   <div class="form-group">
@@ -83,56 +82,103 @@
   </div>
   
   <button class="primary-button" id="btnSaveTaxi" onclick="slaTaxiOp()">+ Taxi Opslaan</button>
+</div>
 
-  <h2>Geplande Taxiritten</h2>
-  <table id="taxiTable">
+<!-- OVERZICHT GEPLANDE & BEZIG RITTEN -->
+<div class="container">
+  <h2>Overzicht Geplande Ritten</h2>
+  <table id="actiefTable">
+    <thead>
+      <tr>
+        <th>Status</th>
+        <th>Datum</th>
+        <th>Tijd</th>
+        <th>Bestemming</th>
+        <th>Actie</th>
+      </tr>
+    </thead>
+    <tbody id="actiefBody">
+      <!-- Dynamisch gevuld -->
+    </tbody>
+  </table>
+</div>
+
+<!-- OVERZICHT GEREED RITTEN (ARCHIEF + ZOEK + EXPORT) -->
+<div class="container">
+  <h2>Overzicht Gereed Ritten</h2>
+  <div class="form-group">
+    <label for="zoekTerm">Zoek op dag, periode of bestemming:</label>
+    <input type="text" id="zoekTerm" placeholder="Typ om te filteren..." onkeyup="laadGereedOverzicht()">
+  </div>
+  
+  <div style="margin-bottom: 15px;">
+    <button class="secondary-button" onclick="exporteer('pdf')">Exporteer naar PDF (LuukData)</button>
+    <button class="secondary-button" onclick="exporteer('excel')">Exporteer naar Excel (LuukData)</button>
+  </div>
+
+  <table id="gereedTable">
     <thead>
       <tr>
         <th>Datum</th>
         <th>Tijd</th>
         <th>Bestemming</th>
-        <th>Start/Stop</th>
-        <th>Herhaling</th>
+        <th>Start / Stop</th>
         <th>Opmerking</th>
       </tr>
     </thead>
-    <tbody id="taxiBody">
-      <!-- Wordt automatisch gevuld -->
+    <tbody id="gereedBody">
+      <!-- Dynamisch gevuld -->
     </tbody>
   </table>
 </div>
 
+<!-- POPUP MODAL VOOR BEWERKEN & START/STOP -->
+<div id="editModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="sluitModal()">&times;</span>
+    <h2>Rit Bewerken & Start/Stop</h2>
+    
+    <input type="hidden" id="editId">
+    
+    <div class="form-group">
+      <label for="editDatum">Datum:</label>
+      <input type="date" id="editDatum">
+    </div>
+    <div class="form-group">
+      <label for="editTijd">Ophaaltijd:</label>
+      <input type="time" id="editTijd">
+    </div>
+    <div class="form-group">
+      <label for="editBestemming">Bestemming:</label>
+      <input type="text" id="editBestemming">
+    </div>
+    <div class="form-group">
+      <label for="editOpmerking">Opmerking:</label>
+      <input type="text" id="editOpmerking">
+    </div>
+
+    <label>Tijden vastleggen:</label>
+    <div class="time-buttons-container">
+      <button type="button" class="big-btn btn-start" onclick="legStartTijdVastInModal()">
+        Start Tijd
+        <div class="time-display" id="modalDisplayStart">Nog niet ingesteld</div>
+      </button>
+      <button type="button" class="big-btn btn-stop" onclick="legStopTijdVastInModal()">
+        Stop Tijd
+        <div class="time-display" id="modalDisplayStop">Nog niet ingesteld</div>
+      </button>
+    </div>
+
+    <button class="primary-button" onclick="bewerkRitOpslaan()">Wijzigingen Opslaan</button>
+  </div>
+</div>
+
 <script>
-  let opgeslagenStartTijd = '';
-  let opgeslagenStopTijd = '';
+  let actieveRittenLijst = [];
+  let modalStartTijd = '';
+  let modalStopTijd = '';
 
-  // Functie om de starttijd vast te leggen via de grote knop
-  function legStartTijdVast() {
-    const nu = new Date();
-    opgeslagenStartTijd = nu.toTimeString().split(' ')[0].substring(0, 5); // HH:MM
-    document.getElementById('displayStart').textContent = 'Vastgelegd: ' + opgeslagenStartTijd;
-  }
-
-  // Functie om de stoptijd vast te leggen via de grote knop
-  function legStopTijdVast() {
-    const nu = new Date();
-    opgeslagenStopTijd = nu.toTimeString().split(' ')[0].substring(0, 5); // HH:MM
-    document.getElementById('displayStop').textContent = 'Vastgelegd: ' + opgeslagenStopTijd;
-  }
-
-  // Visuele feedback op de opslaanknop
-  function geefFeedback(knopId) {
-    const knop = document.getElementById(knopId);
-    if (!knop) return;
-    const oudeTekst = knop.textContent;
-    knop.style.background = '#27ae60';
-    knop.textContent = 'Opgeslagen! ✓';
-    setTimeout(() => {
-      knop.style.background = '';
-      knop.textContent = oudeTekst;
-    }, 1500);
-  }
-
+  // Opslaan nieuwe taxi
   function slaTaxiOp() {
     const datum = document.getElementById('taxiDatum').value;
     const tijd = document.getElementById('taxiTijd').value;
@@ -146,68 +192,154 @@
       return;
     }
 
-    geefFeedback('btnSaveTaxi');
-
     const data = {
-      datum: datum,
-      tijd: tijd,
-      bestemming: bestemming,
-      herhaling: herhaling,
-      herhalingEinddatum: herhalingEinddatum,
-      startTijd: opgeslagenStartTijd,
-      stopTijd: opgeslagenStopTijd,
-      opmerking: opmerking
+      datum, tijd, bestemming, herhaling, herhalingEinddatum, opmerking,
+      startTijd: '', stopTijd: ''
     };
 
     google.script.run
       .withSuccessHandler(() => {
-        // Reset formulier velden
         document.getElementById('bestemming').value = '';
         document.getElementById('opmerking').value = '';
         document.getElementById('taxiTijd').value = '';
         document.getElementById('herhalingEinddatum').value = '';
-        opgeslagenStartTijd = '';
-        opgeslagenStopTijd = '';
-        document.getElementById('displayStart').textContent = 'Nog niet ingesteld';
-        document.getElementById('displayStop').textContent = 'Nog niet ingesteld';
-        laadTaxiOverzicht();
+        laadAlles();
       })
       .withFailureHandler(err => alert('Fout: ' + err.message))
       .opslaanTaxi(data);
   }
 
-  function laadTaxiOverzicht() {
+  // Laad alle tabellen
+  function laadAlles() {
+    laadActiefOverzicht();
+    laadGereedOverzicht();
+  }
+
+  function laadActiefOverzicht() {
     google.script.run
       .withSuccessHandler(regels => {
-        const tbody = document.getElementById('taxiBody');
+        actieveRittenLijst = regels;
+        const tbody = document.getElementById('actiefBody');
         tbody.innerHTML = '';
         
         if (!regels || regels.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Geen ritten gevonden</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Geen geplande ritten gevonden</td></tr>';
           return;
         }
 
         regels.forEach(item => {
           const tr = document.createElement('tr');
-          const startStopInfo = (item.startTijd || item.stopTijd) ? `Start: ${item.startTijd || '-'}<br>Stop: ${item.stopTijd || '-'}` : '-';
-          const herhalingInfo = item.herhaling !== 'Geen' ? `${item.herhaling} (t/m ${item.herhalingEinddatum || 'onbekend'})` : 'Geen';
+          let badgeClass = 'badge-gepland';
+          if (item.status === 'Bezig') badgeClass = 'badge-bezig';
+          
+          tr.innerHTML = `
+            <td><span class="badge ${badgeClass}">${item.status}</span></td>
+            <td>${item.datum}</td>
+            <td>${item.tijd || ''}</td>
+            <td>${item.bestemming || ''}</td>
+            <td><button class="secondary-button" onclick="openBewerkModal('${item.id}')">Bewerken</button></td>
+          `;
+          tbody.appendChild(tr);
+        });
+      })
+      .getTaxiActiefOverzicht();
+  }
 
+  function laadGereedOverzicht() {
+    const zoekTerm = document.getElementById('zoekTerm').value;
+    google.script.run
+      .withSuccessHandler(regels => {
+        const tbody = document.getElementById('gereedBody');
+        tbody.innerHTML = '';
+        
+        if (!regels || regels.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Geen gereed ritten gevonden</td></tr>';
+          return;
+        }
+
+        regels.forEach(item => {
+          const tr = document.createElement('tr');
           tr.innerHTML = `
             <td>${item.datum}</td>
             <td>${item.tijd || ''}</td>
             <td>${item.bestemming || ''}</td>
-            <td>${startStopInfo}</td>
-            <td>${herhalingInfo}</td>
+            <td>Start: ${item.startTijd || '-'}<br>Stop: ${item.stopTijd || '-'}</td>
             <td>${item.opmerking || ''}</td>
           `;
           tbody.appendChild(tr);
         });
       })
-      .getTaxiOverzicht();
+      .getTaxiGereedOverzicht(zoekTerm);
+  }
+
+  // Modal openen en vullen met data
+  function openBewerkModal(id) {
+    const rit = actieveRittenLijst.find(r => r.id === id);
+    if (!rit) return;
+
+    document.getElementById('editId').value = rit.id;
+    document.getElementById('editDatum').value = rit.datum;
+    document.getElementById('editTijd').value = rit.tijd;
+    document.getElementById('editBestemming').value = rit.bestemming;
+    document.getElementById('editOpmerking').value = rit.opmerking;
+
+    modalStartTijd = rit.startTijd || '';
+    modalStopTijd = rit.stopTijd || '';
+    
+    document.getElementById('modalDisplayStart').textContent = modalStartTijd ? 'Vastgelegd: ' + modalStartTijd : 'Nog niet ingesteld';
+    document.getElementById('modalDisplayStop').textContent = modalStopTijd ? 'Vastgelegd: ' + modalStopTijd : 'Nog niet ingesteld';
+
+    document.getElementById('editModal').style.display = 'block';
+  }
+
+  function sluitModal() {
+    document.getElementById('editModal').style.display = 'none';
+  }
+
+  function legStartTijdVastInModal() {
+    const nu = new Date();
+    modalStartTijd = nu.toTimeString().split(' ')[0].substring(0, 5);
+    document.getElementById('modalDisplayStart').textContent = 'Vastgelegd: ' + modalStartTijd;
+  }
+
+  function legStopTijdVastInModal() {
+    const nu = new Date();
+    modalStopTijd = nu.toTimeString().split(' ')[0].substring(0, 5);
+    document.getElementById('modalDisplayStop').textContent = 'Vastgelegd: ' + modalStopTijd;
+  }
+
+  function bewerkRitOpslaan() {
+    const data = {
+      id: document.getElementById('editId').value,
+      datum: document.getElementById('editDatum').value,
+      tijd: document.getElementById('editTijd').value,
+      bestemming: document.getElementById('editBestemming').value,
+      opmerking: document.getElementById('editOpmerking').value,
+      startTijd: modalStartTijd,
+      stopTijd: modalStopTijd
+    };
+
+    google.script.run
+      .withSuccessHandler(bericht => {
+        sluitModal();
+        laadAlles();
+      })
+      .withFailureHandler(err => alert('Fout: ' + err.message))
+      .updateTaxi(data);
+  }
+
+  // Exporteren functie
+  function exporteer(formaat) {
+    google.script.run
+      .withSuccessHandler(bericht => {
+        alert(bericht);
+      })
+      .withFailureHandler(err => alert('Export fout: ' + err.message))
+      .exporteerGereedRitten(formaat);
   }
 
   window.onload = function() {
-    laadTaxiOverzicht();
+    laadAlles();
   };
 </script>
 
