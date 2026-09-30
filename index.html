@@ -4,71 +4,305 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tasker - Taxi Module</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: Arial, sans-serif; margin: 10px; background: #f4f6f9; color: #333; }
-    .container { max-width: 800px; margin: auto; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 15px; }
-    h2 { color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 5px; font-size: 20px; }
-    .form-group { margin-bottom: 15px; }
-    label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; }
-    input, select, textarea { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; }
-    
-    .primary-button { background: #3498db; color: white; border: none; padding: 12px 15px; border-radius: 4px; cursor: pointer; font-size: 16px; width: 100%; transition: background 0.3s; font-weight: bold; }
-    .primary-button:hover { background: #2980b9; }
-    .secondary-button { background: #2ecc71; color: white; border: none; padding: 10px 14px; border-radius: 4px; cursor: pointer; font-size: 14px; margin-right: 5px; margin-bottom: 5px; font-weight: bold; }
-    .secondary-button:hover { background: #27ae60; }
-    
-    .badge { padding: 5px 10px; border-radius: 4px; color: white; font-weight: bold; font-size: 11px; display: inline-block; text-align: center; }
-    .badge-gepland { background: #3498db; }
-    .badge-bezig { background: #f39c12; }
-    .badge-gereed { background: #27ae60; }
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --success: #16a34a;
+      --success-hover: #15803d;
+      --danger: #dc2626;
+      --warning: #d97706;
+      --bg-color: #f8fafc;
+      --card-bg: #ffffff;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+      --radius: 12px;
+    }
 
-    .tabs { display: flex; border-bottom: 2px solid #ddd; margin-bottom: 15px; overflow-x: auto; }
-    .tab-btn { padding: 10px 15px; cursor: pointer; background: #eee; border: none; font-weight: bold; font-size: 14px; border-top-left-radius: 6px; border-top-right-radius: 6px; margin-right: 5px; white-space: nowrap; }
-    .tab-btn.active { background: white; border: 2px solid #ddd; border-bottom: 2px solid white; color: #3498db; margin-bottom: -2px; }
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 12px;
+      background: var(--bg-color);
+      color: var(--text-main);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto 16px auto;
+      background: var(--card-bg);
+      padding: 20px;
+      border-radius: var(--radius);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+      border: 1px solid var(--border-color);
+    }
+
+    h2 {
+      color: var(--text-main);
+      font-size: 18px;
+      font-weight: 700;
+      margin-top: 0;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 12px;
+      box-sizing: border-box;
+      border: 1.5px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 15px;
+      font-family: 'Inter', sans-serif;
+      background: #fff;
+      color: var(--text-main);
+      transition: all 0.2s ease;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    .primary-button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      width: 100%;
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+      transition: all 0.2s ease;
+    }
+
+    .primary-button:active {
+      transform: scale(0.98);
+    }
+
+    .secondary-button {
+      background: var(--success);
+      color: white;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .secondary-button:active {
+      transform: scale(0.98);
+    }
+
+    .badge {
+      padding: 6px 10px;
+      border-radius: 6px;
+      color: white;
+      font-weight: 600;
+      font-size: 11px;
+      display: inline-block;
+      text-align: center;
+      letter-spacing: 0.3px;
+    }
+    .badge-gepland { background: #3b82f6; }
+    .badge-bezig { background: var(--warning); }
+    .badge-gereed { background: var(--success); }
+
+    .tabs {
+      display: flex;
+      background: #f1f5f9;
+      padding: 4px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 10px;
+      cursor: pointer;
+      background: transparent;
+      border: none;
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--text-muted);
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn.active {
+      background: white;
+      color: var(--primary);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
-    .table-container { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 15px; }
-    table { width: 100%; border-collapse: collapse; min-width: 500px; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 13px; }
-    th { background: #f2f2f2; }
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      margin-top: 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
 
-    .modal { display: none; position: fixed; z-index: 10; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); overflow-y: auto; padding: 10px; box-sizing: border-box; }
-    .modal-content { background: white; margin: 10% auto; padding: 15px; width: 100%; max-width: 500px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); box-sizing: border-box; }
-    .close { float: right; font-size: 24px; font-weight: bold; cursor: pointer; color: #aaa; }
-    .close:hover { color: black; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 480px;
+      background: white;
+    }
+
+    th, td {
+      padding: 12px 10px;
+      text-align: left;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    th {
+      background: #f8fafc;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 100;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
+      overflow-y: auto;
+      padding: 16px;
+      box-sizing: border-box;
+    }
+
+    .modal-content {
+      background: white;
+      margin: 10% auto;
+      padding: 20px;
+      width: 100%;
+      max-width: 500px;
+      border-radius: var(--radius);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+      box-sizing: border-box;
+      position: relative;
+    }
+
+    .close {
+      position: absolute;
+      right: 16px;
+      top: 16px;
+      font-size: 20px;
+      font-weight: bold;
+      cursor: pointer;
+      color: var(--text-muted);
+      background: #f1f5f9;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: background 0.2s;
+    }
+    .close:hover { background: #e2e8f0; color: var(--text-main); }
     
-    .time-buttons-container { display: flex; gap: 10px; margin-bottom: 15px; flex-direction: column; }
-    .big-btn { flex: 1; padding: 12px; font-size: 15px; font-weight: bold; color: white; border: none; border-radius: 6px; cursor: pointer; text-align: center; }
-    .btn-start { background: #27ae60; }
-    .btn-stop { background: #c0392b; }
-    .time-display { font-size: 12px; margin-top: 5px; color: #eee; font-weight: normal; }
+    .time-buttons-container {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-direction: column;
+    }
+
+    .big-btn {
+      flex: 1;
+      padding: 14px;
+      font-size: 14px;
+      font-weight: 600;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .btn-start { background: var(--success); }
+    .btn-stop { background: var(--danger); }
+    .time-display { font-size: 11px; margin-top: 4px; opacity: 0.9; font-weight: normal; }
+
+    .export-actions {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .export-actions button {
+      flex: 1;
+    }
 
     @media (min-width: 600px) {
-      body { margin: 20px; }
-      .container { padding: 20px; }
+      body { padding: 24px; }
       .time-buttons-container { flex-direction: row; }
-      th, td { font-size: 14px; padding: 10px; }
     }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <h2>Taxi Afspraak Inplannen</h2>
+  <h2>🚗 Taxi Inplannen</h2>
   
   <div class="form-group">
-    <label for="taxiDatum">Startdatum:</label>
+    <label for="taxiDatum">Startdatum</label>
     <input type="date" id="taxiDatum">
   </div>
 
   <div class="form-group">
-    <label for="taxiTijd">Ophaaltijd:</label>
+    <label for="taxiTijd">Ophaaltijd</label>
     <input type="time" id="taxiTijd">
   </div>
 
   <div class="form-group">
-    <label for="bestemmingSelect">Bestemming:</label>
+    <label for="bestemmingSelect">Bestemming</label>
     <select id="bestemmingSelect" onchange="checkNieuweBestemming(this, 'nieuweBestemmingDiv')">
       <option value="Ziekenhuis">Ziekenhuis</option>
       <option value="Dialyse Centrum">Dialyse Centrum</option>
@@ -76,12 +310,12 @@
     </select>
   </div>
   <div class="form-group" id="nieuweBestemmingDiv" style="display:none;">
-    <label for="nieuweBestemmingInput">Nieuwe Bestemming:</label>
+    <label for="nieuweBestemmingInput">Nieuwe Bestemming</label>
     <input type="text" id="nieuweBestemmingInput" placeholder="Typ nieuwe bestemming...">
   </div>
 
   <div class="form-group">
-    <label for="bedrijfSelect">Bedrijf:</label>
+    <label for="bedrijfSelect">Bedrijf</label>
     <select id="bedrijfSelect" onchange="checkNieuweBedrijf(this, 'nieuwBedrijfDiv')">
       <option value="UMCG">UMCG</option>
       <option value="Maxima">Maxima</option>
@@ -89,12 +323,12 @@
     </select>
   </div>
   <div class="form-group" id="nieuwBedrijfDiv" style="display:none;">
-    <label for="nieuwBedrijfInput">Nieuw Bedrijf:</label>
+    <label for="nieuwBedrijfInput">Nieuw Bedrijf</label>
     <input type="text" id="nieuwBedrijfInput" placeholder="Typ nieuw bedrijf...">
   </div>
 
   <div class="form-group">
-    <label for="herhaling">Herhaling:</label>
+    <label for="herhaling">Herhaling</label>
     <select id="herhaling">
       <option value="Geen">Geen</option>
       <option value="ma wo vrij">ma wo vrij</option>
@@ -105,12 +339,12 @@
   </div>
 
   <div class="form-group">
-    <label for="herhalingEinddatum">Herhalen tot en met einddatum:</label>
+    <label for="herhalingEinddatum">Herhalen t/m einddatum</label>
     <input type="date" id="herhalingEinddatum">
   </div>
 
   <div class="form-group">
-    <label for="opmerking">Opmerking:</label>
+    <label for="opmerking">Opmerking</label>
     <input type="text" id="opmerking" placeholder="Bijv. Rolstoel mee...">
   </div>
   
@@ -119,12 +353,12 @@
 
 <div class="container">
   <div class="tabs">
-    <button class="tab-btn active" onclick="openTab(event, 'tabGepland')">Geplande Ritten</button>
-    <button class="tab-btn" onclick="openTab(event, 'tabGereed')">Gereed Ritten</button>
+    <button class="tab-btn active" onclick="openTab(event, 'tabGepland')">Gepland</button>
+    <button class="tab-btn" onclick="openTab(event, 'tabGereed')">Gereed</button>
   </div>
 
   <div id="tabGepland" class="tab-content active">
-    <h2>Overzicht Geplande Ritten</h2>
+    <h2>📅 Geplande Ritten</h2>
     <div class="table-container">
       <table id="actiefTable">
         <thead>
@@ -133,25 +367,23 @@
             <th>Datum</th>
             <th>Tijd</th>
             <th>Bestemming</th>
-            <th>Bedrijf</th>
             <th>Actie</th>
           </tr>
         </thead>
-        <tbody id="actiefBody"><tr><td colspan="6" style="text-align:center;">Gegevens laden...</td></tr></tbody>
+        <tbody id="actiefBody"><tr><td colspan="5" style="text-align:center; color: var(--text-muted);">Gegevens laden...</td></tr></tbody>
       </table>
     </div>
   </div>
 
   <div id="tabGereed" class="tab-content">
-    <h2>Overzicht Gereed Ritten</h2>
+    <h2>✅ Gereed Ritten</h2>
     <div class="form-group">
-      <label for="zoekTerm">Zoek op dag, periode, bestemming of bedrijf:</label>
-      <input type="text" id="zoekTerm" placeholder="Typ om te filteren..." onkeyup="laadGereedOverzicht()">
+      <input type="text" id="zoekTerm" placeholder="🔍 Zoek in ritten..." onkeyup="laadGereedOverzicht()">
     </div>
     
-    <div style="margin-bottom: 15px; display: flex; flex-direction: column; gap: 5px;">
-      <button class="secondary-button" onclick="exporteer('pdf')">Exporteer naar PDF (LuukData)</button>
-      <button class="secondary-button" onclick="exporteer('excel')">Exporteer naar Excel (LuukData)</button>
+    <div class="export-actions">
+      <button class="secondary-button" onclick="exporteer('pdf')">Exporteer PDF</button>
+      <button class="secondary-button" onclick="exporteer('excel')">Exporteer Excel</button>
     </div>
 
     <div class="table-container">
@@ -161,12 +393,11 @@
             <th>Datum</th>
             <th>Tijd</th>
             <th>Bestemming</th>
-            <th>Bedrijf</th>
             <th>Start / Stop</th>
             <th>Opmerking</th>
           </tr>
         </thead>
-        <tbody id="gereedBody"><tr><td colspan="6" style="text-align:center;">Gegevens laden...</td></tr></tbody>
+        <tbody id="gereedBody"><tr><td colspan="5" style="text-align:center; color: var(--text-muted);">Gegevens laden...</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -175,20 +406,20 @@
 <div id="editModal" class="modal">
   <div class="modal-content">
     <span class="close" onclick="sluitModal()">&times;</span>
-    <h2>Rit Bewerken & Start/Stop</h2>
+    <h2>🛠️ Rit Bewerken</h2>
     <input type="hidden" id="editId">
     
     <div class="form-group">
-      <label for="editDatum">Datum:</label>
+      <label for="editDatum">Datum</label>
       <input type="date" id="editDatum">
     </div>
     <div class="form-group">
-      <label for="editTijd">Ophaaltijd:</label>
+      <label for="editTijd">Ophaaltijd</label>
       <input type="time" id="editTijd">
     </div>
     
     <div class="form-group">
-      <label for="editBestemmingSelect">Bestemming:</label>
+      <label for="editBestemmingSelect">Bestemming</label>
       <select id="editBestemmingSelect" onchange="checkNieuweBestemming(this, 'editNieuweBestemmingDiv')">
         <option value="Ziekenhuis">Ziekenhuis</option>
         <option value="Dialyse Centrum">Dialyse Centrum</option>
@@ -196,12 +427,12 @@
       </select>
     </div>
     <div class="form-group" id="editNieuweBestemmingDiv" style="display:none;">
-      <label for="editNieuweBestemmingInput">Nieuwe Bestemming:</label>
+      <label for="editNieuweBestemmingInput">Nieuwe Bestemming</label>
       <input type="text" id="editNieuweBestemmingInput" placeholder="Typ nieuwe bestemming...">
     </div>
 
     <div class="form-group">
-      <label for="editBedrijfSelect">Bedrijf:</label>
+      <label for="editBedrijfSelect">Bedrijf</label>
       <select id="editBedrijfSelect" onchange="checkNieuweBedrijf(this, 'editNieuwBedrijfDiv')">
         <option value="UMCG">UMCG</option>
         <option value="Maxima">Maxima</option>
@@ -209,23 +440,23 @@
       </select>
     </div>
     <div class="form-group" id="editNieuwBedrijfDiv" style="display:none;">
-      <label for="editNieuwBedrijfInput">Nieuw Bedrijf:</label>
+      <label for="editNieuwBedrijfInput">Nieuw Bedrijf</label>
       <input type="text" id="editNieuwBedrijfInput" placeholder="Typ nieuw bedrijf...">
     </div>
 
     <div class="form-group">
-      <label for="editOpmerking">Opmerking:</label>
+      <label for="editOpmerking">Opmerking</label>
       <input type="text" id="editOpmerking">
     </div>
 
-    <label>Tijden vastleggen:</label>
+    <label>Tijden vastleggen</label>
     <div class="time-buttons-container">
       <button type="button" class="big-btn btn-start" onclick="legStartTijdVastInModal()">
-        Start Tijd
+        ▶ Start Tijd
         <div class="time-display" id="modalDisplayStart">Nog niet ingesteld</div>
       </button>
       <button type="button" class="big-btn btn-stop" onclick="legStopTijdVastInModal()">
-        Stop Tijd
+        ⏹ Stop Tijd
         <div class="time-display" id="modalDisplayStop">Nog niet ingesteld</div>
       </button>
     </div>
@@ -410,7 +641,7 @@
       }
     }
 
-    alert(successCount + " rit(ten) succesvol ingepland t/m " + (basisData.herhalingEinddatum || basisData.datum) + "!");
+    alert(successCount + " rit(ten) succesvol ingepland!");
     
     document.getElementById('taxiTijd').value = '';
     document.getElementById('opmerking').value = '';
@@ -437,7 +668,7 @@
         tbody.innerHTML = '';
         
         if (!regels || regels.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Geen geplande ritten gevonden</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: var(--text-muted);">Geen geplande ritten gevonden</td></tr>';
           return;
         }
 
@@ -451,8 +682,7 @@
             <td>${item.datum}</td>
             <td>${formatteerTijd(item.tijd)}</td>
             <td>${item.bestemming || ''}</td>
-            <td>${item.bedrijf || ''}</td>
-            <td><button class="secondary-button" style="padding: 6px 10px; font-size:12px; margin:0;" onclick="openBewerkModal('${item.id}')">Bewerken</button></td>
+            <td><button class="secondary-button" style="padding: 6px 10px; font-size:11px;" onclick="openBewerkModal('${item.id}')">Bewerk</button></td>
           `;
           tbody.appendChild(tr);
         });
@@ -469,7 +699,7 @@
         tbody.innerHTML = '';
         
         if (!regels || regels.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Geen gereed ritten gevonden</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: var(--text-muted);">Geen gereed ritten gevonden</td></tr>';
           return;
         }
 
@@ -479,7 +709,6 @@
             <td>${item.datum}</td>
             <td>${formatteerTijd(item.tijd)}</td>
             <td>${item.bestemming || ''}</td>
-            <td>${item.bedrijf || ''}</td>
             <td>Start: ${formatteerTijd(item.startTijd) || '-'}<br>Stop: ${formatteerTijd(item.stopTijd) || '-'}</td>
             <td>${item.opmerking || ''}</td>
           `;
