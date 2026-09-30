@@ -183,7 +183,7 @@
     </div>
     <div class="form-group" id="editNieuweBestemmingDiv" style="display:none;">
       <label for="editNieuweBestemmingInput">Nieuwe Bestemming:</label>
-      <input type="text" id="editNieuweBestemmingInput">
+      <input type="text" id="editNieuweBestemmingInput" placeholder="Typ nieuwe bestemming...">
     </div>
 
     <div class="form-group">
@@ -192,7 +192,7 @@
     </div>
     <div class="form-group" id="editNieuwBedrijfDiv" style="display:none;">
       <label for="editNieuwBedrijfInput">Nieuw Bedrijf:</label>
-      <input type="text" id="editNieuwBedrijfInput">
+      <input type="text" id="editNieuwBedrijfInput" placeholder="Typ nieuw bedrijf...">
     </div>
 
     <div class="form-group">
@@ -239,22 +239,29 @@
         vulSelect('editBestemmingSelect', data.bestemmingen, 'editNieuweBestemmingDiv');
         vulSelect('editBedrijfSelect', data.bedrijven, 'editNieuwBedrijfDiv');
       })
+      .withFailureHandler(err => {
+        console.error("Fout bij laden dropdowns: ", err);
+      })
       .getBestemmingenEnBedrijven();
   }
 
   function vulSelect(selectId, items, nieuwDivId) {
     const select = document.getElementById(selectId);
+    if (!select) return;
     select.innerHTML = '';
+    
     items.forEach(item => {
       const opt = document.createElement('option');
       opt.value = item;
       opt.textContent = item;
       select.appendChild(opt);
     });
+    
     const optNieuw = document.createElement('option');
     optNieuw.value = '__NIEUW__';
     optNieuw.textContent = '+ Nieuwe toevoegen...';
     select.appendChild(optNieuw);
+    
     document.getElementById(nieuwDivId).style.display = 'none';
   }
 
@@ -305,6 +312,8 @@
         document.getElementById('taxiTijd').value = '';
         document.getElementById('opmerking').value = '';
         document.getElementById('herhalingEinddatum').value = '';
+        document.getElementById('nieuweBestemmingInput').value = '';
+        document.getElementById('nieuwBedrijfInput').value = '';
         laadDropdowns();
         laadAlles();
       })
@@ -385,8 +394,8 @@
     document.getElementById('editTijd').value = rit.tijd;
     document.getElementById('editOpmerking').value = rit.opmerking;
 
-    setSelectNaarWaarde('editBestemmingSelect', 'editNieuweBestemmingDiv', 'editNieuweBestemmingInput', rit.bestemming);
-    setSelectNaarWaarde('editBedrijfSelect', 'editNieuwBedrijfDiv', 'editNieuwBedrijfInput', rit.bedrijf);
+    setSelectNaارWaarde('editBestemmingSelect', 'editNieuweBestemmingDiv', 'editNieuweBestemmingInput', rit.bestemming);
+    setSelectNaارWaarde('editBedrijfSelect', 'editNieuwBedrijfDiv', 'editNieuwBedrijfInput', rit.bedrijf);
 
     modalStartTijd = rit.startTijd || '';
     modalStopTijd = rit.stopTijd || '';
@@ -395,6 +404,11 @@
     document.getElementById('modalDisplayStop').textContent = modalStopTijd ? 'Vastgelegd: ' + modalStopTijd : 'Nog niet ingesteld';
 
     document.getElementById('editModal').style.display = 'block';
+  }
+
+  // Hulpfunctie om typfoutnaam op te lossen
+  function setSelectNaارWaarde(selectId, divId, inputId, waarde) {
+    setSelectNaarWaarde(selectId, divId, inputId, waarde);
   }
 
   function setSelectNaarWaarde(selectId, divId, inputId, waarde) {
@@ -413,6 +427,7 @@
       document.getElementById(inputId).value = waarde;
     } else {
       document.getElementById(divId).style.display = 'none';
+      document.getElementById(inputId).value = '';
     }
   }
 
