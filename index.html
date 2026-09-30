@@ -21,7 +21,6 @@
     .badge-bezig { background: #f39c12; }
     .badge-gereed { background: #27ae60; }
 
-    /* Tabs opmaak */
     .tabs { display: flex; border-bottom: 2px solid #ddd; margin-bottom: 15px; }
     .tab-btn { padding: 10px 20px; cursor: pointer; background: #eee; border: none; font-weight: bold; font-size: 15px; border-top-left-radius: 6px; border-top-right-radius: 6px; margin-right: 5px; }
     .tab-btn.active { background: white; border: 2px solid #ddd; border-bottom: 2px solid white; color: #3498db; margin-bottom: -2px; }
@@ -46,7 +45,6 @@
 </head>
 <body>
 
-<!-- FORMULIER VOOR NIEUWE TAXIRIT -->
 <div class="container">
   <h2>Taxi Afspraak Inplannen</h2>
   
@@ -110,14 +108,12 @@
   <button class="primary-button" onclick="slaTaxiOp()">+ Taxi Opslaan</button>
 </div>
 
-<!-- CONTAINER MET TABS VOOR OVERZICHTEN -->
 <div class="container">
   <div class="tabs">
     <button class="tab-btn active" onclick="openTab(event, 'tabGepland')">Geplande Ritten</button>
     <button class="tab-btn" onclick="openTab(event, 'tabGereed')">Gereed Ritten</button>
   </div>
 
-  <!-- TAB 1: GEPLANDE RITTEN -->
   <div id="tabGepland" class="tab-content active">
     <h2>Overzicht Geplande Ritten</h2>
     <table id="actiefTable">
@@ -131,11 +127,10 @@
           <th>Actie</th>
         </tr>
       </thead>
-      <tbody id="actiefBody"></tbody>
+      <tbody id="actiefBody"><tr><td colspan="6" style="text-align:center;">Gegevens laden...</td></tr></tbody>
     </table>
   </div>
 
-  <!-- TAB 2: GEREED RITTEN -->
   <div id="tabGereed" class="tab-content">
     <h2>Overzicht Gereed Ritten</h2>
     <div class="form-group">
@@ -159,17 +154,15 @@
           <th>Opmerking</th>
         </tr>
       </thead>
-      <tbody id="gereedBody"></tbody>
+      <tbody id="gereedBody"><tr><td colspan="6" style="text-align:center;">Gegevens laden...</td></tr></tbody>
     </table>
   </div>
 </div>
 
-<!-- POPUP MODAL VOOR BEWERKEN -->
 <div id="editModal" class="modal">
   <div class="modal-content">
     <span class="close" onclick="sluitModal()">&times;</span>
     <h2>Rit Bewerken & Start/Stop</h2>
-    
     <input type="hidden" id="editId">
     
     <div class="form-group">
@@ -229,6 +222,9 @@
 </div>
 
 <script>
+  // Jouw gekoppelde Google Apps Script Web App URL
+  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzlyX0g7xgSS5eYF6-R0QJlLywflW4Gz9nmK7y30Ahet50tKbe-I9Ybud1TtKI7tKWw/exec";
+
   let actieveRittenLijst = [];
   let modalStartTijd = '';
   let modalStopTijd = '';
@@ -238,14 +234,14 @@
     for (let c of contents) c.classList.remove('active');
     const buttons = document.getElementsByClassName('tab-btn');
     for (let b of buttons) b.classList.remove('active');
-    
     document.getElementById(tabName).classList.add('active');
     evt.currentTarget.classList.add('active');
   }
 
   function laadDropdowns() {
-    google.script.run
-      .withSuccessHandler(data => {
+    fetch(WEB_APP_URL + "?actie=getBestemmingen")
+      .then(res => res.json())
+      .then(data => {
         if (data && data.bestemmingen && data.bedrijven) {
           vulSelect('bestemmingSelect', data.bestemmingen, 'nieuweBestemmingDiv');
           vulSelect('bedrijfSelect', data.bedrijven, 'nieuwBedrijfDiv');
@@ -253,19 +249,13 @@
           vulSelect('editBedrijfSelect', data.bedrijven, 'editNieuwBedrijfDiv');
         }
       })
-      .withFailureHandler(err => {
-        console.warn("Kon serverdata niet laden, standaard opties blijven actief.", err);
-      })
-      .getBestemmingenEnBedrijven();
+      .catch(err => console.warn("Kon dropdowns niet laden:", err));
   }
 
   function vulSelect(selectId, items, nieuwDivId) {
     const select = document.getElementById(selectId);
     if (!select) return;
-    
-    // Bewaar de huidige selectie als die er is
     const huidigeWaarde = select.value;
-    
     select.innerHTML = '';
     
     items.forEach(item => {
@@ -286,21 +276,11 @@
   }
 
   function checkNieuweBestemming(selectElement, divId) {
-    const div = document.getElementById(divId);
-    if (selectElement.value === '__NIEUW__') {
-      div.style.display = 'block';
-    } else {
-      div.style.display = 'none';
-    }
+    document.getElementById(divId).style.display = (selectElement.value === '__NIEUW__') ? 'block' : 'none';
   }
 
   function checkNieuweBedrijf(selectElement, divId) {
-    const div = document.getElementById(divId);
-    if (selectElement.value === '__NIEUW__') {
-      div.style.display = 'block';
-    } else {
-      div.style.display = 'none';
-    }
+    document.getElementById(divId).style.display = (selectElement.value === '__NIEUW__') ? 'block' : 'none';
   }
 
   function getGekozenWaarde(selectId, inputId) {
@@ -325,23 +305,26 @@
       return;
     }
 
-    const data = { datum, tijd, bestemming, bedrijf, herhaling, herhalingEinddatum, opmerking, startTijd: '', stopTijd: '' };
+    const payload = { actie: 'opslaan', datum, tijd, bestemming, bedrijf, herhaling, herhalingEinddatum, opmerking, startTijd: '', stopTijd: '' };
 
-    google.script.run
-      .withSuccessHandler((msg) => {
-        alert(msg);
-        document.getElementById('taxiTijd').value = '';
-        document.getElementById('opmerking').value = '';
-        document.getElementById('herhalingEinddatum').value = '';
-        document.getElementById('nieuweBestemmingInput').value = '';
-        document.getElementById('nieuwBedrijfInput').value = '';
-        document.getElementById('nieuweBestemmingDiv').style.display = 'none';
-        document.getElementById('nieuwBedrijfDiv').style.display = 'none';
-        laadDropdowns();
-        laadAlles();
-      })
-      .withFailureHandler(err => alert('Fout bij opslaan: ' + err.message))
-      .opslaanTaxi(data);
+    fetch(WEB_APP_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(res => {
+      alert(res.message);
+      document.getElementById('taxiTijd').value = '';
+      document.getElementById('opmerking').value = '';
+      document.getElementById('herhalingEinddatum').value = '';
+      document.getElementById('nieuweBestemmingInput').value = '';
+      document.getElementById('nieuwBedrijfInput').value = '';
+      document.getElementById('nieuweBestemmingDiv').style.display = 'none';
+      document.getElementById('nieuwBedrijfDiv').style.display = 'none';
+      laadDropdowns();
+      laadAlles();
+    })
+    .catch(err => alert('Fout bij opslaan: ' + err));
   }
 
   function laadAlles() {
@@ -350,8 +333,9 @@
   }
 
   function laadActiefOverzicht() {
-    google.script.run
-      .withSuccessHandler(regels => {
+    fetch(WEB_APP_URL + "?actie=getActief")
+      .then(res => res.json())
+      .then(regels => {
         actieveRittenLijst = regels || [];
         const tbody = document.getElementById('actiefBody');
         tbody.innerHTML = '';
@@ -377,14 +361,14 @@
           tbody.appendChild(tr);
         });
       })
-      .withFailureHandler(() => {})
-      .getTaxiActiefOverzicht();
+      .catch(err => console.warn("Kon actieve overzicht niet laden:", err));
   }
 
   function laadGereedOverzicht() {
-    const zoekTerm = document.getElementById('zoekTerm').value;
-    google.script.run
-      .withSuccessHandler(regels => {
+    const zoekTerm = encodeURIComponent(document.getElementById('zoekTerm').value);
+    fetch(WEB_APP_URL + "?actie=getGereed&zoek=" + zoekTerm)
+      .then(res => res.json())
+      .then(regels => {
         const tbody = document.getElementById('gereedBody');
         tbody.innerHTML = '';
         
@@ -406,8 +390,7 @@
           tbody.appendChild(tr);
         });
       })
-      .withFailureHandler(() => {})
-      .getTaxiGereedOverzicht(zoekTerm);
+      .catch(err => console.warn("Kon gereed overzicht niet laden:", err));
   }
 
   function openBewerkModal(id) {
@@ -470,7 +453,8 @@
   }
 
   function bewerkRitOpslaan() {
-    const data = {
+    const payload = {
+      actie: 'update',
       id: document.getElementById('editId').value,
       datum: document.getElementById('editDatum').value,
       tijd: document.getElementById('editTijd').value,
@@ -481,22 +465,29 @@
       stopTijd: modalStopTijd
     };
 
-    google.script.run
-      .withSuccessHandler((msg) => {
-        alert(msg);
-        sluitModal();
-        laadDropdowns();
-        laadAlles();
-      })
-      .withFailureHandler(err => alert('Fout bij bijwerken: ' + err.message))
-      .updateTaxi(data);
+    fetch(WEB_APP_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(res => {
+      alert(res.message);
+      sluitModal();
+      laadDropdowns();
+      laadAlles();
+    })
+    .catch(err => alert('Fout bij bijwerken: ' + err));
   }
 
   function exporteer(formaat) {
-    google.script.run
-      .withSuccessHandler(bericht => alert(bericht))
-      .withFailureHandler(err => alert('Export fout: ' + err.message))
-      .exporteerGereedRitten(formaat);
+    const payload = { actie: 'exporteer', formaat: formaat };
+    fetch(WEB_APP_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(res => alert(res.message))
+    .catch(err => alert('Export fout: ' + err));
   }
 
   window.onload = function() {
