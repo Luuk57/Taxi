@@ -49,7 +49,7 @@
   <h2>Taxi Afspraak Inplannen</h2>
   
   <div class="form-group">
-    <label for="taxiDatum">Datum:</label>
+    <label for="taxiDatum">Startdatum:</label>
     <input type="date" id="taxiDatum">
   </div>
 
@@ -96,7 +96,7 @@
   </div>
 
   <div class="form-group">
-    <label for="herhalingEinddatum">Herhalen tot datum:</label>
+    <label for="herhalingEinddatum">Herhalen tot en met einddatum:</label>
     <input type="date" id="herhalingEinddatum">
   </div>
 
@@ -222,7 +222,6 @@
 </div>
 
 <script>
-  // Jouw gekoppelde Google Apps Script Web App URL
   const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzlyX0g7xgSS5eYF6-R0QJlLywflW4Gz9nmK7y30Ahet50tKbe-I9Ybud1TtKI7tKWw/exec";
 
   let actieveRittenLijst = [];
@@ -292,7 +291,7 @@
   }
 
   function slaTaxiOp() {
-    const datum = document.getElementById('taxiDatum').value;
+    const startDatum = document.getElementById('taxiDatum').value;
     const tijd = document.getElementById('taxiTijd').value;
     const bestemming = getGekozenWaarde('bestemmingSelect', 'nieuweBestemmingInput');
     const bedrijf = getGekozenWaarde('bedrijfSelect', 'nieuwBedrijfInput');
@@ -300,31 +299,100 @@
     const herhalingEinddatum = document.getElementById('herhalingEinddatum').value;
     const opmerking = document.getElementById('opmerking').value;
 
-    if (!datum) {
-      alert('Kies in ieder geval een datum.');
+    if (!startDatum) {
+      alert('Kies in ieder geval een startdatum.');
       return;
     }
 
-    const payload = { actie: 'opslaan', datum, tijd, bestemming, bedrijf, herhaling, herhalingEinddatum, opmerking, startTijd: '', stopTijd: '' };
+    // Bereken alle datums op basis van de herhaling en de einddatum
+    let datumsLijst = berekenHerhalendeDatums(startDatum, herhaling, herhalingEinddatum);
 
-    fetch(WEB_APP_URL, {
-      method: 'POST',
-      body: JSON.stringify(payload)
-    })
-    .then(res => res.json())
-    .then(res => {
-      alert(res.message);
-      document.getElementById('taxiTijd').value = '';
-      document.getElementById('opmerking').value = '';
-      document.getElementById('herhalingEinddatum').value = '';
-      document.getElementById('nieuweBestemmingInput').value = '';
-      document.getElementById('nieuwBedrijfInput').value = '';
-      document.getElementById('nieuweBestemmingDiv').style.display = 'none';
-      document.getElementById('nieuwBedrijfDiv').style.display = 'none';
-      laadDropdowns();
-      laadAlles();
-    })
-    .catch(err => alert('Fout bij opslaan: ' + err));
+    if (datumsLijst.length === 0) {
+      alert('Geen datums om op te slaan.');
+      return;
+    }
+
+    // Stuur alle datums in een lus of als array naar de backend
+    slaDatumsReeksOp(datumsLijst, {
+      tijd, bestemming, bedrijf, herhaling, herhalingEinddatum, opmerking, startTijd: '', stopTijd: ''
+    });
+  }
+
+  function berekenHerhalendeDatums(startStr, herhaling, eindStr) {
+    let datums = [];
+    let curr = new Date(startStr);
+    let eind = eindStr ? new Date(eindStr) : new Date(startStr);
+
+    // Als er geen einddatum is ingevuld, plannen we alleen de startdatum
+    if (!eindStr || herhaling === 'Geen' || curr > eind) {
+      datums.push(startStr);
+      return datums;
+    }
+
+    let teller = 0;
+    while (curr <= eind && teller < 365) { // Veiligheidslimiet van max 365 dagen
+      let dagVanDeWeek = curr.getDay(); // 0 = zo, 1 = ma, 2 = di, 3 = wo, 4 = do, 5 = vr, 6 = za
+
+      let toevoegen = false;
+      if (herhaling === 'elke dag') {
+        toevoegen = true;
+      } else if (herhaling === 'ma wo vrij' && (dagVanDeWeek === 1 || dagVanDeWeek === 3 || dagVanDeWeek === 5)) {
+        toevoegen = true;
+      } else if (herhaling === 'di do vrij' && (dagVanDeWeek === 2 || dagVanDeWeek === 4 || dagVanDeWeek === 5)) {
+        toevoegen = true;
+      } else if (herhaling === 'om de dag') {
+        toevoegen = true; // Slaat elke iteratie op (kan aangepast worden indien om de dag anders berekend moet worden)
+      }
+
+      if (toevoegen || herhaling === 'Geen') {
+        let jaar = curr.getFullYear();
+        let maand = String(curr.getMonth() + 1).padStart(2, '0');
+        let dag = String(curr.getDate()).padStart(2, '0');
+        datums.push(`${jaar}-${maand}-${dag}`);
+      }
+
+      if (herhaling === 'om de dag') {
+        curr.setDate(curr.getDate() + 2);
+      } else {
+        curr.setDate(curr.getDate() + 1);
+      }
+      teller++;
+    }
+
+    if (datums.length === 0) {
+      datums.push(startStr);
+    }
+
+    return datums;
+  }
+
+  async function slaDatumsReeksOp(datums, basisData) {
+    let successCount = 0;
+    for (let datum of datums) {
+      let payload = { actie: 'opslaan', datum: datum, ...basisData };
+      try {
+        let res = await fetch(WEB_APP_URL, {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+        let json = await res.json();
+        if (json) successCount++;
+      } catch (e) {
+        console.warn("Fout bij opslaan datum " + datum, e);
+      }
+    }
+
+    alert(successCount + " rit(ten) succesvol ingepland t/m " + (basisData.herhalingEinddatum || basisData.datum) + "!");
+    
+    document.getElementById('taxiTijd').value = '';
+    document.getElementById('opmerking').value = '';
+    document.getElementById('herhalingEinddatum').value = '';
+    document.getElementById('nieuweBestemmingInput').value = '';
+    document.getElementById('nieuwBedrijfInput').value = '';
+    document.getElementById('nieuweBestemmingDiv').style.display = 'none';
+    document.getElementById('nieuwBedrijfDiv').style.display = 'none';
+    laadDropdowns();
+    laadAlles();
   }
 
   function laadAlles() {
