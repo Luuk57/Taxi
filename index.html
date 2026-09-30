@@ -237,6 +237,27 @@
     evt.currentTarget.classList.add('active');
   }
 
+  // Hulpfunctie om tijd netjes te formatteren (snijdt eventuele ISO rotzooi eraf)
+  function formatteerTijd(tijdStr) {
+    if (!tijdStr) return '';
+    // Als de string een 'T' bevat (zoals uit de spreadsheet), haal dan het uur/minuut deel eruit
+    if (tijdStr.includes('T')) {
+      try {
+        const parts = tijdStr.split('T');
+        if (parts[1]) {
+          return parts[1].substring(0, 5); // pakt "HH:mm"
+        }
+      } catch (e) {
+        return tijdStr;
+      }
+    }
+    // Als het al een gewone korte tijd is (bijv. "21:30:00" of "21:30")
+    if (tijdStr.length >= 5) {
+      return tijdStr.substring(0, 5);
+    }
+    return tijdStr;
+  }
+
   function laadDropdowns() {
     fetch(WEB_APP_URL + "?actie=getBestemmingen")
       .then(res => res.json())
@@ -304,7 +325,6 @@
       return;
     }
 
-    // Bereken alle datums op basis van de herhaling en de einddatum
     let datumsLijst = berekenHerhalendeDatums(startDatum, herhaling, herhalingEinddatum);
 
     if (datumsLijst.length === 0) {
@@ -312,7 +332,6 @@
       return;
     }
 
-    // Stuur alle datums in een lus of als array naar de backend
     slaDatumsReeksOp(datumsLijst, {
       tijd, bestemming, bedrijf, herhaling, herhalingEinddatum, opmerking, startTijd: '', stopTijd: ''
     });
@@ -323,15 +342,14 @@
     let curr = new Date(startStr);
     let eind = eindStr ? new Date(eindStr) : new Date(startStr);
 
-    // Als er geen einddatum is ingevuld, plannen we alleen de startdatum
     if (!eindStr || herhaling === 'Geen' || curr > eind) {
       datums.push(startStr);
       return datums;
     }
 
     let teller = 0;
-    while (curr <= eind && teller < 365) { // Veiligheidslimiet van max 365 dagen
-      let dagVanDeWeek = curr.getDay(); // 0 = zo, 1 = ma, 2 = di, 3 = wo, 4 = do, 5 = vr, 6 = za
+    while (curr <= eind && teller < 365) {
+      let dagVanDeWeek = curr.getDay(); 
 
       let toevoegen = false;
       if (herhaling === 'elke dag') {
@@ -341,7 +359,7 @@
       } else if (herhaling === 'di do vrij' && (dagVanDeWeek === 2 || dagVanDeWeek === 4 || dagVanDeWeek === 5)) {
         toevoegen = true;
       } else if (herhaling === 'om de dag') {
-        toevoegen = true; // Slaat elke iteratie op (kan aangepast worden indien om de dag anders berekend moet worden)
+        toevoegen = true;
       }
 
       if (toevoegen || herhaling === 'Geen') {
@@ -421,7 +439,7 @@
           tr.innerHTML = `
             <td><span class="badge ${badgeClass}">${item.status}</span></td>
             <td>${item.datum}</td>
-            <td>${item.tijd || ''}</td>
+            <td>${formatteerTijd(item.tijd)}</td>
             <td>${item.bestemming || ''}</td>
             <td>${item.bedrijf || ''}</td>
             <td><button class="secondary-button" onclick="openBewerkModal('${item.id}')">Bewerken</button></td>
@@ -449,10 +467,10 @@
           const tr = document.createElement('tr');
           tr.innerHTML = `
             <td>${item.datum}</td>
-            <td>${item.tijd || ''}</td>
+            <td>${formatteerTijd(item.tijd)}</td>
             <td>${item.bestemming || ''}</td>
             <td>${item.bedrijf || ''}</td>
-            <td>Start: ${item.startTijd || '-'}<br>Stop: ${item.stopTijd || '-'}</td>
+            <td>Start: ${formatteerTijd(item.startTijd) || '-'}<br>Stop: ${formatteerTijd(item.stopTijd) || '-'}</td>
             <td>${item.opmerking || ''}</td>
           `;
           tbody.appendChild(tr);
@@ -467,14 +485,14 @@
 
     document.getElementById('editId').value = rit.id;
     document.getElementById('editDatum').value = rit.datum;
-    document.getElementById('editTijd').value = rit.tijd;
+    document.getElementById('editTijd').value = formatteerTijd(rit.tijd);
     document.getElementById('editOpmerking').value = rit.opmerking;
 
     setSelectNaarWaarde('editBestemmingSelect', 'editNieuweBestemmingDiv', 'editNieuweBestemmingInput', rit.bestemming);
     setSelectNaarWaarde('editBedrijfSelect', 'editNieuwBedrijfDiv', 'editNieuwBedrijfInput', rit.bedrijf);
 
-    modalStartTijd = rit.startTijd || '';
-    modalStopTijd = rit.stopTijd || '';
+    modalStartTijd = formatteerTijd(rit.startTijd) || '';
+    modalStopTijd = formatteerTijd(rit.stopTijd) || '';
     
     document.getElementById('modalDisplayStart').textContent = modalStartTijd ? 'Vastgelegd: ' + modalStartTijd : 'Nog niet ingesteld';
     document.getElementById('modalDisplayStop').textContent = modalStopTijd ? 'Vastgelegd: ' + modalStopTijd : 'Nog niet ingesteld';
