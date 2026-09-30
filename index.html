@@ -63,7 +63,9 @@
   <div class="form-group">
     <label for="bestemmingSelect">Bestemming:</label>
     <select id="bestemmingSelect" onchange="checkNieuweBestemming(this, 'nieuweBestemmingDiv')">
-      <!-- Wordt dynamisch gevuld -->
+      <option value="Ziekenhuis">Ziekenhuis</option>
+      <option value="Dialyse Centrum">Dialyse Centrum</option>
+      <option value="__NIEUW__">+ Nieuwe toevoegen...</option>
     </select>
   </div>
   <div class="form-group" id="nieuweBestemmingDiv" style="display:none;">
@@ -74,7 +76,9 @@
   <div class="form-group">
     <label for="bedrijfSelect">Bedrijf:</label>
     <select id="bedrijfSelect" onchange="checkNieuweBedrijf(this, 'nieuwBedrijfDiv')">
-      <!-- Wordt dynamisch gevuld -->
+      <option value="UMCG">UMCG</option>
+      <option value="Maxima">Maxima</option>
+      <option value="__NIEUW__">+ Nieuwe toevoegen...</option>
     </select>
   </div>
   <div class="form-group" id="nieuwBedrijfDiv" style="display:none;">
@@ -179,7 +183,11 @@
     
     <div class="form-group">
       <label for="editBestemmingSelect">Bestemming:</label>
-      <select id="editBestemmingSelect" onchange="checkNieuweBestemming(this, 'editNieuweBestemmingDiv')"></select>
+      <select id="editBestemmingSelect" onchange="checkNieuweBestemming(this, 'editNieuweBestemmingDiv')">
+        <option value="Ziekenhuis">Ziekenhuis</option>
+        <option value="Dialyse Centrum">Dialyse Centrum</option>
+        <option value="__NIEUW__">+ Nieuwe toevoegen...</option>
+      </select>
     </div>
     <div class="form-group" id="editNieuweBestemmingDiv" style="display:none;">
       <label for="editNieuweBestemmingInput">Nieuwe Bestemming:</label>
@@ -188,7 +196,11 @@
 
     <div class="form-group">
       <label for="editBedrijfSelect">Bedrijf:</label>
-      <select id="editBedrijfSelect" onchange="checkNieuweBedrijf(this, 'editNieuwBedrijfDiv')"></select>
+      <select id="editBedrijfSelect" onchange="checkNieuweBedrijf(this, 'editNieuwBedrijfDiv')">
+        <option value="UMCG">UMCG</option>
+        <option value="Maxima">Maxima</option>
+        <option value="__NIEUW__">+ Nieuwe toevoegen...</option>
+      </select>
     </div>
     <div class="form-group" id="editNieuwBedrijfDiv" style="display:none;">
       <label for="editNieuwBedrijfInput">Nieuw Bedrijf:</label>
@@ -234,13 +246,15 @@
   function laadDropdowns() {
     google.script.run
       .withSuccessHandler(data => {
-        vulSelect('bestemmingSelect', data.bestemmingen, 'nieuweBestemmingDiv');
-        vulSelect('bedrijfSelect', data.bedrijven, 'nieuwBedrijfDiv');
-        vulSelect('editBestemmingSelect', data.bestemmingen, 'editNieuweBestemmingDiv');
-        vulSelect('editBedrijfSelect', data.bedrijven, 'editNieuwBedrijfDiv');
+        if (data && data.bestemmingen && data.bedrijven) {
+          vulSelect('bestemmingSelect', data.bestemmingen, 'nieuweBestemmingDiv');
+          vulSelect('bedrijfSelect', data.bedrijven, 'nieuwBedrijfDiv');
+          vulSelect('editBestemmingSelect', data.bestemmingen, 'editNieuweBestemmingDiv');
+          vulSelect('editBedrijfSelect', data.bedrijven, 'editNieuwBedrijfDiv');
+        }
       })
       .withFailureHandler(err => {
-        console.error("Fout bij laden dropdowns: ", err);
+        console.warn("Kon serverdata niet laden, standaard opties blijven actief.", err);
       })
       .getBestemmingenEnBedrijven();
   }
@@ -248,6 +262,10 @@
   function vulSelect(selectId, items, nieuwDivId) {
     const select = document.getElementById(selectId);
     if (!select) return;
+    
+    // Bewaar de huidige selectie als die er is
+    const huidigeWaarde = select.value;
+    
     select.innerHTML = '';
     
     items.forEach(item => {
@@ -262,7 +280,9 @@
     optNieuw.textContent = '+ Nieuwe toevoegen...';
     select.appendChild(optNieuw);
     
-    document.getElementById(nieuwDivId).style.display = 'none';
+    if (huidigeWaarde && huidigeWaarde !== '__NIEUW__') {
+      select.value = huidigeWaarde;
+    }
   }
 
   function checkNieuweBestemming(selectElement, divId) {
@@ -308,16 +328,19 @@
     const data = { datum, tijd, bestemming, bedrijf, herhaling, herhalingEinddatum, opmerking, startTijd: '', stopTijd: '' };
 
     google.script.run
-      .withSuccessHandler(() => {
+      .withSuccessHandler((msg) => {
+        alert(msg);
         document.getElementById('taxiTijd').value = '';
         document.getElementById('opmerking').value = '';
         document.getElementById('herhalingEinddatum').value = '';
         document.getElementById('nieuweBestemmingInput').value = '';
         document.getElementById('nieuwBedrijfInput').value = '';
+        document.getElementById('nieuweBestemmingDiv').style.display = 'none';
+        document.getElementById('nieuwBedrijfDiv').style.display = 'none';
         laadDropdowns();
         laadAlles();
       })
-      .withFailureHandler(err => alert('Fout: ' + err.message))
+      .withFailureHandler(err => alert('Fout bij opslaan: ' + err.message))
       .opslaanTaxi(data);
   }
 
@@ -329,7 +352,7 @@
   function laadActiefOverzicht() {
     google.script.run
       .withSuccessHandler(regels => {
-        actieveRittenLijst = regels;
+        actieveRittenLijst = regels || [];
         const tbody = document.getElementById('actiefBody');
         tbody.innerHTML = '';
         
@@ -354,6 +377,7 @@
           tbody.appendChild(tr);
         });
       })
+      .withFailureHandler(() => {})
       .getTaxiActiefOverzicht();
   }
 
@@ -382,6 +406,7 @@
           tbody.appendChild(tr);
         });
       })
+      .withFailureHandler(() => {})
       .getTaxiGereedOverzicht(zoekTerm);
   }
 
@@ -394,8 +419,8 @@
     document.getElementById('editTijd').value = rit.tijd;
     document.getElementById('editOpmerking').value = rit.opmerking;
 
-    setSelectNaارWaarde('editBestemmingSelect', 'editNieuweBestemmingDiv', 'editNieuweBestemmingInput', rit.bestemming);
-    setSelectNaارWaarde('editBedrijfSelect', 'editNieuwBedrijfDiv', 'editNieuwBedrijfInput', rit.bedrijf);
+    setSelectNaarWaarde('editBestemmingSelect', 'editNieuweBestemmingDiv', 'editNieuweBestemmingInput', rit.bestemming);
+    setSelectNaarWaarde('editBedrijfSelect', 'editNieuwBedrijfDiv', 'editNieuwBedrijfInput', rit.bedrijf);
 
     modalStartTijd = rit.startTijd || '';
     modalStopTijd = rit.stopTijd || '';
@@ -404,11 +429,6 @@
     document.getElementById('modalDisplayStop').textContent = modalStopTijd ? 'Vastgelegd: ' + modalStopTijd : 'Nog niet ingesteld';
 
     document.getElementById('editModal').style.display = 'block';
-  }
-
-  // Hulpfunctie om typfoutnaam op te lossen
-  function setSelectNaارWaarde(selectId, divId, inputId, waarde) {
-    setSelectNaarWaarde(selectId, divId, inputId, waarde);
   }
 
   function setSelectNaarWaarde(selectId, divId, inputId, waarde) {
@@ -426,8 +446,10 @@
       document.getElementById(divId).style.display = 'block';
       document.getElementById(inputId).value = waarde;
     } else {
-      document.getElementById(divId).style.display = 'none';
-      document.getElementById(inputId).value = '';
+      if (select.value !== '__NIEUW__') {
+        document.getElementById(divId).style.display = 'none';
+        document.getElementById(inputId).value = '';
+      }
     }
   }
 
@@ -460,12 +482,13 @@
     };
 
     google.script.run
-      .withSuccessHandler(() => {
+      .withSuccessHandler((msg) => {
+        alert(msg);
         sluitModal();
         laadDropdowns();
         laadAlles();
       })
-      .withFailureHandler(err => alert('Fout: ' + err.message))
+      .withFailureHandler(err => alert('Fout bij bijwerken: ' + err.message))
       .updateTaxi(data);
   }
 
