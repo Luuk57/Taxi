@@ -21,12 +21,19 @@
     .badge-bezig { background: #f39c12; }
     .badge-gereed { background: #27ae60; }
 
+    /* Tabs opmaak */
+    .tabs { display: flex; border-bottom: 2px solid #ddd; margin-bottom: 15px; }
+    .tab-btn { padding: 10px 20px; cursor: pointer; background: #eee; border: none; font-weight: bold; font-size: 15px; border-top-left-radius: 6px; border-top-right-radius: 6px; margin-right: 5px; }
+    .tab-btn.active { background: white; border: 2px solid #ddd; border-bottom: 2px solid white; color: #3498db; margin-bottom: -2px; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
     table { width: 100%; border-collapse: collapse; margin-top: 15px; }
     th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 14px; }
     th { background: #f2f2f2; }
 
     .modal { display: none; position: fixed; z-index: 10; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
-    .modal-content { background: white; margin: 10% auto; padding: 20px; width: 90%; max-width: 500px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+    .modal-content { background: white; margin: 5% auto; padding: 20px; width: 90%; max-width: 500px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
     .close { float: right; font-size: 24px; font-weight: bold; cursor: pointer; color: #aaa; }
     .close:hover { color: black; }
     
@@ -54,11 +61,25 @@
   </div>
 
   <div class="form-group">
-    <label for="bestemming">Bestemming (Kies uit lijst of typ nieuwe):</label>
-    <input type="text" id="bestemming" list="bestemmingenList" placeholder="Waar naartoe?">
-    <datalist id="bestemmingenList">
-      <!-- Wordt dynamisch geladen uit Google Sheets -->
-    </datalist>
+    <label for="bestemmingSelect">Bestemming:</label>
+    <select id="bestemmingSelect" onchange="checkNieuweBestemming(this, 'nieuweBestemmingDiv')">
+      <!-- Wordt dynamisch gevuld -->
+    </select>
+  </div>
+  <div class="form-group" id="nieuweBestemmingDiv" style="display:none;">
+    <label for="nieuweBestemmingInput">Nieuwe Bestemming:</label>
+    <input type="text" id="nieuweBestemmingInput" placeholder="Typ nieuwe bestemming...">
+  </div>
+
+  <div class="form-group">
+    <label for="bedrijfSelect">Bedrijf:</label>
+    <select id="bedrijfSelect" onchange="checkNieuweBedrijf(this, 'nieuwBedrijfDiv')">
+      <!-- Wordt dynamisch gevuld -->
+    </select>
+  </div>
+  <div class="form-group" id="nieuwBedrijfDiv" style="display:none;">
+    <label for="nieuwBedrijfInput">Nieuw Bedrijf:</label>
+    <input type="text" id="nieuwBedrijfInput" placeholder="Typ nieuw bedrijf...">
   </div>
 
   <div class="form-group">
@@ -82,51 +103,61 @@
     <input type="text" id="opmerking" placeholder="Bijv. Rolstoel mee...">
   </div>
   
-  <button class="primary-button" id="btnSaveTaxi" onclick="slaTaxiOp()">+ Taxi Opslaan</button>
+  <button class="primary-button" onclick="slaTaxiOp()">+ Taxi Opslaan</button>
 </div>
 
-<!-- OVERZICHT GEPLANDE & BEZIG RITTEN -->
+<!-- CONTAINER MET TABS VOOR OVERZICHTEN -->
 <div class="container">
-  <h2>Overzicht Geplande Ritten</h2>
-  <table id="actiefTable">
-    <thead>
-      <tr>
-        <th>Status</th>
-        <th>Datum</th>
-        <th>Tijd</th>
-        <th>Bestemming</th>
-        <th>Actie</th>
-      </tr>
-    </thead>
-    <tbody id="actiefBody"></tbody>
-  </table>
-</div>
-
-<!-- OVERZICHT GEREED RITTEN -->
-<div class="container">
-  <h2>Overzicht Gereed Ritten</h2>
-  <div class="form-group">
-    <label for="zoekTerm">Zoek op dag, periode of bestemming:</label>
-    <input type="text" id="zoekTerm" placeholder="Typ om te filteren..." onkeyup="laadGereedOverzicht()">
-  </div>
-  
-  <div style="margin-bottom: 15px;">
-    <button class="secondary-button" onclick="exporteer('pdf')">Exporteer naar PDF (LuukData)</button>
-    <button class="secondary-button" onclick="exporteer('excel')">Exporteer naar Excel (LuukData)</button>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="openTab(event, 'tabGepland')">Geplande Ritten</button>
+    <button class="tab-btn" onclick="openTab(event, 'tabGereed')">Gereed Ritten</button>
   </div>
 
-  <table id="gereedTable">
-    <thead>
-      <tr>
-        <th>Datum</th>
-        <th>Tijd</th>
-        <th>Bestemming</th>
-        <th>Start / Stop</th>
-        <th>Opmerking</th>
-      </tr>
-    </thead>
-    <tbody id="gereedBody"></tbody>
-  </table>
+  <!-- TAB 1: GEPLANDE RITTEN -->
+  <div id="tabGepland" class="tab-content active">
+    <h2>Overzicht Geplande Ritten</h2>
+    <table id="actiefTable">
+      <thead>
+        <tr>
+          <th>Status</th>
+          <th>Datum</th>
+          <th>Tijd</th>
+          <th>Bestemming</th>
+          <th>Bedrijf</th>
+          <th>Actie</th>
+        </tr>
+      </thead>
+      <tbody id="actiefBody"></tbody>
+    </table>
+  </div>
+
+  <!-- TAB 2: GEREED RITTEN -->
+  <div id="tabGereed" class="tab-content">
+    <h2>Overzicht Gereed Ritten</h2>
+    <div class="form-group">
+      <label for="zoekTerm">Zoek op dag, periode, bestemming of bedrijf:</label>
+      <input type="text" id="zoekTerm" placeholder="Typ om te filteren..." onkeyup="laadGereedOverzicht()">
+    </div>
+    
+    <div style="margin-bottom: 15px;">
+      <button class="secondary-button" onclick="exporteer('pdf')">Exporteer naar PDF (LuukData)</button>
+      <button class="secondary-button" onclick="exporteer('excel')">Exporteer naar Excel (LuukData)</button>
+    </div>
+
+    <table id="gereedTable">
+      <thead>
+        <tr>
+          <th>Datum</th>
+          <th>Tijd</th>
+          <th>Bestemming</th>
+          <th>Bedrijf</th>
+          <th>Start / Stop</th>
+          <th>Opmerking</th>
+        </tr>
+      </thead>
+      <tbody id="gereedBody"></tbody>
+    </table>
+  </div>
 </div>
 
 <!-- POPUP MODAL VOOR BEWERKEN -->
@@ -145,10 +176,25 @@
       <label for="editTijd">Ophaaltijd:</label>
       <input type="time" id="editTijd">
     </div>
+    
     <div class="form-group">
-      <label for="editBestemming">Bestemming:</label>
-      <input type="text" id="editBestemming" list="bestemmingenList">
+      <label for="editBestemmingSelect">Bestemming:</label>
+      <select id="editBestemmingSelect" onchange="checkNieuweBestemming(this, 'editNieuweBestemmingDiv')"></select>
     </div>
+    <div class="form-group" id="editNieuweBestemmingDiv" style="display:none;">
+      <label for="editNieuweBestemmingInput">Nieuwe Bestemming:</label>
+      <input type="text" id="editNieuweBestemmingInput">
+    </div>
+
+    <div class="form-group">
+      <label for="editBedrijfSelect">Bedrijf:</label>
+      <select id="editBedrijfSelect" onchange="checkNieuweBedrijf(this, 'editNieuwBedrijfDiv')"></select>
+    </div>
+    <div class="form-group" id="editNieuwBedrijfDiv" style="display:none;">
+      <label for="editNieuwBedrijfInput">Nieuw Bedrijf:</label>
+      <input type="text" id="editNieuwBedrijfInput">
+    </div>
+
     <div class="form-group">
       <label for="editOpmerking">Opmerking:</label>
       <input type="text" id="editOpmerking">
@@ -175,25 +221,74 @@
   let modalStartTijd = '';
   let modalStopTijd = '';
 
-  // Laad alle bestemmingen in de keuzelijst vanuit Google Sheets
-  function laadBestemmingenLijst() {
+  function openTab(evt, tabName) {
+    const contents = document.getElementsByClassName('tab-content');
+    for (let c of contents) c.classList.remove('active');
+    const buttons = document.getElementsByClassName('tab-btn');
+    for (let b of buttons) b.classList.remove('active');
+    
+    document.getElementById(tabName).classList.add('active');
+    evt.currentTarget.classList.add('active');
+  }
+
+  function laadDropdowns() {
     google.script.run
-      .withSuccessHandler(bestemmingen => {
-        const datalist = document.getElementById('bestemmingenList');
-        datalist.innerHTML = '';
-        bestemmingen.forEach(b => {
-          const option = document.createElement('option');
-          option.value = b;
-          datalist.appendChild(option);
-        });
+      .withSuccessHandler(data => {
+        vulSelect('bestemmingSelect', data.bestemmingen, 'nieuweBestemmingDiv');
+        vulSelect('bedrijfSelect', data.bedrijven, 'nieuwBedrijfDiv');
+        vulSelect('editBestemmingSelect', data.bestemmingen, 'editNieuweBestemmingDiv');
+        vulSelect('editBedrijfSelect', data.bedrijven, 'editNieuwBedrijfDiv');
       })
-      .getBestemmingen();
+      .getBestemmingenEnBedrijven();
+  }
+
+  function vulSelect(selectId, items, nieuwDivId) {
+    const select = document.getElementById(selectId);
+    select.innerHTML = '';
+    items.forEach(item => {
+      const opt = document.createElement('option');
+      opt.value = item;
+      opt.textContent = item;
+      select.appendChild(opt);
+    });
+    const optNieuw = document.createElement('option');
+    optNieuw.value = '__NIEUW__';
+    optNieuw.textContent = '+ Nieuwe toevoegen...';
+    select.appendChild(optNieuw);
+    document.getElementById(nieuwDivId).style.display = 'none';
+  }
+
+  function checkNieuweBestemming(selectElement, divId) {
+    const div = document.getElementById(divId);
+    if (selectElement.value === '__NIEUW__') {
+      div.style.display = 'block';
+    } else {
+      div.style.display = 'none';
+    }
+  }
+
+  function checkNieuweBedrijf(selectElement, divId) {
+    const div = document.getElementById(divId);
+    if (selectElement.value === '__NIEUW__') {
+      div.style.display = 'block';
+    } else {
+      div.style.display = 'none';
+    }
+  }
+
+  function getGekozenWaarde(selectId, inputId) {
+    const select = document.getElementById(selectId);
+    if (select.value === '__NIEUW__') {
+      return document.getElementById(inputId).value.trim();
+    }
+    return select.value;
   }
 
   function slaTaxiOp() {
     const datum = document.getElementById('taxiDatum').value;
     const tijd = document.getElementById('taxiTijd').value;
-    const bestemming = document.getElementById('bestemming').value;
+    const bestemming = getGekozenWaarde('bestemmingSelect', 'nieuweBestemmingInput');
+    const bedrijf = getGekozenWaarde('bedrijfSelect', 'nieuwBedrijfInput');
     const herhaling = document.getElementById('herhaling').value;
     const herhalingEinddatum = document.getElementById('herhalingEinddatum').value;
     const opmerking = document.getElementById('opmerking').value;
@@ -203,19 +298,15 @@
       return;
     }
 
-    const data = {
-      datum, tijd, bestemming, herhaling, herhalingEinddatum, opmerking,
-      startTijd: '', stopTijd: ''
-    };
+    const data = { datum, tijd, bestemming, bedrijf, herhaling, herhalingEinddatum, opmerking, startTijd: '', stopTijd: '' };
 
     google.script.run
       .withSuccessHandler(() => {
-        document.getElementById('bestemming').value = '';
-        document.getElementById('opmerking').value = '';
         document.getElementById('taxiTijd').value = '';
+        document.getElementById('opmerking').value = '';
         document.getElementById('herhalingEinddatum').value = '';
+        laadDropdowns();
         laadAlles();
-        laadBestemmingenLijst(); // Herlaad lijst zodat nieuwe bestemming er meteen in staat
       })
       .withFailureHandler(err => alert('Fout: ' + err.message))
       .opslaanTaxi(data);
@@ -234,7 +325,7 @@
         tbody.innerHTML = '';
         
         if (!regels || regels.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Geen geplande ritten gevonden</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Geen geplande ritten gevonden</td></tr>';
           return;
         }
 
@@ -248,6 +339,7 @@
             <td>${item.datum}</td>
             <td>${item.tijd || ''}</td>
             <td>${item.bestemming || ''}</td>
+            <td>${item.bedrijf || ''}</td>
             <td><button class="secondary-button" onclick="openBewerkModal('${item.id}')">Bewerken</button></td>
           `;
           tbody.appendChild(tr);
@@ -264,7 +356,7 @@
         tbody.innerHTML = '';
         
         if (!regels || regels.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Geen gereed ritten gevonden</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Geen gereed ritten gevonden</td></tr>';
           return;
         }
 
@@ -274,6 +366,7 @@
             <td>${item.datum}</td>
             <td>${item.tijd || ''}</td>
             <td>${item.bestemming || ''}</td>
+            <td>${item.bedrijf || ''}</td>
             <td>Start: ${item.startTijd || '-'}<br>Stop: ${item.stopTijd || '-'}</td>
             <td>${item.opmerking || ''}</td>
           `;
@@ -290,8 +383,10 @@
     document.getElementById('editId').value = rit.id;
     document.getElementById('editDatum').value = rit.datum;
     document.getElementById('editTijd').value = rit.tijd;
-    document.getElementById('editBestemming').value = rit.bestemming;
     document.getElementById('editOpmerking').value = rit.opmerking;
+
+    setSelectNaarWaarde('editBestemmingSelect', 'editNieuweBestemmingDiv', 'editNieuweBestemmingInput', rit.bestemming);
+    setSelectNaarWaarde('editBedrijfSelect', 'editNieuwBedrijfDiv', 'editNieuwBedrijfInput', rit.bedrijf);
 
     modalStartTijd = rit.startTijd || '';
     modalStopTijd = rit.stopTijd || '';
@@ -300,6 +395,25 @@
     document.getElementById('modalDisplayStop').textContent = modalStopTijd ? 'Vastgelegd: ' + modalStopTijd : 'Nog niet ingesteld';
 
     document.getElementById('editModal').style.display = 'block';
+  }
+
+  function setSelectNaarWaarde(selectId, divId, inputId, waarde) {
+    const select = document.getElementById(selectId);
+    let gevonden = false;
+    for (let opt of select.options) {
+      if (opt.value === waarde) {
+        select.value = waarde;
+        gevonden = true;
+        break;
+      }
+    }
+    if (!gevonden && waarde) {
+      select.value = '__NIEUW__';
+      document.getElementById(divId).style.display = 'block';
+      document.getElementById(inputId).value = waarde;
+    } else {
+      document.getElementById(divId).style.display = 'none';
+    }
   }
 
   function sluitModal() {
@@ -323,17 +437,18 @@
       id: document.getElementById('editId').value,
       datum: document.getElementById('editDatum').value,
       tijd: document.getElementById('editTijd').value,
-      bestemming: document.getElementById('editBestemming').value,
+      bestemming: getGekozenWaarde('editBestemmingSelect', 'editNieuweBestemmingInput'),
+      bedrijf: getGekozenWaarde('editBedrijfSelect', 'editNieuwBedrijfInput'),
       opmerking: document.getElementById('editOpmerking').value,
       startTijd: modalStartTijd,
       stopTijd: modalStopTijd
     };
 
     google.script.run
-      .withSuccessHandler(bericht => {
+      .withSuccessHandler(() => {
         sluitModal();
+        laadDropdowns();
         laadAlles();
-        laadBestemmingenLijst();
       })
       .withFailureHandler(err => alert('Fout: ' + err.message))
       .updateTaxi(data);
@@ -347,7 +462,7 @@
   }
 
   window.onload = function() {
-    laadBestemmingenLijst();
+    laadDropdowns();
     laadAlles();
   };
 </script>
