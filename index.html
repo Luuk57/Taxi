@@ -210,7 +210,7 @@
       border-bottom: none;
     }
 
-    /* Stijlen voor overzicht over twee regels */
+    /* Stijlen over twee regels */
     .row-line-1 {
       font-weight: 600;
       color: var(--text-main);
@@ -274,13 +274,13 @@
     .time-buttons-container {
       display: flex;
       gap: 10px;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
       flex-direction: column;
     }
 
     .big-btn {
       flex: 1;
-      padding: 14px;
+      padding: 12px;
       font-size: 14px;
       font-weight: 600;
       color: white;
@@ -293,6 +293,21 @@
     .btn-start { background: var(--success); }
     .btn-stop { background: var(--danger); }
     .time-display { font-size: 11px; margin-top: 4px; opacity: 0.9; font-weight: normal; }
+
+    .tussen-opslag-btn {
+      background: #64748b;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      width: 100%;
+      margin-bottom: 14px;
+      transition: background 0.2s;
+    }
+    .tussen-opslag-btn:hover { background: #475569; }
 
     .export-actions {
       display: flex;
@@ -422,7 +437,7 @@
 <div id="editModal" class="modal">
   <div class="modal-content">
     <span class="close" onclick="sluitModal()">&times;</span>
-    <h2>🛠️ Rit Bewerken</h2>
+    <h2>🛠️️ Rit Bewerken</h2>
     <input type="hidden" id="editId">
     
     <div class="form-group">
@@ -487,7 +502,8 @@
       </button>
     </div>
 
-    <button class="primary-button" onclick="bewerkRitOpslaan()">Wijzigingen Opslaan</button>
+    <button type="button" class="tussen-opslag-btn" onclick="tussentijdsOpslaan()">💾 Tussentijds Opslaan (Popup blijft open)</button>
+    <button class="primary-button" onclick="bewerkRitOpslaanEnSluiten()">Wijzigingen Definitief Opslaan</button>
   </div>
 </div>
 
@@ -495,6 +511,7 @@
   const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzlyX0g7xgSS5eYF6-R0QJlLywflW4Gz9nmK7y30Ahet50tKbe-I9Ybud1TtKI7tKWw/exec";
 
   let actieveRittenLijst = [];
+  let gereedRittenLijst = [];
   let modalStartTijd = '';
   let modalStopTijd = '';
 
@@ -715,7 +732,7 @@
               </div>
               <div class="row-line-2" style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
                 <span>📍 <strong>${item.bestemming || ''}</strong> (${item.bedrijf || ''}) ${item.opmerking ? '• ' + item.opmerking : ''}</span>
-                <button class="secondary-button" style="padding: 5px 10px; font-size:11px; margin:0;" onclick="openBewerkModal('${item.id}')">Bewerk</button>
+                <button class="secondary-button" style="padding: 5px 10px; font-size:11px; margin:0;" onclick="openBewerkModal('${item.id}', 'actief')">Bewerk</button>
               </div>
             </td>
           `;
@@ -730,6 +747,7 @@
     fetch(WEB_APP_URL + "?actie=getGereed&zoek=" + zoekTerm)
       .then(res => res.json())
       .then(regels => {
+        gereedRittenLijst = regels || [];
         const tbody = document.getElementById('gereedBody');
         tbody.innerHTML = '';
         
@@ -746,8 +764,9 @@
                 <span>📅 ${item.datum} &nbsp;|&nbsp; ⏰ ${formatteerTijd(item.tijd) || ''}</span>
                 <span style="font-size: 11px; color: var(--text-muted);">Start: ${formatteerTijd(item.startTijd) || '-'} | Stop: ${formatteerTijd(item.stopTijd) || '-'}</span>
               </div>
-              <div class="row-line-2" style="margin-top: 4px;">
-                📍 <strong>${item.bestemming || ''}</strong> (${item.bedrijf || ''}) ${item.opmerking ? '• ' + item.opmerking : ''}
+              <div class="row-line-2" style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                <span>📍 <strong>${item.bestemming || ''}</strong> (${item.bedrijf || ''}) ${item.opmerking ? '• ' + item.opmerking : ''}</span>
+                <button class="secondary-button" style="padding: 5px 10px; font-size:11px; margin:0; background: #64748b;" onclick="openBewerkModal('${item.id}', 'gereed')">Bewerk</button>
               </div>
             </td>
           `;
@@ -757,8 +776,13 @@
       .catch(err => console.warn("Kon gereed overzicht niet laden:", err));
   }
 
-  function openBewerkModal(id) {
-    const rit = actieveRittenLijst.find(r => r.id === id);
+  function openBewerkModal(id, bron) {
+    let rit = null;
+    if (bron === 'actief') {
+      rit = actieveRittenLijst.find(r => r.id === id);
+    } else {
+      rit = gereedRittenLijst.find(r => r.id === id);
+    }
     if (!rit) return;
 
     document.getElementById('editId').value = rit.id;
@@ -820,8 +844,8 @@
     document.getElementById('modalDisplayStop').textContent = 'Ingesteld: ' + modalStopTijd;
   }
 
-  function bewerkRitOpslaan() {
-    const payload = {
+  function verzamelBewerkData() {
+    return {
       actie: 'update',
       id: document.getElementById('editId').value,
       datum: document.getElementById('editDatum').value,
@@ -832,7 +856,26 @@
       bedrijf: getGekozenWaarde('editBedrijfSelect', 'editNieuwBedrijfInput'),
       opmerking: document.getElementById('editOpmerking').value
     };
+  }
 
+  function tussentijdsOpslaan() {
+    const payload = verzamelBewerkData();
+    fetch(WEB_APP_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(res => {
+      // Subtiele bevestiging of melding zonder de popup te sluiten
+      alert("Tussentijds opgeslagen! Je kunt doorgaan in de popup.");
+      laadDropdowns();
+      laadAlles();
+    })
+    .catch(err => alert('Fout bij tussentijds opslaan: ' + err));
+  }
+
+  function bewerkRitOpslaanEnSluiten() {
+    const payload = verzamelBewerkData();
     fetch(WEB_APP_URL, {
       method: 'POST',
       body: JSON.stringify(payload)
