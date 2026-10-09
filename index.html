@@ -35,22 +35,21 @@
         /* Actieve rit info formulier */
         .active-ride-form { margin-top: 20px; text-align: left; display: none; }
         .active-ride-form label { display: block; font-size: 11px; font-weight: 800; color: #4a5568; text-transform: uppercase; margin-bottom: 4px; margin-top: 10px; }
-        .active-ride-form input, .active-ride-form textarea { width: 100%; padding: 10px; font-size: 14px; border: 2px solid #e2e8f0; border-radius: 8px; outline: none; background: #f8fafc; font-weight: 600; color: #2d3748; }
-        .active-ride-form input:focus, .active-ride-form textarea:focus { border-color: #007bff; background: white; }
+        .active-ride-form select, .active-ride-form input, .active-ride-form textarea { width: 100%; padding: 10px; font-size: 14px; border: 2px solid #e2e8f0; border-radius: 8px; outline: none; background: #f8fafc; font-weight: 600; color: #2d3748; }
 
         /* Modals (Popups) */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); justify-content: center; align-items: center; z-index: 100; }
         .modal-content { background: white; padding: 24px; border-radius: 16px; width: 90%; max-width: 420px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.2); max-height: 85vh; overflow-y: auto; }
         .modal-content h3 { margin-bottom: 16px; color: #1a202c; font-size: 18px; font-weight: 700; }
-        .modal-content label { display: block; font-size: 12px; font-weight: 700; text-align: left; margin-bottom: 6px; color: #4a5568; text-transform: uppercase; }
-        .modal-content input, .modal-content select, .modal-content textarea { width: 100%; padding: 10px; font-size: 14px; border: 2px solid #e2e8f0; border-radius: 10px; margin-bottom: 10px; outline: none; background: #f8fafc; font-weight: 600; color: #2d3748; text-align: left; }
+        .modal-content label { display: block; font-size: 12px; font-weight: 700; text-align: left; margin-bottom: 4px; color: #4a5568; text-transform: uppercase; margin-top: 8px; }
+        .modal-content input, .modal-content select, .modal-content textarea { width: 100%; padding: 10px; font-size: 14px; border: 2px solid #e2e8f0; border-radius: 10px; margin-bottom: 6px; outline: none; background: #f8fafc; font-weight: 600; color: #2d3748; text-align: left; }
         
-        .modal-buttons { display: flex; gap: 10px; margin-top: 10px; }
+        .modal-buttons { display: flex; gap: 10px; margin-top: 15px; }
         .modal-buttons button { flex: 1; padding: 12px; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 15px; }
         .btn-cancel { background: #edf2f7; color: #4a5568; }
         .btn-confirm { background: #007bff; color: white; box-shadow: 0 4px 10px rgba(0,123,255,0.25); }
 
-        .list-container { max-height: 220px; overflow-y: auto; text-align: left; margin-bottom: 16px; border: 2px solid #edf2f7; padding: 8px; border-radius: 10px; background: #f8fafc; }
+        .list-container { max-height: 200px; overflow-y: auto; text-align: left; margin-bottom: 16px; border: 2px solid #edf2f7; padding: 8px; border-radius: 10px; background: #f8fafc; }
         .list-card { background: white; border: 1px solid #cbd5e0; border-radius: 8px; padding: 10px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
         .list-card-header { font-weight: 700; font-size: 13px; color: #2d3748; margin-bottom: 4px; display: flex; justify-content: space-between; }
         .list-card-row { font-size: 12px; color: #4a5568; padding: 2px 0; }
@@ -93,13 +92,13 @@
             <!-- Extra invoervelden tijdens actieve rit -->
             <div class="active-ride-form" id="activeRideForm">
                 <label>Bedrijf:</label>
-                <input type="text" id="rideCompany" placeholder="Bijv. zorginstelling / klant">
+                <select id="rideCompany"></select>
                 
                 <label>Chauffeur:</label>
-                <input type="text" id="rideDriver" placeholder="Naam chauffeur">
+                <select id="rideDriver"></select>
 
                 <label>Bestemming:</label>
-                <input type="text" id="rideDestination" placeholder="Adres of locatie">
+                <select id="rideDestination"></select>
 
                 <label>Opmerking:</label>
                 <textarea id="rideNote" rows="2" placeholder="Eventuele bijzonderheden"></textarea>
@@ -113,27 +112,37 @@
             <h3>Agenda & Planning</h3>
             <div class="list-container" id="plannedListContainer"></div>
 
-            <hr style="margin: 15px 0; border:0; border-top:1px solid #edf2f7;">
+            <hr style="margin: 12px 0; border:0; border-top:1px solid #edf2f7;">
             
-            <h4 style="font-size: 13px; margin-bottom: 8px; color: #4a5568; text-align: left;">Nieuwe rit inplannen:</h4>
+            <h4 style="font-size: 13px; margin-bottom: 6px; color: #4a5568; text-align: left;">Nieuwe rit inplannen:</h4>
             <label>Startdatum:</label>
             <input type="date" id="planDate">
             <label>Ophaaltijd:</label>
             <input type="time" id="planTime" value="08:00">
+            
             <label>Bedrijf:</label>
-            <input type="text" id="planCompany" placeholder="Bedrijf of klant">
+            <select id="planCompany" onchange="checkNewOption(this, 'company')"></select>
+            
             <label>Chauffeur:</label>
-            <input type="text" id="planDriver" placeholder="Standaard chauffeur">
+            <select id="planDriver" onchange="checkNewOption(this, 'driver')"></select>
+            
             <label>Bestemming:</label>
-            <input type="text" id="planDestination" placeholder="Bestemming">
+            <select id="planDestination" onchange="checkNewOption(this, 'destination')"></select>
+            
             <label>Herhaling:</label>
-            <select id="planRepeat">
+            <select id="planRepeat" onchange="toggleEndDate()">
                 <option value="none">Geen (enmalig)</option>
                 <option value="daily">Elke dag</option>
                 <option value="alternate">Om de dag</option>
                 <option value="mwf">Ma, Wo, Vrij</option>
                 <option value="tts">Di, Do, Za</option>
             </select>
+
+            <div id="endDateContainer" style="display: none;">
+                <label>Tot einddatum reeks:</label>
+                <input type="date" id="planEndDate">
+            </div>
+
             <label>Opmerking:</label>
             <input type="text" id="planNote" placeholder="Bijv. plantage ophalen">
 
@@ -185,8 +194,14 @@
     </div>
 
     <script>
-        let rides = [];      // Voltooide ritten
-        let planned = [];    // Geplande ritten
+        let rides = [];
+        let planned = [];
+        let optionsList = {
+            company: ['Zorginstelling A', 'Cliënt B', 'Dagbesteding C'],
+            driver: ['Chauffeur 1', 'Chauffeur 2'],
+            destination: ['Plantage', 'Ziekenhuis', 'Stadscentrum']
+        };
+
         let isDriving = false;
         let startTime = null;
         let timerInterval = null;
@@ -199,10 +214,12 @@
             document.getElementById('startDate').value = todayStr;
             document.getElementById('endDate').value = todayStr;
             document.getElementById('planDate').value = todayStr;
+            document.getElementById('planEndDate').value = todayStr;
 
             if (apiKey && binId) {
                 await syncWithCloud(false);
             }
+            updateDropdowns();
             checkTodayPlanning();
         };
 
@@ -223,7 +240,7 @@
                             'X-Master-Key': apiKey,
                             'X-Bin-Private': 'true'
                         },
-                        body: JSON.stringify({ rides: [], planned: [] })
+                        body: JSON.stringify({ rides: [], planned: [], optionsList: optionsList })
                     });
                     const createData = await createRes.json();
                     if (createData.metadata && createData.metadata.id) {
@@ -242,9 +259,11 @@
                 if (getData.record) {
                     if (getData.record.rides) rides = getData.record.rides;
                     if (getData.record.planned) planned = getData.record.planned;
+                    if (getData.record.optionsList) optionsList = getData.record.optionsList;
                     document.getElementById('syncStatus').innerText = 'Cloud: Verbonden';
                     if (showAlert) alert('Verbonden & gesynchroniseerd!');
                 }
+                updateDropdowns();
                 checkTodayPlanning();
             } catch (error) {
                 console.error(error);
@@ -262,13 +281,59 @@
                         'Content-Type': 'application/json',
                         'X-Master-Key': apiKey
                     },
-                    body: JSON.stringify({ rides: rides, planned: planned })
+                    body: JSON.stringify({ rides: rides, planned: planned, optionsList: optionsList })
                 });
                 document.getElementById('syncStatus').innerText = 'Cloud: Opgeslagen';
             } catch (error) {
                 console.error(error);
                 document.getElementById('syncStatus').innerText = 'Cloud: Opslaan mislukt';
             }
+        }
+
+        function updateDropdowns() {
+            ['rideCompany', 'planCompany'].forEach(id => populateSelect(id, optionsList.company));
+            ['rideDriver', 'planDriver'].forEach(id => populateSelect(id, optionsList.driver));
+            ['rideDestination', 'planDestination'].forEach(id => populateSelect(id, optionsList.destination));
+        }
+
+        function populateSelect(elementId, items) {
+            const select = document.getElementById(elementId);
+            if (!select) return;
+            const currentVal = select.value;
+            select.innerHTML = '<option value="">-- Maak keuze of voeg toe --</option>';
+            items.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item;
+                opt.textContent = item;
+                select.appendChild(opt);
+            });
+            select.innerHTML += '<option value="__new__" style="font-weight:bold; color:#007bff;">+ Nieuwe toevoegen...</option>';
+            if (items.includes(currentVal)) select.value = currentVal;
+        }
+
+        async function checkNewOption(selectElement, type) {
+            if (selectElement.value === '__new__') {
+                const newVal = prompt('Voer een nieuwe naam in:');
+                if (newVal && newVal.trim() !== '') {
+                    const cleaned = newVal.trim();
+                    if (!optionsList[type].includes(cleaned)) {
+                        optionsList[type].push(cleaned);
+                        await pushToCloud();
+                        updateDropdowns();
+                        selectElement.value = cleaned;
+                    } else {
+                        selectElement.value = cleaned;
+                    }
+                } else {
+                    selectElement.value = '';
+                }
+            }
+        }
+
+        function toggleEndDate() {
+            const repeat = document.getElementById('planRepeat').value;
+            const container = document.getElementById('endDateContainer');
+            container.style.display = repeat === 'none' ? 'none' : 'block';
         }
 
         function checkTodayPlanning() {
@@ -332,9 +397,9 @@
             } else {
                 const stopTime = new Date();
 
-                const company = document.getElementById('rideCompany').value.trim() || 'Onbekend';
-                const driver = document.getElementById('rideDriver').value.trim() || 'Onbekend';
-                const destination = document.getElementById('rideDestination').value.trim() || 'Onbekend';
+                const company = document.getElementById('rideCompany').value || 'Onbekend';
+                const driver = document.getElementById('rideDriver').value || 'Onbekend';
+                const destination = document.getElementById('rideDestination').value || 'Onbekend';
                 const note = document.getElementById('rideNote').value.trim();
 
                 const newRide = {
@@ -403,33 +468,36 @@
         async function addPlannedRide() {
             const date = document.getElementById('planDate').value;
             const time = document.getElementById('planTime').value;
-            const company = document.getElementById('planCompany').value.trim();
-            const driver = document.getElementById('planDriver').value.trim();
-            const destination = document.getElementById('planDestination').value.trim();
+            const company = document.getElementById('planCompany').value;
+            const driver = document.getElementById('planDriver').value;
+            const destination = document.getElementById('planDestination').value;
             const repeat = document.getElementById('planRepeat').value;
+            const endDate = document.getElementById('planEndDate').value;
             const note = document.getElementById('planNote').value.trim();
 
-            if (!date || !company) {
-                alert('Vul tenminste een datum en bedrijf in.');
+            if (!date || !company || company === '__new__') {
+                alert('Vul een geldige datum en bedrijf in.');
                 return;
             }
 
-            // Genereer reeksen op basis van herhaling (voor de komende 4 weken / 30 dagen als voorbeeld)
             let currDate = new Date(date);
+            let limitDate = repeat === 'none' ? new Date(date) : new Date(endDate || date);
+            if (limitDate < currDate) limitDate = new Date(date);
+
             let addedCount = 0;
 
-            for (let i = 0; i < 30; i++) {
+            while (currDate <= limitDate && addedCount < 100) {
                 let dateStr = currDate.toISOString().split('T')[0];
-                let dayOfWeek = currDate.getDay(); // 0 = zo, 1 = ma, ..., 3 = wo, 5 = vr, etc.
+                let dayOfWeek = currDate.getDay();
 
                 let shouldAdd = false;
-                if (i === 0) {
-                    shouldAdd = true; // Altijd de startdatum toevoegen
+                if (addedCount === 0) {
+                    shouldAdd = true;
                 } else {
                     if (repeat === 'daily') {
                         shouldAdd = true;
                     } else if (repeat === 'alternate') {
-                        shouldAdd = (i % 2 === 0);
+                        shouldAdd = true; // Je kunt dit per dag vergroten indien gewenst
                     } else if (repeat === 'mwf') {
                         if (dayOfWeek === 1 || dayOfWeek === 3 || dayOfWeek === 5) shouldAdd = true;
                     } else if (repeat === 'tts') {
@@ -437,14 +505,18 @@
                     }
                 }
 
-                if (shouldAdd && (i === 0 || repeat !== 'none')) {
+                // Voor "om de dag" slaan we er eentje over
+                if (repeat === 'alternate' && addedCount > 0 && addedCount % 2 !== 0) {
+                    shouldAdd = false;
+                }
+
+                if (shouldAdd) {
                     planned.push({ date: dateStr, time, company, driver, destination, repeat, note });
                     addedCount++;
                 }
 
-                if (repeat === 'none') break; // Enmalig, stop na 1 keer
+                if (repeat === 'none') break;
 
-                // Volgende dag
                 currDate.setDate(currDate.getDate() + 1);
             }
 
@@ -452,9 +524,6 @@
             checkTodayPlanning();
             renderPlannedList();
 
-            document.getElementById('planCompany').value = '';
-            document.getElementById('planDriver').value = '';
-            document.getElementById('planDestination').value = '';
             document.getElementById('planNote').value = '';
             alert(`${addedCount} rit(ten) succesvol ingepland!`);
         }
