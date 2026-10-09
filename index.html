@@ -182,10 +182,10 @@
     <div class="modal" id="settingsModal">
         <div class="modal-content">
             <h3>Cloud Instellingen</h3>
-            <p style="font-size: 13px; color: #718096; margin-bottom: 14px; line-height: 1.4;">Plak hier je JSONBin Master Key om te synchroniseren:</p>
+            <p style="font-size: 13px; color: #718096; margin-bottom: 14px; line-height: 1.4;">Plak hier je JSONBin Master Key en Bin ID om te synchroniseren:</p>
             
             <input type="text" id="apiKeyInput" placeholder="API Key ($2a$10$...)">
-            <input type="text" id="binIdInput" placeholder="Bin ID (laat leeg voor nieuwe kluis)">
+            <input type="text" id="binIdInput" placeholder="Bin ID (bijv. 65... of laat leeg voor nieuwe)">
 
             <div class="modal-buttons" style="margin-top: 15px;">
                 <button class="btn-cancel" onclick="closeSettingsModal()">Sluiten</button>
@@ -408,7 +408,6 @@
                 const driver = document.getElementById('rideDriver').value || 'Onbekend';
                 const destination = document.getElementById('rideDestination').value || 'Onbekend';
 
-                // --- LIVE SYNC VOOR NEXUS-OS ---
                 localStorage.setItem('nexus_taxi_is_driving', 'true');
                 localStorage.setItem('nexus_taxi_active_data', JSON.stringify({
                     company: company,
@@ -452,7 +451,6 @@
                 rides.push(newRide);
                 pushToCloud();
 
-                // --- LIVE SYNC UITZETTEN VOOR NEXUS-OS ---
                 localStorage.setItem('nexus_taxi_is_driving', 'false');
                 localStorage.removeItem('nexus_taxi_active_data');
 
@@ -571,12 +569,13 @@
                 safetyCounter++;
             }
 
+            // Direct naar de cloud pushen zodat andere apparaten het ook zien!
             await pushToCloud();
             checkTodayPlanning();
             renderPlannedList();
 
             document.getElementById('planNote').value = '';
-            alert(`${addedCount} rit(ten) succesvol ingepland tot ${endDateInput || dateStrInput}!`);
+            alert(`${addedCount} rit(ten) succesvol ingepland en gesynchroniseerd!`);
         }
 
         async function deletePlanned(index) {
