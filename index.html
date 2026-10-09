@@ -340,7 +340,6 @@
             container.style.display = repeat === 'none' ? 'none' : 'block';
         }
 
-        // Hulpfunctie om tijd in minuten te berekenen
         function timeToMinutes(timeStr) {
             if (!timeStr) return 0;
             const parts = timeStr.split(':');
@@ -355,7 +354,6 @@
             if (todayRides.length > 0) {
                 let html = '';
                 todayRides.forEach(r => {
-                    // Check of start >= 15 min afwijkt van afspraak
                     let startMin = timeToMinutes(r.time);
                     let appMin = timeToMinutes(r.appointmentTime || r.time);
                     let diff = appMin - startMin;
@@ -406,6 +404,19 @@
                 status.innerText = 'Status: Rit bezig...';
                 form.style.display = 'block';
 
+                const company = document.getElementById('rideCompany').value || 'Onbekend';
+                const driver = document.getElementById('rideDriver').value || 'Onbekend';
+                const destination = document.getElementById('rideDestination').value || 'Onbekend';
+
+                // --- LIVE SYNC VOOR NEXUS-OS ---
+                localStorage.setItem('nexus_taxi_is_driving', 'true');
+                localStorage.setItem('nexus_taxi_active_data', JSON.stringify({
+                    company: company,
+                    driver: driver,
+                    destination: destination,
+                    startTimeStr: startTime.toLocaleTimeString('nl-NL')
+                }));
+
                 timerInterval = setInterval(() => {
                     const now = new Date();
                     const diff = Math.floor((now - startTime) / 1000);
@@ -440,6 +451,10 @@
 
                 rides.push(newRide);
                 pushToCloud();
+
+                // --- LIVE SYNC UITZETTEN VOOR NEXUS-OS ---
+                localStorage.setItem('nexus_taxi_is_driving', 'false');
+                localStorage.removeItem('nexus_taxi_active_data');
 
                 clearInterval(timerInterval);
                 isDriving = false;
