@@ -49,11 +49,11 @@
         .btn-cancel { background: #edf2f7; color: #4a5568; }
         .btn-confirm { background: #007bff; color: white; box-shadow: 0 4px 10px rgba(0,123,255,0.25); }
 
-        .list-container { max-height: 200px; overflow-y: auto; text-align: left; margin-bottom: 16px; border: 2px solid #edf2f7; padding: 8px; border-radius: 10px; background: #f8fafc; }
+        .list-container { max-height: 240px; overflow-y: auto; text-align: left; margin-bottom: 16px; border: 2px solid #edf2f7; padding: 8px; border-radius: 10px; background: #f8fafc; }
         .list-card { background: white; border: 1px solid #cbd5e0; border-radius: 8px; padding: 10px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
-        .list-card-header { font-weight: 700; font-size: 13px; color: #2d3748; margin-bottom: 4px; display: flex; justify-content: space-between; }
+        .list-card-header { font-weight: 700; font-size: 13px; color: #2d3748; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center; }
         .list-card-row { font-size: 12px; color: #4a5568; padding: 2px 0; }
-        .delete-btn { background: #e53e3e; color: white; border: none; padding: 3px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 700; }
+        .delete-btn { background: #e53e3e; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 700; }
 
         .sync-status { font-size: 11px; color: rgba(255,255,255,0.75); margin-top: 3px; font-weight: 500; }
     </style>
@@ -216,10 +216,14 @@
             document.getElementById('planDate').value = todayStr;
             document.getElementById('planEndDate').value = todayStr;
 
+            updateDropdowns();
+
+            // Automatisch syncen bij opstarten als sleutels aanwezig zijn
             if (apiKey && binId) {
                 await syncWithCloud(false);
+            } else {
+                document.getElementById('syncStatus').innerText = 'Cloud: Niet ingesteld';
             }
-            updateDropdowns();
             checkTodayPlanning();
         };
 
@@ -497,7 +501,7 @@
                     if (repeat === 'daily') {
                         shouldAdd = true;
                     } else if (repeat === 'alternate') {
-                        shouldAdd = true; // Je kunt dit per dag vergroten indien gewenst
+                        shouldAdd = true;
                     } else if (repeat === 'mwf') {
                         if (dayOfWeek === 1 || dayOfWeek === 3 || dayOfWeek === 5) shouldAdd = true;
                     } else if (repeat === 'tts') {
@@ -505,7 +509,6 @@
                     }
                 }
 
-                // Voor "om de dag" slaan we er eentje over
                 if (repeat === 'alternate' && addedCount > 0 && addedCount % 2 !== 0) {
                     shouldAdd = false;
                 }
@@ -535,21 +538,31 @@
             renderPlannedList();
         }
 
+        // --- OVERZICHT (📊) MET WIS-KNOP ---
         function openDiaryModal() {
+            renderDiaryList();
+            document.getElementById('diaryModal').style.display = 'flex';
+        }
+
+        function closeDiaryModal() {
+            document.getElementById('diaryModal').style.display = 'none';
+        }
+
+        function renderDiaryList() {
             const container = document.getElementById('diaryListContainer');
             container.innerHTML = '';
 
             if (rides.length === 0) {
                 container.innerHTML = '<p style="color: #a0aec0; text-align: center; padding: 25px;">Nog geen ritten geregistreerd.</p>';
             } else {
-                const sortedRides = [...rides].reverse();
-                sortedRides.forEach(r => {
+                // We tonen de originele index zodat we de juiste rit kunnen verwijderen
+                rides.forEach((r, index) => {
                     const card = document.createElement('div');
                     card.className = 'list-card';
                     card.innerHTML = `
                         <div class="list-card-header">
-                            <span>🚗 ${r.company}</span>
-                            <span>📅 ${r.date}</span>
+                            <span>🚗 ${r.company} (📅 ${r.date})</span>
+                            <button class="delete-btn" onclick="deleteRide(${index})">Wis</button>
                         </div>
                         <div class="list-card-row"><b>Chauffeur:</b> ${r.driver}</div>
                         <div class="list-card-row"><b>Bestemming:</b> ${r.destination}</div>
@@ -560,11 +573,14 @@
                     container.appendChild(card);
                 });
             }
-            document.getElementById('diaryModal').style.display = 'flex';
         }
 
-        function closeDiaryModal() {
-            document.getElementById('diaryModal').style.display = 'none';
+        async function deleteRide(index) {
+            if (confirm('Weet je zeker dat je deze opgeslagen rit wilt verwijderen?')) {
+                rides.splice(index, 1);
+                await pushToCloud();
+                renderDiaryList();
+            }
         }
 
         function openReportModal() {
