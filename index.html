@@ -43,7 +43,7 @@
         .modal-content { background: white; padding: 24px; border-radius: 16px; width: 90%; max-width: 420px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.2); max-height: 85vh; overflow-y: auto; }
         .modal-content h3 { margin-bottom: 16px; color: #1a202c; font-size: 18px; font-weight: 700; }
         .modal-content label { display: block; font-size: 12px; font-weight: 700; text-align: left; margin-bottom: 6px; color: #4a5568; text-transform: uppercase; }
-        .modal-content input, .modal-content select, .modal-content textarea { width: 100%; padding: 12px; font-size: 14px; border: 2px solid #e2e8f0; border-radius: 10px; margin-bottom: 12px; outline: none; background: #f8fafc; font-weight: 600; color: #2d3748; text-align: left; }
+        .modal-content input, .modal-content select, .modal-content textarea { width: 100%; padding: 10px; font-size: 14px; border: 2px solid #e2e8f0; border-radius: 10px; margin-bottom: 10px; outline: none; background: #f8fafc; font-weight: 600; color: #2d3748; text-align: left; }
         
         .modal-buttons { display: flex; gap: 10px; margin-top: 10px; }
         .modal-buttons button { flex: 1; padding: 12px; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 15px; }
@@ -75,11 +75,11 @@
     </header>
 
     <div class="main-container">
-        <!-- Melding als er vandaag een geplande rit klaarstaat -->
+        <!-- Melding als er vandaag geplande ritten klaarstaan -->
         <div class="scheduled-banner" id="scheduledBanner">
-            <div class="scheduled-title">📌 Geplande Rit voor Vandaag!</div>
+            <div class="scheduled-title">📌 Geplande Rit(ten) voor Vandaag!</div>
             <div class="scheduled-details" id="scheduledDetailsText"></div>
-            <button class="btn-start-scheduled" onclick="startScheduledRide()">Start deze geplande rit</button>
+            <button class="btn-start-scheduled" onclick="startFirstScheduledRide()">Start eerstvolgende rit</button>
         </div>
 
         <!-- Centrale Start/Stop Console -->
@@ -116,14 +116,24 @@
             <hr style="margin: 15px 0; border:0; border-top:1px solid #edf2f7;">
             
             <h4 style="font-size: 13px; margin-bottom: 8px; color: #4a5568; text-align: left;">Nieuwe rit inplannen:</h4>
-            <label>Datum:</label>
+            <label>Startdatum:</label>
             <input type="date" id="planDate">
+            <label>Ophaaltijd:</label>
+            <input type="time" id="planTime" value="08:00">
             <label>Bedrijf:</label>
             <input type="text" id="planCompany" placeholder="Bedrijf of klant">
             <label>Chauffeur:</label>
             <input type="text" id="planDriver" placeholder="Standaard chauffeur">
             <label>Bestemming:</label>
             <input type="text" id="planDestination" placeholder="Bestemming">
+            <label>Herhaling:</label>
+            <select id="planRepeat">
+                <option value="none">Geen (enmalig)</option>
+                <option value="daily">Elke dag</option>
+                <option value="alternate">Om de dag</option>
+                <option value="mwf">Ma, Wo, Vrij</option>
+                <option value="tts">Di, Do, Za</option>
+            </select>
             <label>Opmerking:</label>
             <input type="text" id="planNote" placeholder="Bijv. plantage ophalen">
 
@@ -261,7 +271,6 @@
             }
         }
 
-        // Check of er vandaag een rit gepland staat
         function checkTodayPlanning() {
             const todayStr = new Date().toISOString().split('T')[0];
             const todayRides = planned.filter(p => p.date === todayStr);
@@ -270,7 +279,7 @@
             if (todayRides.length > 0) {
                 let html = '';
                 todayRides.forEach(r => {
-                    html += `<div>🚗 <b>${r.company}</b> naar ${r.destination} (${r.note || 'Geen opmerking'})</div>`;
+                    html += `<div>⏰ <b>${r.time || '00:00'}</b> - 🚗 <b>${r.company}</b> naar ${r.destination} ${r.note ? '('+r.note+')' : ''}</div>`;
                 });
                 document.getElementById('scheduledDetailsText').innerHTML = html;
                 banner.style.display = 'block';
@@ -279,8 +288,7 @@
             }
         }
 
-        // Start geplande rit direct door gegevens in te vullen
-        function startScheduledRide() {
+        function startFirstScheduledRide() {
             const todayStr = new Date().toISOString().split('T')[0];
             const match = planned.find(p => p.date === todayStr);
 
@@ -290,17 +298,14 @@
                 document.getElementById('rideDestination').value = match.destination;
                 document.getElementById('rideNote').value = match.note;
 
-                // Verwijder uit planning omdat hij nu gereden wordt
                 planned = planned.filter(p => p !== match);
                 pushToCloud();
                 checkTodayPlanning();
             }
 
-            // Start de rit direct
             toggleRide();
         }
 
-        // Start / Stop logica
         function toggleRide() {
             const btn = document.getElementById('mainActionBtn');
             const status = document.getElementById('meterStatus');
@@ -362,7 +367,6 @@
             }
         }
 
-        // Planning Modal
         function openPlanningModal() {
             renderPlannedList();
             document.getElementById('planningModal').style.display = 'flex';
@@ -384,11 +388,11 @@
                     card.className = 'list-card';
                     card.innerHTML = `
                         <div class="list-card-header">
-                            <span>📅 ${p.date} - ${p.company}</span>
+                            <span>📅 ${p.date} om ${p.time || '00:00'} - ${p.company}</span>
                             <button class="delete-btn" onclick="deletePlanned(${index})">Wis</button>
                         </div>
                         <div class="list-card-row"><b>Bestemming:</b> ${p.destination}</div>
-                        <div class="list-card-row"><b>Chauffeur:</b> ${p.driver}</div>
+                        <div class="list-card-row"><b>Chauffeur:</b> ${p.driver} | <b>Herhaling:</b> ${p.repeat || 'Geen'}</div>
                         ${p.note ? `<div class="list-card-row"><b>Opmerking:</b> ${p.note}</div>` : ''}
                     `;
                     container.appendChild(card);
@@ -398,9 +402,11 @@
 
         async function addPlannedRide() {
             const date = document.getElementById('planDate').value;
+            const time = document.getElementById('planTime').value;
             const company = document.getElementById('planCompany').value.trim();
             const driver = document.getElementById('planDriver').value.trim();
             const destination = document.getElementById('planDestination').value.trim();
+            const repeat = document.getElementById('planRepeat').value;
             const note = document.getElementById('planNote').value.trim();
 
             if (!date || !company) {
@@ -408,17 +414,49 @@
                 return;
             }
 
-            planned.push({ date, company, driver, destination, note });
+            // Genereer reeksen op basis van herhaling (voor de komende 4 weken / 30 dagen als voorbeeld)
+            let currDate = new Date(date);
+            let addedCount = 0;
+
+            for (let i = 0; i < 30; i++) {
+                let dateStr = currDate.toISOString().split('T')[0];
+                let dayOfWeek = currDate.getDay(); // 0 = zo, 1 = ma, ..., 3 = wo, 5 = vr, etc.
+
+                let shouldAdd = false;
+                if (i === 0) {
+                    shouldAdd = true; // Altijd de startdatum toevoegen
+                } else {
+                    if (repeat === 'daily') {
+                        shouldAdd = true;
+                    } else if (repeat === 'alternate') {
+                        shouldAdd = (i % 2 === 0);
+                    } else if (repeat === 'mwf') {
+                        if (dayOfWeek === 1 || dayOfWeek === 3 || dayOfWeek === 5) shouldAdd = true;
+                    } else if (repeat === 'tts') {
+                        if (dayOfWeek === 2 || dayOfWeek === 4 || dayOfWeek === 6) shouldAdd = true;
+                    }
+                }
+
+                if (shouldAdd && (i === 0 || repeat !== 'none')) {
+                    planned.push({ date: dateStr, time, company, driver, destination, repeat, note });
+                    addedCount++;
+                }
+
+                if (repeat === 'none') break; // Enmalig, stop na 1 keer
+
+                // Volgende dag
+                currDate.setDate(currDate.getDate() + 1);
+            }
+
             await pushToCloud();
             checkTodayPlanning();
             renderPlannedList();
 
-            // Velden leegmaken behalve datum
             document.getElementById('planCompany').value = '';
             document.getElementById('planDriver').value = '';
             document.getElementById('planDestination').value = '';
             document.getElementById('planNote').value = '';
-            alert('Rit ingepland!');
+            alert(`${addedCount} rit(ten) succesvol ingepland!`);
         }
 
         async function deletePlanned(index) {
@@ -428,7 +466,6 @@
             renderPlannedList();
         }
 
-        // Overzicht modal
         function openDiaryModal() {
             const container = document.getElementById('diaryListContainer');
             container.innerHTML = '';
@@ -461,7 +498,6 @@
             document.getElementById('diaryModal').style.display = 'none';
         }
 
-        // PDF Rapportage
         function openReportModal() {
             document.getElementById('reportModal').style.display = 'flex';
         }
@@ -542,7 +578,6 @@
             closeReportModal();
         }
 
-        // Cloud Instellingen
         function openSettingsModal() {
             document.getElementById('apiKeyInput').value = apiKey;
             document.getElementById('binIdInput').value = binId;
