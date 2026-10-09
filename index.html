@@ -55,6 +55,10 @@
         .list-card-row { font-size: 12px; color: #4a5568; padding: 2px 0; }
         .delete-btn { background: #e53e3e; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 700; }
 
+        /* Kleurcodes voor duur / planning indicatoren */
+        .badge-green { background: #c6f6d5; color: #22543d; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 11px; }
+        .badge-red { background: #fed7d7; color: #742a2a; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 11px; }
+
         .sync-status { font-size: 11px; color: #a0aec0; margin-top: 3px; font-weight: 500; }
     </style>
 </head>
@@ -74,22 +78,18 @@
     </header>
 
     <div class="main-container">
-        <!-- Melding als er vandaag geplande ritten klaarstaan -->
         <div class="scheduled-banner" id="scheduledBanner">
             <div class="scheduled-title">📌 Geplande Rit(ten) voor Vandaag!</div>
             <div class="scheduled-details" id="scheduledDetailsText"></div>
             <button class="btn-start-scheduled" onclick="startFirstScheduledRide()">Start eerstvolgende rit</button>
         </div>
 
-        <!-- Centrale Start/Stop Console -->
         <div class="meter-card">
             <div class="meter-status" id="meterStatus">Status: Vrij / Klaar voor rit</div>
             <div class="timer-display" id="timerDisplay">00:00:00</div>
 
-            <!-- Start / Stop hoofdknoppen -->
             <button class="action-main-btn btn-start" id="mainActionBtn" onclick="toggleRide()">RIT STARTEN</button>
 
-            <!-- Extra invoervelden tijdens actieve rit -->
             <div class="active-ride-form" id="activeRideForm">
                 <label>Bedrijf:</label>
                 <select id="rideCompany"></select>
@@ -100,13 +100,15 @@
                 <label>Bestemming:</label>
                 <select id="rideDestination"></select>
 
+                <label>Afgesproken Tijd:</label>
+                <input type="time" id="rideAppointmentTime" value="08:00">
+
                 <label>Opmerking:</label>
                 <textarea id="rideNote" rows="2" placeholder="Eventuele bijzonderheden"></textarea>
             </div>
         </div>
     </div>
 
-    <!-- POPUP 1: AGENDA & PLANNING (📅) -->
     <div class="modal" id="planningModal">
         <div class="modal-content">
             <h3>Agenda & Planning</h3>
@@ -117,8 +119,10 @@
             <h4 style="font-size: 13px; margin-bottom: 6px; color: #4a5568; text-align: left;">Nieuwe rit inplannen:</h4>
             <label>Startdatum:</label>
             <input type="date" id="planDate">
-            <label>Ophaaltijd:</label>
+            <label>Ophaaltijd (Start):</label>
             <input type="time" id="planTime" value="08:00">
+            <label>Afgesproken Tijd:</label>
+            <input type="time" id="planAppointmentTime" value="08:15">
             
             <label>Bedrijf:</label>
             <select id="planCompany" onchange="checkNewOption(this, 'company')"></select>
@@ -153,7 +157,6 @@
         </div>
     </div>
 
-    <!-- POPUP 2: RAPPORTAGE PERIODE (📄) -->
     <div class="modal" id="reportModal">
         <div class="modal-content">
             <h3>Rittenstaat PDF</h3>
@@ -168,7 +171,6 @@
         </div>
     </div>
 
-    <!-- POPUP 3: RITTEN OVERZICHT (📊) -->
     <div class="modal" id="diaryModal">
         <div class="modal-content">
             <h3>Opgeslagen Ritten</h3>
@@ -177,7 +179,6 @@
         </div>
     </div>
 
-    <!-- POPUP 4: CLOUD INSTELLINGEN (☁️) -->
     <div class="modal" id="settingsModal">
         <div class="modal-content">
             <h3>Cloud Instellingen</h3>
@@ -339,6 +340,13 @@
             container.style.display = repeat === 'none' ? 'none' : 'block';
         }
 
+        // Hulpfunctie om tijd in minuten te berekenen
+        function timeToMinutes(timeStr) {
+            if (!timeStr) return 0;
+            const parts = timeStr.split(':');
+            return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+        }
+
         function checkTodayPlanning() {
             const todayStr = new Date().toISOString().split('T')[0];
             const todayRides = planned.filter(p => p.date === todayStr);
@@ -347,7 +355,14 @@
             if (todayRides.length > 0) {
                 let html = '';
                 todayRides.forEach(r => {
-                    html += `<div>⏰ <b>${r.time || '00:00'}</b> - 🚗 <b>${r.company}</b> naar ${r.destination} ${r.note ? '('+r.note+')' : ''}</div>`;
+                    // Check of start >= 15 min afwijkt van afspraak
+                    let startMin = timeToMinutes(r.time);
+                    let appMin = timeToMinutes(r.appointmentTime || r.time);
+                    let diff = appMin - startMin;
+                    let isRed = diff >= 15;
+                    let badgeClass = isRed ? 'badge-red' : 'badge-green';
+
+                    html += `<div>⏰ <span class="${badgeClass}">${r.time || '00:00'}</span> (Afspraak: ${r.appointmentTime || '00:00'}) - 🚗 <b>${r.company}</b> naar ${r.destination} ${r.note ? '('+r.note+')' : ''}</div>`;
                 });
                 document.getElementById('scheduledDetailsText').innerHTML = html;
                 banner.style.display = 'block';
@@ -364,6 +379,9 @@
                 document.getElementById('rideCompany').value = match.company;
                 document.getElementById('rideDriver').value = match.driver;
                 document.getElementById('rideDestination').value = match.destination;
+                if(match.appointmentTime) {
+                    document.getElementById('rideAppointmentTime').value = match.appointmentTime;
+                }
                 document.getElementById('rideNote').value = match.note;
 
                 planned = planned.filter(p => p !== match);
@@ -403,15 +421,20 @@
                 const company = document.getElementById('rideCompany').value || 'Onbekend';
                 const driver = document.getElementById('rideDriver').value || 'Onbekend';
                 const destination = document.getElementById('rideDestination').value || 'Onbekend';
+                const appointmentTime = document.getElementById('rideAppointmentTime').value;
                 const note = document.getElementById('rideNote').value.trim();
 
                 const newRide = {
                     date: startTime.toISOString().split('T')[0],
                     startDateTime: startTime.toLocaleString('nl-NL'),
                     stopDateTime: stopTime.toLocaleString('nl-NL'),
+                    startTimeOnly: String(startTime.getHours()).padStart(2, '0') + ':' + String(startTime.getMinutes()).padStart(2, '0'),
+                    stopTimeOnly: String(stopTime.getHours()).padStart(2, '0') + ':' + String(stopTime.getMinutes()).padStart(2, '0'),
+                    durationMinutes: Math.floor((stopTime - startTime) / 60000),
                     company: company,
                     driver: driver,
                     destination: destination,
+                    appointmentTime: appointmentTime,
                     note: note
                 };
 
@@ -452,13 +475,20 @@
                 container.innerHTML = '<p style="color: #a0aec0; text-align: center; padding: 15px;">Geen geplande ritten.</p>';
             } else {
                 planned.forEach((p, index) => {
+                    let startMin = timeToMinutes(p.time);
+                    let appMin = timeToMinutes(p.appointmentTime || p.time);
+                    let diff = appMin - startMin;
+                    let isRed = diff >= 15;
+                    let badgeClass = isRed ? 'badge-red' : 'badge-green';
+
                     const card = document.createElement('div');
                     card.className = 'list-card';
                     card.innerHTML = `
                         <div class="list-card-header">
-                            <span>📅 ${p.date} om ${p.time || '00:00'} - ${p.company}</span>
+                            <span>📅 ${p.date} om <span class="${badgeClass}">${p.time || '00:00'}</span> - ${p.company}</span>
                             <button class="delete-btn" onclick="deletePlanned(${index})">Wis</button>
                         </div>
+                        <div class="list-card-row"><b>Afspraak tijd:</b> ${p.appointmentTime || '-'}</div>
                         <div class="list-card-row"><b>Bestemming:</b> ${p.destination}</div>
                         <div class="list-card-row"><b>Chauffeur:</b> ${p.driver} | <b>Herhaling:</b> ${p.repeat || 'Geen'}</div>
                         ${p.note ? `<div class="list-card-row"><b>Opmerking:</b> ${p.note}</div>` : ''}
@@ -468,10 +498,10 @@
             }
         }
 
-        // --- VERBETERDE HERHALINGSLUS (GENEREERT ALLE RITTEN TOT EINDDATUM) ---
         async function addPlannedRide() {
             const dateStrInput = document.getElementById('planDate').value;
             const time = document.getElementById('planTime').value;
+            const appointmentTime = document.getElementById('planAppointmentTime').value;
             const company = document.getElementById('planCompany').value;
             const driver = document.getElementById('planDriver').value;
             const destination = document.getElementById('planDestination').value;
@@ -492,10 +522,10 @@
             }
 
             let addedCount = 0;
-            let safetyCounter = 0; // Voorkomt oneindige lussen
+            let safetyCounter = 0;
 
             while (currDate <= limitDate && safetyCounter < 500) {
-                let dayOfWeek = currDate.getDay(); // 0=zo, 1=ma, 2=di, 3=wo, 4=do, 5=vr, 6=za
+                let dayOfWeek = currDate.getDay();
                 let shouldAdd = false;
 
                 if (repeat === 'none') {
@@ -505,15 +535,9 @@
                 } else if (repeat === 'alternate') {
                     shouldAdd = (safetyCounter % 2 === 0);
                 } else if (repeat === 'mwf') {
-                    // Maandag (1), Woensdag (3), Vrijdag (5)
-                    if (dayOfWeek === 1 || dayOfWeek === 3 || dayOfWeek === 5) {
-                        shouldAdd = true;
-                    }
+                    if (dayOfWeek === 1 || dayOfWeek === 3 || dayOfWeek === 5) shouldAdd = true;
                 } else if (repeat === 'tts') {
-                    // Dinsdag (2), Donderdag (4), Zaterdag (6)
-                    if (dayOfWeek === 2 || dayOfWeek === 4 || dayOfWeek === 6) {
-                        shouldAdd = true;
-                    }
+                    if (dayOfWeek === 2 || dayOfWeek === 4 || dayOfWeek === 6) shouldAdd = true;
                 }
 
                 if (shouldAdd) {
@@ -522,13 +546,12 @@
                     let dd = String(currDate.getDate()).padStart(2, '0');
                     let formattedDate = `${yyyy}-${mm}-${dd}`;
 
-                    planned.push({ date: formattedDate, time, company, driver, destination, repeat, note });
+                    planned.push({ date: formattedDate, time, appointmentTime, company, driver, destination, repeat, note });
                     addedCount++;
                 }
 
                 if (repeat === 'none') break;
 
-                // Verhoog met 1 dag
                 currDate.setDate(currDate.getDate() + 1);
                 safetyCounter++;
             }
@@ -565,6 +588,11 @@
                 container.innerHTML = '<p style="color: #a0aec0; text-align: center; padding: 25px;">Nog geen ritten geregistreerd.</p>';
             } else {
                 rides.forEach((r, index) => {
+                    let duration = r.durationMinutes !== undefined ? r.durationMinutes : 0;
+                    let isDurationRed = duration >= 48;
+                    let badgeClass = isDurationRed ? 'badge-red' : 'badge-green';
+                    let durationText = isDurationRed ? `Duur: ${duration} min (>= 48 min)` : `Duur: ${duration} min (< 48 min)`;
+
                     const card = document.createElement('div');
                     card.className = 'list-card';
                     card.innerHTML = `
@@ -574,8 +602,8 @@
                         </div>
                         <div class="list-card-row"><b>Chauffeur:</b> ${r.driver}</div>
                         <div class="list-card-row"><b>Bestemming:</b> ${r.destination}</div>
-                        <div class="list-card-row"><b>Start:</b> ${r.startDateTime}</div>
-                        <div class="list-card-row"><b>Stop:</b> ${r.stopDateTime}</div>
+                        <div class="list-card-row"><b>Start:</b> ${r.startDateTime} | <b>Stop:</b> ${r.stopDateTime}</div>
+                        <div class="list-card-row"><b>Beoordeling:</b> <span class="${badgeClass}">${durationText}</span></div>
                         ${r.note ? `<div class="list-card-row"><b>Opmerking:</b> ${r.note}</div>` : ''}
                     `;
                     container.appendChild(card);
@@ -625,6 +653,8 @@
                         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
                         th, td { border: 1px solid #cbd5e0; padding: 8px 10px; font-size: 12px; text-align: left; }
                         th { background: #edf2f7; }
+                        .badge-green { background: #c6f6d5; color: #22543d; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+                        .badge-red { background: #fed7d7; color: #742a2a; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
                     </style>
                 </head>
                 <body>
@@ -635,23 +665,27 @@
                             <th>Datum</th>
                             <th>Start</th>
                             <th>Stop</th>
+                            <th>Duur (Min)</th>
                             <th>Bedrijf</th>
                             <th>Chauffeur</th>
                             <th>Bestemming</th>
-                            <th>Opmerking</th>
                         </tr>
             `;
 
             filtered.forEach(r => {
+                let duration = r.durationMinutes !== undefined ? r.durationMinutes : 0;
+                let isRed = duration >= 48;
+                let badgeClass = isRed ? 'badge-red' : 'badge-green';
+
                 reportHTML += `
                     <tr>
                         <td>${r.date}</td>
                         <td>${r.startDateTime.split(' ')[1] || r.startDateTime}</td>
                         <td>${r.stopDateTime.split(' ')[1] || r.stopDateTime}</td>
+                        <td><span class="${badgeClass}">${duration} min</span></td>
                         <td>${r.company}</td>
                         <td>${r.driver}</td>
                         <td>${r.destination}</td>
-                        <td>${r.note || '-'}</td>
                     </tr>
                 `;
             });
