@@ -468,58 +468,69 @@
             }
         }
 
+        // --- VERBETERDE HERHALINGSLUS (GENEREERT ALLE RITTEN TOT EINDDATUM) ---
         async function addPlannedRide() {
-            const date = document.getElementById('planDate').value;
+            const dateStrInput = document.getElementById('planDate').value;
             const time = document.getElementById('planTime').value;
             const company = document.getElementById('planCompany').value;
             const driver = document.getElementById('planDriver').value;
             const destination = document.getElementById('planDestination').value;
             const repeat = document.getElementById('planRepeat').value;
-            const endDate = document.getElementById('planEndDate').value;
+            const endDateInput = document.getElementById('planEndDate').value;
             const note = document.getElementById('planNote').value.trim();
 
-            if (!date || !company || company === '__new__') {
-                alert('Vul een geldige datum en bedrijf in.');
+            if (!dateStrInput || !company || company === '__new__') {
+                alert('Vul een geldige startdatum en bedrijf in.');
                 return;
             }
 
-            let currDate = new Date(date);
-            let limitDate = repeat === 'none' ? new Date(date) : new Date(endDate || date);
-            if (limitDate < currDate) limitDate = new Date(date);
+            let currDate = new Date(dateStrInput + 'T00:00:00');
+            let limitDate = repeat === 'none' ? new Date(dateStrInput + 'T00:00:00') : new Date((endDateInput || dateStrInput) + 'T00:00:00');
+            
+            if (limitDate < currDate) {
+                limitDate = new Date(dateStrInput + 'T00:00:00');
+            }
 
             let addedCount = 0;
+            let safetyCounter = 0; // Voorkomt oneindige lussen
 
-            while (currDate <= limitDate && addedCount < 100) {
-                let dateStr = currDate.toISOString().split('T')[0];
-                let dayOfWeek = currDate.getDay();
-
+            while (currDate <= limitDate && safetyCounter < 500) {
+                let dayOfWeek = currDate.getDay(); // 0=zo, 1=ma, 2=di, 3=wo, 4=do, 5=vr, 6=za
                 let shouldAdd = false;
-                if (addedCount === 0) {
+
+                if (repeat === 'none') {
+                    shouldAdd = (safetyCounter === 0);
+                } else if (repeat === 'daily') {
                     shouldAdd = true;
-                } else {
-                    if (repeat === 'daily') {
+                } else if (repeat === 'alternate') {
+                    shouldAdd = (safetyCounter % 2 === 0);
+                } else if (repeat === 'mwf') {
+                    // Maandag (1), Woensdag (3), Vrijdag (5)
+                    if (dayOfWeek === 1 || dayOfWeek === 3 || dayOfWeek === 5) {
                         shouldAdd = true;
-                    } else if (repeat === 'alternate') {
+                    }
+                } else if (repeat === 'tts') {
+                    // Dinsdag (2), Donderdag (4), Zaterdag (6)
+                    if (dayOfWeek === 2 || dayOfWeek === 4 || dayOfWeek === 6) {
                         shouldAdd = true;
-                    } else if (repeat === 'mwf') {
-                        if (dayOfWeek === 1 || dayOfWeek === 3 || dayOfWeek === 5) shouldAdd = true;
-                    } else if (repeat === 'tts') {
-                        if (dayOfWeek === 2 || dayOfWeek === 4 || dayOfWeek === 6) shouldAdd = true;
                     }
                 }
 
-                if (repeat === 'alternate' && addedCount > 0 && addedCount % 2 !== 0) {
-                    shouldAdd = false;
-                }
-
                 if (shouldAdd) {
-                    planned.push({ date: dateStr, time, company, driver, destination, repeat, note });
+                    let yyyy = currDate.getFullYear();
+                    let mm = String(currDate.getMonth() + 1).padStart(2, '0');
+                    let dd = String(currDate.getDate()).padStart(2, '0');
+                    let formattedDate = `${yyyy}-${mm}-${dd}`;
+
+                    planned.push({ date: formattedDate, time, company, driver, destination, repeat, note });
                     addedCount++;
                 }
 
                 if (repeat === 'none') break;
 
+                // Verhoog met 1 dag
                 currDate.setDate(currDate.getDate() + 1);
+                safetyCounter++;
             }
 
             await pushToCloud();
@@ -527,7 +538,7 @@
             renderPlannedList();
 
             document.getElementById('planNote').value = '';
-            alert(`${addedCount} rit(ten) succesvol ingepland!`);
+            alert(`${addedCount} rit(ten) succesvol ingepland tot ${endDateInput || dateStrInput}!`);
         }
 
         async function deletePlanned(index) {
