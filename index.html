@@ -8,11 +8,11 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
         body { background: #f0f3f8; display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: #333; }
 
-        header { background: linear-gradient(135deg, #1a202c, #2d3748); color: white; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10; }
-        .app-title { font-size: 18px; font-weight: 700; letter-spacing: 0.3px; }
-        .header-btns { display: flex; gap: 8px; align-items: center; }
-        .icon-btn { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); color: white; width: 38px; height: 38px; border-radius: 50%; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; }
-        .icon-btn:active { background: rgba(255,255,255,0.3); transform: scale(0.94); }
+        header { background: linear-gradient(135deg, #1a202c, #2d3748); color: white; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10; flex-wrap: wrap; gap: 10px; }
+        .app-title { font-size: 17px; font-weight: 700; letter-spacing: 0.3px; }
+        .header-btns { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+        .icon-btn { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: white; width: 36px; height: 36px; border-radius: 50%; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; flex-shrink: 0; }
+        .icon-btn:active { background: rgba(255,255,255,0.4); transform: scale(0.94); }
 
         .main-container { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }
 
@@ -55,7 +55,7 @@
         .list-card-row { font-size: 12px; color: #4a5568; padding: 2px 0; }
         .delete-btn { background: #e53e3e; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 700; }
 
-        .sync-status { font-size: 11px; color: rgba(255,255,255,0.75); margin-top: 3px; font-weight: 500; }
+        .sync-status { font-size: 11px; color: #a0aec0; margin-top: 3px; font-weight: 500; }
     </style>
 </head>
 <body>
@@ -218,7 +218,6 @@
 
             updateDropdowns();
 
-            // Automatisch syncen bij opstarten als sleutels aanwezig zijn
             if (apiKey && binId) {
                 await syncWithCloud(false);
             } else {
@@ -538,7 +537,6 @@
             renderPlannedList();
         }
 
-        // --- OVERZICHT (📊) MET WIS-KNOP ---
         function openDiaryModal() {
             renderDiaryList();
             document.getElementById('diaryModal').style.display = 'flex';
@@ -555,7 +553,6 @@
             if (rides.length === 0) {
                 container.innerHTML = '<p style="color: #a0aec0; text-align: center; padding: 25px;">Nog geen ritten geregistreerd.</p>';
             } else {
-                // We tonen de originele index zodat we de juiste rit kunnen verwijderen
                 rides.forEach((r, index) => {
                     const card = document.createElement('div');
                     card.className = 'list-card';
