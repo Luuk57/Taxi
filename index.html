@@ -67,13 +67,13 @@
     <header>
         <div>
             <div class="app-title">Taxi Vervoer Rittenstaat</div>
-            <div class="sync-status" id="syncStatus">Cloud: Niet ingesteld</div>
+            <div class="sync-status" id="syncStatus">Sheets: Niet ingesteld</div>
         </div>
         <div class="header-btns">
             <button class="icon-btn" onclick="openPlanningModal()" title="Agenda & Planning">📅</button>
             <button class="icon-btn" onclick="openReportModal()" title="Periode Rapport / PDF">📄</button>
             <button class="icon-btn" onclick="openDiaryModal()" title="Ritten Overzicht">📊</button>
-            <button class="icon-btn" onclick="openSettingsModal()" title="Cloud Instellingen">☁️</button>
+            <button class="icon-btn" onclick="openSettingsModal()" title="Google Sheets Instellingen">☁️</button>
         </div>
     </header>
 
@@ -100,9 +100,6 @@
                 <label>Bestemming:</label>
                 <select id="rideDestination"></select>
 
-                <label>Afgesproken Tijd:</label>
-                <input type="time" id="rideAppointmentTime" value="08:00">
-
                 <label>Opmerking:</label>
                 <textarea id="rideNote" rows="2" placeholder="Eventuele bijzonderheden"></textarea>
             </div>
@@ -121,8 +118,6 @@
             <input type="date" id="planDate">
             <label>Ophaaltijd (Start):</label>
             <input type="time" id="planTime" value="08:00">
-            <label>Afgesproken Tijd:</label>
-            <input type="time" id="planAppointmentTime" value="08:15">
             
             <label>Bedrijf:</label>
             <select id="planCompany" onchange="checkNewOption(this, 'company')"></select>
@@ -181,11 +176,10 @@
 
     <div class="modal" id="settingsModal">
         <div class="modal-content">
-            <h3>Cloud Instellingen</h3>
-            <p style="font-size: 13px; color: #718096; margin-bottom: 14px; line-height: 1.4;">Plak hier je JSONBin Master Key en Bin ID om te synchroniseren:</p>
+            <h3>Google Sheets Instellingen</h3>
+            <p style="font-size: 13px; color: #718096; margin-bottom: 14px; line-height: 1.4;">Plak hier de Web App URL van je Google Apps Script:</p>
             
-            <input type="text" id="apiKeyInput" placeholder="API Key ($2a$10$...)">
-            <input type="text" id="binIdInput" placeholder="Bin ID (bijv. 65... of laat leeg voor nieuwe)">
+            <input type="text" id="scriptUrlInput" placeholder="https://script.google.com/macros/s/.../exec">
 
             <div class="modal-buttons" style="margin-top: 15px;">
                 <button class="btn-cancel" onclick="closeSettingsModal()">Sluiten</button>
@@ -207,8 +201,7 @@
         let startTime = null;
         let timerInterval = null;
 
-        let apiKey = localStorage.getItem('taxi_jsonbin_apikey') || '';
-        let binId = localStorage.getItem('taxi_jsonbin_binid') || '';
+        let scriptUrl = localStorage.getItem('taxi_sheets_url') || '';
 
         window.onload = async () => {
             const todayStr = new Date().toISOString().split('T')[0];
@@ -219,78 +212,49 @@
 
             updateDropdowns();
 
-            if (apiKey && binId) {
-                await syncWithCloud(false);
+            if (scriptUrl) {
+                await fetchFromSheets();
+                setInterval(fetchFromSheets, 4000); // Polling elke 4 seconden voor live sync tussen tablet en telefoon
             } else {
-                document.getElementById('syncStatus').innerText = 'Cloud: Niet ingesteld';
+                document.getElementById('syncStatus').innerText = 'Sheets: Niet ingesteld';
             }
             checkTodayPlanning();
         };
 
-        async function syncWithCloud(showAlert = false) {
-            if (!apiKey) {
-                if (showAlert) alert('Stel eerst je API Key in via het wolkje (☁️).');
-                return;
-            }
-
-            document.getElementById('syncStatus').innerText = 'Cloud: Synchroniseren...';
-
+        async function fetchFromSheets() {
+            if (!scriptUrl) return;
             try {
-                if (!binId) {
-                    const createRes = await fetch('https://api.jsonbin.io/v3/b', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-Master-Key': apiKey,
-                            'X-Bin-Private': 'true'
-                        },
-                        body: JSON.stringify({ rides: [], planned: [], optionsList: optionsList })
-                    });
-                    const createData = await createRes.json();
-                    if (createData.metadata && createData.metadata.id) {
-                        binId = createData.metadata.id;
-                        localStorage.setItem('taxi_jsonbin_binid', binId);
-                    } else {
-                        throw new Error('Kon geen Bin aanmaken.');
-                    }
-                }
-
-                const getRes = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
-                    headers: { 'X-Master-Key': apiKey }
-                });
-                const getData = await getRes.json();
-
-                if (getData.record) {
-                    if (getData.record.rides) rides = getData.record.rides;
-                    if (getData.record.planned) planned = getData.record.planned;
-                    if (getData.record.optionsList) optionsList = getData.record.optionsList;
-                    document.getElementById('syncStatus').innerText = 'Cloud: Verbonden';
-                    if (showAlert) alert('Verbonden & gesynchroniseerd!');
+                const res = await fetch(scriptUrl);
+                const data = await res.json();
+                if (data) {
+                    if (data.rides) rides = data.rides;
+                    if (data.planned) planned = data.planned;
+                    if (data.optionsList) optionsList = data.optionsList;
+                    document.getElementById('syncStatus').innerText = 'Sheets: Verbonden';
                 }
                 updateDropdowns();
                 checkTodayPlanning();
+                if (document.getElementById('planningModal').style.display === 'flex') renderPlannedList();
+                if (document.getElementById('diaryModal').style.display === 'flex') renderDiaryList();
             } catch (error) {
                 console.error(error);
-                document.getElementById('syncStatus').innerText = 'Cloud: Fout bij sync';
-                if (showAlert) alert('Fout bij synchroniseren. Controleer je API Key.');
+                document.getElementById('syncStatus').innerText = 'Sheets: Fout bij sync';
             }
         }
 
-        async function pushToCloud() {
-            if (!apiKey || !binId) return;
+        async function pushToSheets() {
+            if (!scriptUrl) return;
             try {
-                await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Master-Key': apiKey
-                    },
+                await fetch(scriptUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ rides: rides, planned: planned, optionsList: optionsList })
                 });
-                document.getElementById('syncStatus').innerText = 'Cloud: Opgeslagen';
+                document.getElementById('syncStatus').innerText = 'Sheets: Opgeslagen';
             } catch (error) {
                 console.error(error);
-                document.getElementById('syncStatus').innerText = 'Cloud: Opslaan mislukt';
+                document.getElementById('syncStatus').innerText = 'Sheets: Opslaan mislukt';
             }
         }
 
@@ -322,7 +286,7 @@
                     const cleaned = newVal.trim();
                     if (!optionsList[type].includes(cleaned)) {
                         optionsList[type].push(cleaned);
-                        await pushToCloud();
+                        await pushToSheets();
                         updateDropdowns();
                         selectElement.value = cleaned;
                     } else {
@@ -354,13 +318,7 @@
             if (todayRides.length > 0) {
                 let html = '';
                 todayRides.forEach(r => {
-                    let startMin = timeToMinutes(r.time);
-                    let appMin = timeToMinutes(r.appointmentTime || r.time);
-                    let diff = appMin - startMin;
-                    let isRed = diff >= 15;
-                    let badgeClass = isRed ? 'badge-red' : 'badge-green';
-
-                    html += `<div>⏰ <span class="${badgeClass}">${r.time || '00:00'}</span> (Afspraak: ${r.appointmentTime || '00:00'}) - 🚗 <b>${r.company}</b> naar ${r.destination} ${r.note ? '('+r.note+')' : ''}</div>`;
+                    html += `<div>⏰ <span class="badge-green">${r.time || '00:00'}</span> - 🚗 <b>${r.company}</b> naar ${r.destination} ${r.note ? '('+r.note+')' : ''}</div>`;
                 });
                 document.getElementById('scheduledDetailsText').innerHTML = html;
                 banner.style.display = 'block';
@@ -377,13 +335,10 @@
                 document.getElementById('rideCompany').value = match.company;
                 document.getElementById('rideDriver').value = match.driver;
                 document.getElementById('rideDestination').value = match.destination;
-                if(match.appointmentTime) {
-                    document.getElementById('rideAppointmentTime').value = match.appointmentTime;
-                }
                 document.getElementById('rideNote').value = match.note;
 
                 planned = planned.filter(p => p !== match);
-                pushToCloud();
+                pushToSheets();
                 checkTodayPlanning();
             }
 
@@ -404,18 +359,6 @@
                 status.innerText = 'Status: Rit bezig...';
                 form.style.display = 'block';
 
-                const company = document.getElementById('rideCompany').value || 'Onbekend';
-                const driver = document.getElementById('rideDriver').value || 'Onbekend';
-                const destination = document.getElementById('rideDestination').value || 'Onbekend';
-
-                localStorage.setItem('nexus_taxi_is_driving', 'true');
-                localStorage.setItem('nexus_taxi_active_data', JSON.stringify({
-                    company: company,
-                    driver: driver,
-                    destination: destination,
-                    startTimeStr: startTime.toLocaleTimeString('nl-NL')
-                }));
-
                 timerInterval = setInterval(() => {
                     const now = new Date();
                     const diff = Math.floor((now - startTime) / 1000);
@@ -431,28 +374,21 @@
                 const company = document.getElementById('rideCompany').value || 'Onbekend';
                 const driver = document.getElementById('rideDriver').value || 'Onbekend';
                 const destination = document.getElementById('rideDestination').value || 'Onbekend';
-                const appointmentTime = document.getElementById('rideAppointmentTime').value;
                 const note = document.getElementById('rideNote').value.trim();
 
                 const newRide = {
                     date: startTime.toISOString().split('T')[0],
                     startDateTime: startTime.toLocaleString('nl-NL'),
                     stopDateTime: stopTime.toLocaleString('nl-NL'),
-                    startTimeOnly: String(startTime.getHours()).padStart(2, '0') + ':' + String(startTime.getMinutes()).padStart(2, '0'),
-                    stopTimeOnly: String(stopTime.getHours()).padStart(2, '0') + ':' + String(stopTime.getMinutes()).padStart(2, '0'),
                     durationMinutes: Math.floor((stopTime - startTime) / 60000),
                     company: company,
                     driver: driver,
                     destination: destination,
-                    appointmentTime: appointmentTime,
                     note: note
                 };
 
                 rides.push(newRide);
-                pushToCloud();
-
-                localStorage.setItem('nexus_taxi_is_driving', 'false');
-                localStorage.removeItem('nexus_taxi_active_data');
+                pushToSheets();
 
                 clearInterval(timerInterval);
                 isDriving = false;
@@ -467,7 +403,7 @@
                 document.getElementById('rideDestination').value = '';
                 document.getElementById('rideNote').value = '';
 
-                alert('Rit succesvol opgeslagen!');
+                alert('Rit succesvol opgeslagen en gesynchroniseerd met Google Sheets!');
             }
         }
 
@@ -488,20 +424,13 @@
                 container.innerHTML = '<p style="color: #a0aec0; text-align: center; padding: 15px;">Geen geplande ritten.</p>';
             } else {
                 planned.forEach((p, index) => {
-                    let startMin = timeToMinutes(p.time);
-                    let appMin = timeToMinutes(p.appointmentTime || p.time);
-                    let diff = appMin - startMin;
-                    let isRed = diff >= 15;
-                    let badgeClass = isRed ? 'badge-red' : 'badge-green';
-
                     const card = document.createElement('div');
                     card.className = 'list-card';
                     card.innerHTML = `
                         <div class="list-card-header">
-                            <span>📅 ${p.date} om <span class="${badgeClass}">${p.time || '00:00'}</span> - ${p.company}</span>
+                            <span>📅 ${p.date} om <span class="badge-green">${p.time || '00:00'}</span> - ${p.company}</span>
                             <button class="delete-btn" onclick="deletePlanned(${index})">Wis</button>
                         </div>
-                        <div class="list-card-row"><b>Afspraak tijd:</b> ${p.appointmentTime || '-'}</div>
                         <div class="list-card-row"><b>Bestemming:</b> ${p.destination}</div>
                         <div class="list-card-row"><b>Chauffeur:</b> ${p.driver} | <b>Herhaling:</b> ${p.repeat || 'Geen'}</div>
                         ${p.note ? `<div class="list-card-row"><b>Opmerking:</b> ${p.note}</div>` : ''}
@@ -514,7 +443,6 @@
         async function addPlannedRide() {
             const dateStrInput = document.getElementById('planDate').value;
             const time = document.getElementById('planTime').value;
-            const appointmentTime = document.getElementById('planAppointmentTime').value;
             const company = document.getElementById('planCompany').value;
             const driver = document.getElementById('planDriver').value;
             const destination = document.getElementById('planDestination').value;
@@ -559,7 +487,7 @@
                     let dd = String(currDate.getDate()).padStart(2, '0');
                     let formattedDate = `${yyyy}-${mm}-${dd}`;
 
-                    planned.push({ date: formattedDate, time, appointmentTime, company, driver, destination, repeat, note });
+                    planned.push({ date: formattedDate, time, company, driver, destination, repeat, note });
                     addedCount++;
                 }
 
@@ -569,18 +497,17 @@
                 safetyCounter++;
             }
 
-            // Direct naar de cloud pushen zodat andere apparaten het ook zien!
-            await pushToCloud();
+            await pushToSheets();
             checkTodayPlanning();
             renderPlannedList();
 
             document.getElementById('planNote').value = '';
-            alert(`${addedCount} rit(ten) succesvol ingepland en gesynchroniseerd!`);
+            alert(`${addedCount} rit(ten) succesvol ingepland en gesynchroniseerd met Google Sheets!`);
         }
 
         async function deletePlanned(index) {
             planned.splice(index, 1);
-            await pushToCloud();
+            await pushToSheets();
             checkTodayPlanning();
             renderPlannedList();
         }
@@ -605,7 +532,7 @@
                     let duration = r.durationMinutes !== undefined ? r.durationMinutes : 0;
                     let isDurationRed = duration >= 48;
                     let badgeClass = isDurationRed ? 'badge-red' : 'badge-green';
-                    let durationText = isDurationRed ? `Duur: ${duration} min (>= 48 min)` : `Duur: ${duration} min (< 48 min)`;
+                    let durationText = isDurationRed ? `Duur: ${duration} min (≥ 48 min)` : `Duur: ${duration} min (< 48 min)`;
 
                     const card = document.createElement('div');
                     card.className = 'list-card';
@@ -628,7 +555,7 @@
         async function deleteRide(index) {
             if (confirm('Weet je zeker dat je deze opgeslagen rit wilt verwijderen?')) {
                 rides.splice(index, 1);
-                await pushToCloud();
+                await pushToSheets();
                 renderDiaryList();
             }
         }
@@ -720,8 +647,7 @@
         }
 
         function openSettingsModal() {
-            document.getElementById('apiKeyInput').value = apiKey;
-            document.getElementById('binIdInput').value = binId;
+            document.getElementById('scriptUrlInput').value = scriptUrl;
             document.getElementById('settingsModal').style.display = 'flex';
         }
 
@@ -730,12 +656,11 @@
         }
 
         function saveSettings() {
-            apiKey = document.getElementById('apiKeyInput').value.trim();
-            binId = document.getElementById('binIdInput').value.trim();
-            localStorage.setItem('taxi_jsonbin_apikey', apiKey);
-            localStorage.setItem('taxi_jsonbin_binid', binId);
+            scriptUrl = document.getElementById('scriptUrlInput').value.trim();
+            localStorage.setItem('taxi_sheets_url', scriptUrl);
             closeSettingsModal();
-            syncWithCloud(true);
+            fetchFromSheets();
+            alert('Google Sheets URL opgeslagen en verbonden!');
         }
     </script>
 </body>
