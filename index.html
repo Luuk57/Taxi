@@ -16,13 +16,11 @@
 
         .main-container { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }
 
-        /* Geplande Rit Vandaag Banner */
         .scheduled-banner { background: #fffaf0; border: 2px dashed #dd6b20; border-radius: 14px; padding: 15px; width: 100%; max-width: 450px; margin-bottom: 15px; text-align: left; display: none; box-shadow: 0 4px 10px rgba(0,0,0,0.02); }
         .scheduled-title { font-size: 12px; font-weight: 800; color: #dd6b20; text-transform: uppercase; margin-bottom: 5px; }
         .scheduled-details { font-size: 14px; color: #2d3748; margin-bottom: 10px; font-weight: 600; }
         .btn-start-scheduled { background: #dd6b20; color: white; border: none; padding: 8px 14px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 13px; width: 100%; }
 
-        /* Start / Stop bedieningpaneel */
         .meter-card { background: white; border-radius: 16px; padding: 25px; width: 100%; max-width: 450px; box-shadow: 0 8px 25px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; text-align: center; }
         .meter-status { font-size: 14px; font-weight: 700; color: #718096; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
         .timer-display { font-size: 36px; font-weight: 800; color: #2d3748; margin-bottom: 20px; font-variant-numeric: tabular-nums; }
@@ -32,12 +30,10 @@
         .btn-start { background: #28a745; box-shadow: 0 6px 15px rgba(40,167,69,0.3); }
         .btn-stop { background: #dc3545; box-shadow: 0 6px 15px rgba(220,53,69,0.3); }
 
-        /* Actieve rit info formulier */
         .active-ride-form { margin-top: 20px; text-align: left; display: none; }
         .active-ride-form label { display: block; font-size: 11px; font-weight: 800; color: #4a5568; text-transform: uppercase; margin-bottom: 4px; margin-top: 10px; }
         .active-ride-form select, .active-ride-form input, .active-ride-form textarea { width: 100%; padding: 10px; font-size: 14px; border: 2px solid #e2e8f0; border-radius: 8px; outline: none; background: #f8fafc; font-weight: 600; color: #2d3748; }
 
-        /* Modals (Popups) */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); justify-content: center; align-items: center; z-index: 100; }
         .modal-content { background: white; padding: 24px; border-radius: 16px; width: 90%; max-width: 420px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.2); max-height: 85vh; overflow-y: auto; }
         .modal-content h3 { margin-bottom: 16px; color: #1a202c; font-size: 18px; font-weight: 700; }
@@ -105,28 +101,17 @@
         </div>
     </div>
 
+    <!-- Modals -->
     <div class="modal" id="planningModal">
         <div class="modal-content">
             <h3>Agenda & Planning</h3>
             <div class="list-container" id="plannedListContainer"></div>
-
             <hr style="margin: 12px 0; border:0; border-top:1px solid #edf2f7;">
-            
-            <h4 style="font-size: 13px; margin-bottom: 6px; color: #4a5568; text-align: left;">Nieuwe rit inplannen:</h4>
-            <label>Startdatum:</label>
-            <input type="date" id="planDate">
-            <label>Ophaaltijd (Start):</label>
-            <input type="time" id="planTime" value="08:00">
-            
-            <label>Bedrijf:</label>
-            <select id="planCompany" onchange="checkNewOption(this, 'company')"></select>
-            
-            <label>Chauffeur:</label>
-            <select id="planDriver" onchange="checkNewOption(this, 'driver')"></select>
-            
-            <label>Bestemming:</label>
-            <select id="planDestination" onchange="checkNewOption(this, 'destination')"></select>
-            
+            <label>Startdatum:</label><input type="date" id="planDate">
+            <label>Ophaaltijd (Start):</label><input type="time" id="planTime" value="08:00">
+            <label>Bedrijf:</label><select id="planCompany" onchange="checkNewOption(this, 'company')"></select>
+            <label>Chauffeur:</label><select id="planDriver" onchange="checkNewOption(this, 'driver')"></select>
+            <label>Bestemming:</label><select id="planDestination" onchange="checkNewOption(this, 'destination')"></select>
             <label>Herhaling:</label>
             <select id="planRepeat" onchange="toggleEndDate()">
                 <option value="none">Geen (enmalig)</option>
@@ -135,15 +120,10 @@
                 <option value="mwf">Ma, Wo, Vrij</option>
                 <option value="tts">Di, Do, Za</option>
             </select>
-
             <div id="endDateContainer" style="display: none;">
-                <label>Tot einddatum reeks:</label>
-                <input type="date" id="planEndDate">
+                <label>Tot einddatum reeks:</label><input type="date" id="planEndDate">
             </div>
-
-            <label>Opmerking:</label>
-            <input type="text" id="planNote" placeholder="Bijv. plantage ophalen">
-
+            <label>Opmerking:</label><input type="text" id="planNote" placeholder="Bijv. plantage ophalen">
             <div class="modal-buttons" style="margin-top: 10px;">
                 <button class="btn-cancel" onclick="closePlanningModal()">Sluiten</button>
                 <button class="btn-confirm" onclick="addPlannedRide()">Inplannen</button>
@@ -154,10 +134,8 @@
     <div class="modal" id="reportModal">
         <div class="modal-content">
             <h3>Rittenstaat PDF</h3>
-            <label>Startdatum:</label>
-            <input type="date" id="startDate">
-            <label>Einddatum:</label>
-            <input type="date" id="endDate">
+            <label>Startdatum:</label><input type="date" id="startDate">
+            <label>Einddatum:</label><input type="date" id="endDate">
             <div class="modal-buttons">
                 <button class="btn-cancel" onclick="closeReportModal()">Sluiten</button>
                 <button class="btn-confirm" onclick="generatePDFReport()">Genereer PDF</button>
@@ -177,10 +155,8 @@
         <div class="modal-content">
             <h3>JSONBin Instellingen</h3>
             <p style="font-size: 13px; color: #718096; margin-bottom: 14px; line-height: 1.4;">Plak hier je JSONBin Master Key en Bin ID:</p>
-            
             <input type="text" id="apiKeyInput" placeholder="API Key ($2a$10$...)">
             <input type="text" id="binIdInput" placeholder="Bin ID (bijv. 65...)">
-
             <div class="modal-buttons" style="margin-top: 15px;">
                 <button class="btn-cancel" onclick="closeSettingsModal()">Sluiten</button>
                 <button class="btn-confirm" onclick="saveSettings()">Opslaan & Sync</button>
@@ -322,5 +298,68 @@
                     } else {
                         selectElement.value = cleaned;
                     }
+                } else {
+                    selectElement.value = '';
+                }
+            }
+        }
 
+        function toggleEndDate() {
+            const repeat = document.getElementById('planRepeat').value;
+            const container = document.getElementById('endDateContainer');
+            container.style.display = repeat === 'none' ? 'none' : 'block';
+        }
+
+        function checkTodayPlanning() {
+            const todayStr = new Date().toISOString().split('T')[0];
+            const todayRides = planned.filter(p => p.date === todayStr);
+            const banner = document.getElementById('scheduledBanner');
+
+            if (todayRides.length > 0) {
+                let html = '';
+                todayRides.forEach(r => {
+                    html += `<div>⏰ <span class="badge-green">${r.time || '00:00'}</span> - 🚗 <b>${r.company}</b> naar ${r.destination} ${r.note ? '('+r.note+')' : ''}</div>`;
+                });
+                document.getElementById('scheduledDetailsText').innerHTML = html;
+                banner.style.display = 'block';
+            } else {
+                banner.style.display = 'none';
+            }
+        }
+
+        function startFirstScheduledRide() {
+            const todayStr = new Date().toISOString().split('T')[0];
+            const match = planned.find(p => p.date === todayStr);
+
+            if (match) {
+                document.getElementById('rideCompany').value = match.company;
+                document.getElementById('rideDriver').value = match.driver;
+                document.getElementById('rideDestination').value = match.destination;
+                document.getElementById('rideNote').value = match.note;
+
+                planned = planned.filter(p => p !== match);
+                pushToCloud();
+                checkTodayPlanning();
+            }
+
+            toggleRide();
+        }
+
+        function toggleRide() {
+            const btn = document.getElementById('mainActionBtn');
+            const status = document.getElementById('meterStatus');
+            const form = document.getElementById('activeRideForm');
+
+            if (!isDriving) {
+                isDriving = true;
+                startTime = new Date();
                 
+                btn.innerText = 'RIT STOPPEN & OPSLAAN';
+                btn.className = 'action-main-btn btn-stop';
+                status.innerText = 'Status: Rit bezig...';
+                form.style.display = 'block';
+
+                timerInterval = setInterval(() => {
+                    const now = new Date();
+                    const diff = Math.floor((now - startTime) / 1000);
+                    const h
