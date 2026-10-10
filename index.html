@@ -55,7 +55,6 @@
         .list-card-row { font-size: 12px; color: #4a5568; padding: 2px 0; }
         .delete-btn { background: #e53e3e; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 700; }
 
-        /* Kleurcodes voor duur / planning indicatoren */
         .badge-green { background: #c6f6d5; color: #22543d; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 11px; }
         .badge-red { background: #fed7d7; color: #742a2a; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 11px; }
 
@@ -67,13 +66,13 @@
     <header>
         <div>
             <div class="app-title">Taxi Vervoer Rittenstaat</div>
-            <div class="sync-status" id="syncStatus">Sheets: Niet ingesteld</div>
+            <div class="sync-status" id="syncStatus">Cloud: Niet ingesteld</div>
         </div>
         <div class="header-btns">
             <button class="icon-btn" onclick="openPlanningModal()" title="Agenda & Planning">📅</button>
             <button class="icon-btn" onclick="openReportModal()" title="Periode Rapport / PDF">📄</button>
             <button class="icon-btn" onclick="openDiaryModal()" title="Ritten Overzicht">📊</button>
-            <button class="icon-btn" onclick="openSettingsModal()" title="Google Sheets Instellingen">☁️</button>
+            <button class="icon-btn" onclick="openSettingsModal()" title="JSONBin Instellingen">☁️</button>
         </div>
     </header>
 
@@ -176,10 +175,11 @@
 
     <div class="modal" id="settingsModal">
         <div class="modal-content">
-            <h3>Google Sheets Instellingen</h3>
-            <p style="font-size: 13px; color: #718096; margin-bottom: 14px; line-height: 1.4;">Plak hier de Web App URL van je Google Apps Script:</p>
+            <h3>JSONBin Instellingen</h3>
+            <p style="font-size: 13px; color: #718096; margin-bottom: 14px; line-height: 1.4;">Plak hier je JSONBin Master Key en Bin ID:</p>
             
-            <input type="text" id="scriptUrlInput" placeholder="https://script.google.com/macros/s/.../exec">
+            <input type="text" id="apiKeyInput" placeholder="API Key ($2a$10$...)">
+            <input type="text" id="binIdInput" placeholder="Bin ID (bijv. 65...)">
 
             <div class="modal-buttons" style="margin-top: 15px;">
                 <button class="btn-cancel" onclick="closeSettingsModal()">Sluiten</button>
@@ -201,7 +201,8 @@
         let startTime = null;
         let timerInterval = null;
 
-        let scriptUrl = localStorage.getItem('taxi_sheets_url') || '';
+        let apiKey = localStorage.getItem('taxi_jsonbin_apikey') || '';
+        let binId = localStorage.getItem('taxi_jsonbin_binid') || '';
 
         window.onload = async () => {
             const todayStr = new Date().toISOString().split('T')[0];
@@ -212,49 +213,78 @@
 
             updateDropdowns();
 
-            if (scriptUrl) {
-                await fetchFromSheets();
-                setInterval(fetchFromSheets, 4000); // Polling elke 4 seconden voor live sync tussen tablet en telefoon
+            if (apiKey && binId) {
+                await syncWithCloud(false);
             } else {
-                document.getElementById('syncStatus').innerText = 'Sheets: Niet ingesteld';
+                document.getElementById('syncStatus').innerText = 'Cloud: Niet ingesteld';
             }
             checkTodayPlanning();
         };
 
-        async function fetchFromSheets() {
-            if (!scriptUrl) return;
+        async function syncWithCloud(showAlert = false) {
+            if (!apiKey) {
+                if (showAlert) alert('Stel eerst je API Key in via het wolkje (☁️).');
+                return;
+            }
+
+            document.getElementById('syncStatus').innerText = 'Cloud: Synchroniseren...';
+
             try {
-                const res = await fetch(scriptUrl);
-                const data = await res.json();
-                if (data) {
-                    if (data.rides) rides = data.rides;
-                    if (data.planned) planned = data.planned;
-                    if (data.optionsList) optionsList = data.optionsList;
-                    document.getElementById('syncStatus').innerText = 'Sheets: Verbonden';
+                if (!binId) {
+                    const createRes = await fetch('https://api.jsonbin.io/v3/b', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Master-Key': apiKey,
+                            'X-Bin-Private': 'true'
+                        },
+                        body: JSON.stringify({ rides: [], planned: [], optionsList: optionsList })
+                    });
+                    const createData = await createRes.json();
+                    if (createData.metadata && createData.metadata.id) {
+                        binId = createData.metadata.id;
+                        localStorage.setItem('taxi_jsonbin_binid', binId);
+                    } else {
+                        throw new Error('Kon geen Bin aanmaken.');
+                    }
+                }
+
+                const getRes = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
+                    headers: { 'X-Master-Key': apiKey }
+                });
+                const getData = await getRes.json();
+
+                if (getData.record) {
+                    if (getData.record.rides) rides = getData.record.rides;
+                    if (getData.record.planned) planned = getData.record.planned;
+                    if (getData.record.optionsList) optionsList = getData.record.optionsList;
+                    document.getElementById('syncStatus').innerText = 'Cloud: Verbonden';
+                    if (showAlert) alert('Verbonden & gesynchroniseerd!');
                 }
                 updateDropdowns();
                 checkTodayPlanning();
-                if (document.getElementById('planningModal').style.display === 'flex') renderPlannedList();
-                if (document.getElementById('diaryModal').style.display === 'flex') renderDiaryList();
             } catch (error) {
                 console.error(error);
-                document.getElementById('syncStatus').innerText = 'Sheets: Fout bij sync';
+                document.getElementById('syncStatus').innerText = 'Cloud: Fout bij sync';
+                if (showAlert) alert('Fout bij synchroniseren. Controleer je API Key.');
             }
         }
 
-        async function pushToSheets() {
-            if (!scriptUrl) return;
+        async function pushToCloud() {
+            if (!apiKey || !binId) return;
             try {
-                await fetch(scriptUrl, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
+                await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': apiKey
+                    },
                     body: JSON.stringify({ rides: rides, planned: planned, optionsList: optionsList })
                 });
-                document.getElementById('syncStatus').innerText = 'Sheets: Opgeslagen';
+                document.getElementById('syncStatus').innerText = 'Cloud: Opgeslagen';
             } catch (error) {
                 console.error(error);
-                document.getElementById('syncStatus').innerText = 'Sheets: Opslaan mislukt';
+                document.getElementById('syncStatus').innerText = 'Cloud: Opslaan mislukt';
             }
         }
 
@@ -286,382 +316,11 @@
                     const cleaned = newVal.trim();
                     if (!optionsList[type].includes(cleaned)) {
                         optionsList[type].push(cleaned);
-                        await pushToSheets();
+                        await pushToCloud();
                         updateDropdowns();
                         selectElement.value = cleaned;
                     } else {
                         selectElement.value = cleaned;
                     }
-                } else {
-                    selectElement.value = '';
-                }
-            }
-        }
 
-        function toggleEndDate() {
-            const repeat = document.getElementById('planRepeat').value;
-            const container = document.getElementById('endDateContainer');
-            container.style.display = repeat === 'none' ? 'none' : 'block';
-        }
-
-        function timeToMinutes(timeStr) {
-            if (!timeStr) return 0;
-            const parts = timeStr.split(':');
-            return parseInt(parts[0]) * 60 + parseInt(parts[1]);
-        }
-
-        function checkTodayPlanning() {
-            const todayStr = new Date().toISOString().split('T')[0];
-            const todayRides = planned.filter(p => p.date === todayStr);
-            const banner = document.getElementById('scheduledBanner');
-
-            if (todayRides.length > 0) {
-                let html = '';
-                todayRides.forEach(r => {
-                    html += `<div>⏰ <span class="badge-green">${r.time || '00:00'}</span> - 🚗 <b>${r.company}</b> naar ${r.destination} ${r.note ? '('+r.note+')' : ''}</div>`;
-                });
-                document.getElementById('scheduledDetailsText').innerHTML = html;
-                banner.style.display = 'block';
-            } else {
-                banner.style.display = 'none';
-            }
-        }
-
-        function startFirstScheduledRide() {
-            const todayStr = new Date().toISOString().split('T')[0];
-            const match = planned.find(p => p.date === todayStr);
-
-            if (match) {
-                document.getElementById('rideCompany').value = match.company;
-                document.getElementById('rideDriver').value = match.driver;
-                document.getElementById('rideDestination').value = match.destination;
-                document.getElementById('rideNote').value = match.note;
-
-                planned = planned.filter(p => p !== match);
-                pushToSheets();
-                checkTodayPlanning();
-            }
-
-            toggleRide();
-        }
-
-        function toggleRide() {
-            const btn = document.getElementById('mainActionBtn');
-            const status = document.getElementById('meterStatus');
-            const form = document.getElementById('activeRideForm');
-
-            if (!isDriving) {
-                isDriving = true;
-                startTime = new Date();
                 
-                btn.innerText = 'RIT STOPPEN & OPSLAAN';
-                btn.className = 'action-main-btn btn-stop';
-                status.innerText = 'Status: Rit bezig...';
-                form.style.display = 'block';
-
-                timerInterval = setInterval(() => {
-                    const now = new Date();
-                    const diff = Math.floor((now - startTime) / 1000);
-                    const hours = String(Math.floor(diff / 3600)).padStart(2, '0');
-                    const minutes = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
-                    const seconds = String(diff % 60).padStart(2, '0');
-                    document.getElementById('timerDisplay').innerText = `${hours}:${minutes}:${seconds}`;
-                }, 1000);
-
-            } else {
-                const stopTime = new Date();
-
-                const company = document.getElementById('rideCompany').value || 'Onbekend';
-                const driver = document.getElementById('rideDriver').value || 'Onbekend';
-                const destination = document.getElementById('rideDestination').value || 'Onbekend';
-                const note = document.getElementById('rideNote').value.trim();
-
-                const newRide = {
-                    date: startTime.toISOString().split('T')[0],
-                    startDateTime: startTime.toLocaleString('nl-NL'),
-                    stopDateTime: stopTime.toLocaleString('nl-NL'),
-                    durationMinutes: Math.floor((stopTime - startTime) / 60000),
-                    company: company,
-                    driver: driver,
-                    destination: destination,
-                    note: note
-                };
-
-                rides.push(newRide);
-                pushToSheets();
-
-                clearInterval(timerInterval);
-                isDriving = false;
-                btn.innerText = 'RIT STARTEN';
-                btn.className = 'action-main-btn btn-start';
-                status.innerText = 'Status: Vrij / Rit opgeslagen';
-                document.getElementById('timerDisplay').innerText = '00:00:00';
-                form.style.display = 'none';
-
-                document.getElementById('rideCompany').value = '';
-                document.getElementById('rideDriver').value = '';
-                document.getElementById('rideDestination').value = '';
-                document.getElementById('rideNote').value = '';
-
-                alert('Rit succesvol opgeslagen en gesynchroniseerd met Google Sheets!');
-            }
-        }
-
-        function openPlanningModal() {
-            renderPlannedList();
-            document.getElementById('planningModal').style.display = 'flex';
-        }
-
-        function closePlanningModal() {
-            document.getElementById('planningModal').style.display = 'none';
-        }
-
-        function renderPlannedList() {
-            const container = document.getElementById('plannedListContainer');
-            container.innerHTML = '';
-
-            if (planned.length === 0) {
-                container.innerHTML = '<p style="color: #a0aec0; text-align: center; padding: 15px;">Geen geplande ritten.</p>';
-            } else {
-                planned.forEach((p, index) => {
-                    const card = document.createElement('div');
-                    card.className = 'list-card';
-                    card.innerHTML = `
-                        <div class="list-card-header">
-                            <span>📅 ${p.date} om <span class="badge-green">${p.time || '00:00'}</span> - ${p.company}</span>
-                            <button class="delete-btn" onclick="deletePlanned(${index})">Wis</button>
-                        </div>
-                        <div class="list-card-row"><b>Bestemming:</b> ${p.destination}</div>
-                        <div class="list-card-row"><b>Chauffeur:</b> ${p.driver} | <b>Herhaling:</b> ${p.repeat || 'Geen'}</div>
-                        ${p.note ? `<div class="list-card-row"><b>Opmerking:</b> ${p.note}</div>` : ''}
-                    `;
-                    container.appendChild(card);
-                });
-            }
-        }
-
-        async function addPlannedRide() {
-            const dateStrInput = document.getElementById('planDate').value;
-            const time = document.getElementById('planTime').value;
-            const company = document.getElementById('planCompany').value;
-            const driver = document.getElementById('planDriver').value;
-            const destination = document.getElementById('planDestination').value;
-            const repeat = document.getElementById('planRepeat').value;
-            const endDateInput = document.getElementById('planEndDate').value;
-            const note = document.getElementById('planNote').value.trim();
-
-            if (!dateStrInput || !company || company === '__new__') {
-                alert('Vul een geldige startdatum en bedrijf in.');
-                return;
-            }
-
-            let currDate = new Date(dateStrInput + 'T00:00:00');
-            let limitDate = repeat === 'none' ? new Date(dateStrInput + 'T00:00:00') : new Date((endDateInput || dateStrInput) + 'T00:00:00');
-            
-            if (limitDate < currDate) {
-                limitDate = new Date(dateStrInput + 'T00:00:00');
-            }
-
-            let addedCount = 0;
-            let safetyCounter = 0;
-
-            while (currDate <= limitDate && safetyCounter < 500) {
-                let dayOfWeek = currDate.getDay();
-                let shouldAdd = false;
-
-                if (repeat === 'none') {
-                    shouldAdd = (safetyCounter === 0);
-                } else if (repeat === 'daily') {
-                    shouldAdd = true;
-                } else if (repeat === 'alternate') {
-                    shouldAdd = (safetyCounter % 2 === 0);
-                } else if (repeat === 'mwf') {
-                    if (dayOfWeek === 1 || dayOfWeek === 3 || dayOfWeek === 5) shouldAdd = true;
-                } else if (repeat === 'tts') {
-                    if (dayOfWeek === 2 || dayOfWeek === 4 || dayOfWeek === 6) shouldAdd = true;
-                }
-
-                if (shouldAdd) {
-                    let yyyy = currDate.getFullYear();
-                    let mm = String(currDate.getMonth() + 1).padStart(2, '0');
-                    let dd = String(currDate.getDate()).padStart(2, '0');
-                    let formattedDate = `${yyyy}-${mm}-${dd}`;
-
-                    planned.push({ date: formattedDate, time, company, driver, destination, repeat, note });
-                    addedCount++;
-                }
-
-                if (repeat === 'none') break;
-
-                currDate.setDate(currDate.getDate() + 1);
-                safetyCounter++;
-            }
-
-            await pushToSheets();
-            checkTodayPlanning();
-            renderPlannedList();
-
-            document.getElementById('planNote').value = '';
-            alert(`${addedCount} rit(ten) succesvol ingepland en gesynchroniseerd met Google Sheets!`);
-        }
-
-        async function deletePlanned(index) {
-            planned.splice(index, 1);
-            await pushToSheets();
-            checkTodayPlanning();
-            renderPlannedList();
-        }
-
-        function openDiaryModal() {
-            renderDiaryList();
-            document.getElementById('diaryModal').style.display = 'flex';
-        }
-
-        function closeDiaryModal() {
-            document.getElementById('diaryModal').style.display = 'none';
-        }
-
-        function renderDiaryList() {
-            const container = document.getElementById('diaryListContainer');
-            container.innerHTML = '';
-
-            if (rides.length === 0) {
-                container.innerHTML = '<p style="color: #a0aec0; text-align: center; padding: 25px;">Nog geen ritten geregistreerd.</p>';
-            } else {
-                rides.forEach((r, index) => {
-                    let duration = r.durationMinutes !== undefined ? r.durationMinutes : 0;
-                    let isDurationRed = duration >= 48;
-                    let badgeClass = isDurationRed ? 'badge-red' : 'badge-green';
-                    let durationText = isDurationRed ? `Duur: ${duration} min (≥ 48 min)` : `Duur: ${duration} min (< 48 min)`;
-
-                    const card = document.createElement('div');
-                    card.className = 'list-card';
-                    card.innerHTML = `
-                        <div class="list-card-header">
-                            <span>🚗 ${r.company} (📅 ${r.date})</span>
-                            <button class="delete-btn" onclick="deleteRide(${index})">Wis</button>
-                        </div>
-                        <div class="list-card-row"><b>Chauffeur:</b> ${r.driver}</div>
-                        <div class="list-card-row"><b>Bestemming:</b> ${r.destination}</div>
-                        <div class="list-card-row"><b>Start:</b> ${r.startDateTime} | <b>Stop:</b> ${r.stopDateTime}</div>
-                        <div class="list-card-row"><b>Beoordeling:</b> <span class="${badgeClass}">${durationText}</span></div>
-                        ${r.note ? `<div class="list-card-row"><b>Opmerking:</b> ${r.note}</div>` : ''}
-                    `;
-                    container.appendChild(card);
-                });
-            }
-        }
-
-        async function deleteRide(index) {
-            if (confirm('Weet je zeker dat je deze opgeslagen rit wilt verwijderen?')) {
-                rides.splice(index, 1);
-                await pushToSheets();
-                renderDiaryList();
-            }
-        }
-
-        function openReportModal() {
-            document.getElementById('reportModal').style.display = 'flex';
-        }
-
-        function closeReportModal() {
-            document.getElementById('reportModal').style.display = 'none';
-        }
-
-        function generatePDFReport() {
-            const start = document.getElementById('startDate').value;
-            const end = document.getElementById('endDate').value;
-
-            if (!start || !end) {
-                alert('Selecteer een start- en einddatum.');
-                return;
-            }
-
-            const filtered = rides.filter(r => r.date >= start && r.date <= end);
-
-            if (filtered.length === 0) {
-                alert('Geen ritten gevonden in deze periode.');
-                return;
-            }
-
-            let reportHTML = `
-                <html>
-                <head>
-                    <title>Rittenstaat ${start} t/m ${end}</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; padding: 25px; color: #333; }
-                        h2 { color: #1a202c; border-bottom: 2px solid #1a202c; padding-bottom: 8px; }
-                        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-                        th, td { border: 1px solid #cbd5e0; padding: 8px 10px; font-size: 12px; text-align: left; }
-                        th { background: #edf2f7; }
-                        .badge-green { background: #c6f6d5; color: #22543d; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
-                        .badge-red { background: #fed7d7; color: #742a2a; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
-                    </style>
-                </head>
-                <body>
-                    <h2>Taxi Rittenstaat Rapport</h2>
-                    <p><b>Periode:</b> ${start} t/m ${end}</p>
-                    <table>
-                        <tr>
-                            <th>Datum</th>
-                            <th>Start</th>
-                            <th>Stop</th>
-                            <th>Duur (Min)</th>
-                            <th>Bedrijf</th>
-                            <th>Chauffeur</th>
-                            <th>Bestemming</th>
-                        </tr>
-            `;
-
-            filtered.forEach(r => {
-                let duration = r.durationMinutes !== undefined ? r.durationMinutes : 0;
-                let isRed = duration >= 48;
-                let badgeClass = isRed ? 'badge-red' : 'badge-green';
-
-                reportHTML += `
-                    <tr>
-                        <td>${r.date}</td>
-                        <td>${r.startDateTime.split(' ')[1] || r.startDateTime}</td>
-                        <td>${r.stopDateTime.split(' ')[1] || r.stopDateTime}</td>
-                        <td><span class="${badgeClass}">${duration} min</span></td>
-                        <td>${r.company}</td>
-                        <td>${r.driver}</td>
-                        <td>${r.destination}</td>
-                    </tr>
-                `;
-            });
-
-            reportHTML += `
-                    </table>
-                    <script>
-                        window.onload = function() { window.print(); }
-                    <\/script>
-                </body>
-                </html>
-            `;
-
-            const win = window.open('', '_blank');
-            win.document.write(reportHTML);
-            win.document.close();
-            closeReportModal();
-        }
-
-        function openSettingsModal() {
-            document.getElementById('scriptUrlInput').value = scriptUrl;
-            document.getElementById('settingsModal').style.display = 'flex';
-        }
-
-        function closeSettingsModal() {
-            document.getElementById('settingsModal').style.display = 'none';
-        }
-
-        function saveSettings() {
-            scriptUrl = document.getElementById('scriptUrlInput').value.trim();
-            localStorage.setItem('taxi_sheets_url', scriptUrl);
-            closeSettingsModal();
-            fetchFromSheets();
-            alert('Google Sheets URL opgeslagen en verbonden!');
-        }
-    </script>
-</body>
-</html>
