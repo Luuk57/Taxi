@@ -8,25 +8,24 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
         body { background: #f0f3f8; display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: #333; }
 
-        header { background: linear-gradient(135deg, #1a202c, #2d3748); color: white; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10; flex-wrap: wrap; gap: 10px; }
-        .app-title { font-size: 17px; font-weight: 700; letter-spacing: 0.3px; }
-        .header-btns { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-        .icon-btn { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: white; width: 36px; height: 36px; border-radius: 50%; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; flex-shrink: 0; }
-        .icon-btn:active { background: rgba(255,255,255,0.4); transform: scale(0.94); }
+        header { background: linear-gradient(135deg, #1a202c, #2d3748); color: white; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10; }
+        .app-title { font-size: 17px; font-weight: 700; }
+        .header-btns { display: flex; gap: 6px; align-items: center; }
+        .icon-btn { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: white; width: 38px; height: 38px; border-radius: 50%; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .icon-btn:active { background: rgba(255,255,255,0.4); transform: scale(0.95); }
 
-        .main-container { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }
+        .main-container { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; align-items: center; }
 
-        .scheduled-banner { background: #fffaf0; border: 2px dashed #dd6b20; border-radius: 14px; padding: 15px; width: 100%; max-width: 450px; margin-bottom: 15px; text-align: left; display: none; box-shadow: 0 4px 10px rgba(0,0,0,0.02); }
+        .scheduled-banner { background: #fffaf0; border: 2px dashed #dd6b20; border-radius: 14px; padding: 15px; width: 100%; max-width: 450px; margin-bottom: 15px; text-align: left; display: none; }
         .scheduled-title { font-size: 12px; font-weight: 800; color: #dd6b20; text-transform: uppercase; margin-bottom: 5px; }
         .scheduled-details { font-size: 14px; color: #2d3748; margin-bottom: 10px; font-weight: 600; }
         .btn-start-scheduled { background: #dd6b20; color: white; border: none; padding: 8px 14px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 13px; width: 100%; }
 
         .meter-card { background: white; border-radius: 16px; padding: 25px; width: 100%; max-width: 450px; box-shadow: 0 8px 25px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; text-align: center; }
         .meter-status { font-size: 14px; font-weight: 700; color: #718096; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
-        .timer-display { font-size: 36px; font-weight: 800; color: #2d3748; margin-bottom: 20px; font-variant-numeric: tabular-nums; }
+        .timer-display { font-size: 38px; font-weight: 800; color: #2d3748; margin-bottom: 20px; font-variant-numeric: tabular-nums; }
         
-        .action-main-btn { width: 100%; padding: 20px; border: none; border-radius: 14px; font-size: 20px; font-weight: 800; cursor: pointer; color: white; box-shadow: 0 6px 15px rgba(0,0,0,0.15); transition: transform 0.1s; }
-        .action-main-btn:active { transform: scale(0.97); }
+        .action-main-btn { width: 100%; padding: 20px; border: none; border-radius: 14px; font-size: 20px; font-weight: 800; cursor: pointer; color: white; box-shadow: 0 6px 15px rgba(0,0,0,0.15); }
         .btn-start { background: #28a745; box-shadow: 0 6px 15px rgba(40,167,69,0.3); }
         .btn-stop { background: #dc3545; box-shadow: 0 6px 15px rgba(220,53,69,0.3); }
 
@@ -34,7 +33,7 @@
         .active-ride-form label { display: block; font-size: 11px; font-weight: 800; color: #4a5568; text-transform: uppercase; margin-bottom: 4px; margin-top: 10px; }
         .active-ride-form select, .active-ride-form input, .active-ride-form textarea { width: 100%; padding: 10px; font-size: 14px; border: 2px solid #e2e8f0; border-radius: 8px; outline: none; background: #f8fafc; font-weight: 600; color: #2d3748; }
 
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); justify-content: center; align-items: center; z-index: 100; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(3px); justify-content: center; align-items: center; z-index: 100; }
         .modal-content { background: white; padding: 24px; border-radius: 16px; width: 90%; max-width: 420px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.2); max-height: 85vh; overflow-y: auto; }
         .modal-content h3 { margin-bottom: 16px; color: #1a202c; font-size: 18px; font-weight: 700; }
         .modal-content label { display: block; font-size: 12px; font-weight: 700; text-align: left; margin-bottom: 4px; color: #4a5568; text-transform: uppercase; margin-top: 8px; }
@@ -43,18 +42,17 @@
         .modal-buttons { display: flex; gap: 10px; margin-top: 15px; }
         .modal-buttons button { flex: 1; padding: 12px; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 15px; }
         .btn-cancel { background: #edf2f7; color: #4a5568; }
-        .btn-confirm { background: #007bff; color: white; box-shadow: 0 4px 10px rgba(0,123,255,0.25); }
+        .btn-confirm { background: #007bff; color: white; }
 
-        .list-container { max-height: 240px; overflow-y: auto; text-align: left; margin-bottom: 16px; border: 2px solid #edf2f7; padding: 8px; border-radius: 10px; background: #f8fafc; }
-        .list-card { background: white; border: 1px solid #cbd5e0; border-radius: 8px; padding: 10px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
-        .list-card-header { font-weight: 700; font-size: 13px; color: #2d3748; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center; }
+        .list-container { max-height: 220px; overflow-y: auto; text-align: left; margin-bottom: 12px; border: 2px solid #edf2f7; padding: 8px; border-radius: 10px; background: #f8fafc; }
+        .list-card { background: white; border: 1px solid #cbd5e0; border-radius: 8px; padding: 10px; margin-bottom: 8px; }
+        .list-card-header { font-weight: 700; font-size: 13px; color: #2d3748; display: flex; justify-content: space-between; align-items: center; }
         .list-card-row { font-size: 12px; color: #4a5568; padding: 2px 0; }
         .delete-btn { background: #e53e3e; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 700; }
 
         .badge-green { background: #c6f6d5; color: #22543d; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 11px; }
         .badge-red { background: #fed7d7; color: #742a2a; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 11px; }
-
-        .sync-status { font-size: 11px; color: #a0aec0; margin-top: 3px; font-weight: 500; }
+        .sync-status { font-size: 11px; color: #a0aec0; margin-top: 2px; }
     </style>
 </head>
 <body>
@@ -65,16 +63,16 @@
             <div class="sync-status" id="syncStatus">Cloud: Niet ingesteld</div>
         </div>
         <div class="header-btns">
-            <button class="icon-btn" onclick="openPlanningModal()" title="Agenda & Planning">📅</button>
-            <button class="icon-btn" onclick="openReportModal()" title="Periode Rapport / PDF">📄</button>
-            <button class="icon-btn" onclick="openDiaryModal()" title="Ritten Overzicht">📊</button>
-            <button class="icon-btn" onclick="openSettingsModal()" title="JSONBin Instellingen">☁️</button>
+            <button class="icon-btn" onclick="openModal('planningModal')" title="Planning">📅</button>
+            <button class="icon-btn" onclick="openModal('reportModal')" title="Rapport">📄</button>
+            <button class="icon-btn" onclick="openModal('diaryModal')" title="Opgeslagen Ritten">📊</button>
+            <button class="icon-btn" onclick="openModal('settingsModal')" title="Instellingen">☁️</button>
         </div>
     </header>
 
     <div class="main-container">
         <div class="scheduled-banner" id="scheduledBanner">
-            <div class="scheduled-title">📌 Geplande Rit(ten) voor Vandaag!</div>
+            <div class="scheduled-title">📌 Geplande Rit voor Vandaag!</div>
             <div class="scheduled-details" id="scheduledDetailsText"></div>
             <button class="btn-start-scheduled" onclick="startFirstScheduledRide()">Start eerstvolgende rit</button>
         </div>
@@ -96,7 +94,7 @@
                 <select id="rideDestination"></select>
 
                 <label>Opmerking:</label>
-                <textarea id="rideNote" rows="2" placeholder="Eventuele bijzonderheden"></textarea>
+                <textarea id="rideNote" rows="2" placeholder="Bijv. bijzonderheden"></textarea>
             </div>
         </div>
     </div>
@@ -106,9 +104,9 @@
         <div class="modal-content">
             <h3>Agenda & Planning</h3>
             <div class="list-container" id="plannedListContainer"></div>
-            <hr style="margin: 12px 0; border:0; border-top:1px solid #edf2f7;">
+            <hr style="margin: 10px 0; border:0; border-top:1px solid #edf2f7;">
             <label>Startdatum:</label><input type="date" id="planDate">
-            <label>Ophaaltijd (Start):</label><input type="time" id="planTime" value="08:00">
+            <label>Ophaaltijd:</label><input type="time" id="planTime" value="08:00">
             <label>Bedrijf:</label><select id="planCompany" onchange="checkNewOption(this, 'company')"></select>
             <label>Chauffeur:</label><select id="planDriver" onchange="checkNewOption(this, 'driver')"></select>
             <label>Bestemming:</label><select id="planDestination" onchange="checkNewOption(this, 'destination')"></select>
@@ -121,11 +119,11 @@
                 <option value="tts">Di, Do, Za</option>
             </select>
             <div id="endDateContainer" style="display: none;">
-                <label>Tot einddatum reeks:</label><input type="date" id="planEndDate">
+                <label>Tot einddatum:</label><input type="date" id="planEndDate">
             </div>
-            <label>Opmerking:</label><input type="text" id="planNote" placeholder="Bijv. plantage ophalen">
-            <div class="modal-buttons" style="margin-top: 10px;">
-                <button class="btn-cancel" onclick="closePlanningModal()">Sluiten</button>
+            <label>Opmerking:</label><input type="text" id="planNote" placeholder="Optioneel">
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="closeModal('planningModal')">Sluiten</button>
                 <button class="btn-confirm" onclick="addPlannedRide()">Inplannen</button>
             </div>
         </div>
@@ -137,7 +135,7 @@
             <label>Startdatum:</label><input type="date" id="startDate">
             <label>Einddatum:</label><input type="date" id="endDate">
             <div class="modal-buttons">
-                <button class="btn-cancel" onclick="closeReportModal()">Sluiten</button>
+                <button class="btn-cancel" onclick="closeModal('reportModal')">Sluiten</button>
                 <button class="btn-confirm" onclick="generatePDFReport()">Genereer PDF</button>
             </div>
         </div>
@@ -147,18 +145,18 @@
         <div class="modal-content">
             <h3>Opgeslagen Ritten</h3>
             <div class="list-container" id="diaryListContainer"></div>
-            <button class="btn-confirm" onclick="closeDiaryModal()" style="width:100%;">Sluiten</button>
+            <button class="btn-confirm" onclick="closeModal('diaryModal')" style="width:100%;">Sluiten</button>
         </div>
     </div>
 
     <div class="modal" id="settingsModal">
         <div class="modal-content">
-            <h3>JSONBin Instellingen</h3>
-            <p style="font-size: 13px; color: #718096; margin-bottom: 14px; line-height: 1.4;">Plak hier je JSONBin Master Key en Bin ID:</p>
+            <h3>Cloud Instellingen</h3>
+            <p style="font-size: 13px; color: #718096; margin-bottom: 10px;">Vul je JSONBin gegevens in:</p>
             <input type="text" id="apiKeyInput" placeholder="API Key ($2a$10$...)">
-            <input type="text" id="binIdInput" placeholder="Bin ID (bijv. 65...)">
-            <div class="modal-buttons" style="margin-top: 15px;">
-                <button class="btn-cancel" onclick="closeSettingsModal()">Sluiten</button>
+            <input type="text" id="binIdInput" placeholder="Bin ID">
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="closeModal('settingsModal')">Sluiten</button>
                 <button class="btn-confirm" onclick="saveSettings()">Opslaan & Sync</button>
             </div>
         </div>
@@ -196,6 +194,20 @@
             }
             checkTodayPlanning();
         };
+
+        function openModal(modalId) {
+            if (modalId === 'planningModal') renderPlannedList();
+            if (modalId === 'diaryModal') renderDiaryList();
+            if (modalId === 'settingsModal') {
+                document.getElementById('apiKeyInput').value = apiKey;
+                document.getElementById('binIdInput').value = binId;
+            }
+            document.getElementById(modalId).style.display = 'flex';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
 
         async function syncWithCloud(showAlert = false) {
             if (!apiKey) {
@@ -306,8 +318,7 @@
 
         function toggleEndDate() {
             const repeat = document.getElementById('planRepeat').value;
-            const container = document.getElementById('endDateContainer');
-            container.style.display = repeat === 'none' ? 'none' : 'block';
+            document.getElementById('endDateContainer').style.display = repeat === 'none' ? 'none' : 'block';
         }
 
         function checkTodayPlanning() {
@@ -318,7 +329,7 @@
             if (todayRides.length > 0) {
                 let html = '';
                 todayRides.forEach(r => {
-                    html += `<div>⏰ <span class="badge-green">${r.time || '00:00'}</span> - 🚗 <b>${r.company}</b> naar ${r.destination} ${r.note ? '('+r.note+')' : ''}</div>`;
+                    html += `<div>⏰ <span class="badge-green">${r.time || '00:00'}</span> - 🚗 <b>${r.company}</b> naar ${r.destination}</div>`;
                 });
                 document.getElementById('scheduledDetailsText').innerHTML = html;
                 banner.style.display = 'block';
@@ -335,13 +346,12 @@
                 document.getElementById('rideCompany').value = match.company;
                 document.getElementById('rideDriver').value = match.driver;
                 document.getElementById('rideDestination').value = match.destination;
-                document.getElementById('rideNote').value = match.note;
+                document.getElementById('rideNote').value = match.note || '';
 
                 planned = planned.filter(p => p !== match);
                 pushToCloud();
                 checkTodayPlanning();
             }
-
             toggleRide();
         }
 
@@ -362,4 +372,167 @@
                 timerInterval = setInterval(() => {
                     const now = new Date();
                     const diff = Math.floor((now - startTime) / 1000);
-                    const h
+                    const h = String(Math.floor(diff / 3600)).padStart(2, '0');
+                    const m = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
+                    const s = String(diff % 60).padStart(2, '0');
+                    document.getElementById('timerDisplay').innerText = `${h}:${m}:${s}`;
+                }, 1000);
+            } else {
+                const stopTime = new Date();
+                const company = document.getElementById('rideCompany').value || 'Onbekend';
+                const driver = document.getElementById('rideDriver').value || 'Onbekend';
+                const destination = document.getElementById('rideDestination').value || 'Onbekend';
+                const note = document.getElementById('rideNote').value.trim();
+
+                rides.push({
+                    date: startTime.toISOString().split('T')[0],
+                    startDateTime: startTime.toLocaleString('nl-NL'),
+                    stopDateTime: stopTime.toLocaleString('nl-NL'),
+                    durationMinutes: Math.floor((stopTime - startTime) / 60000),
+                    company, driver, destination, note
+                });
+
+                pushToCloud();
+                clearInterval(timerInterval);
+                isDriving = false;
+                btn.innerText = 'RIT STARTEN';
+                btn.className = 'action-main-btn btn-start';
+                status.innerText = 'Status: Vrij / Rit opgeslagen';
+                document.getElementById('timerDisplay').innerText = '00:00:00';
+                form.style.display = 'none';
+
+                document.getElementById('rideCompany').value = '';
+                document.getElementById('rideDriver').value = '';
+                document.getElementById('rideDestination').value = '';
+                document.getElementById('rideNote').value = '';
+                alert('Rit succesvol opgeslagen!');
+            }
+        }
+
+        function renderPlannedList() {
+            const container = document.getElementById('plannedListContainer');
+            container.innerHTML = '';
+            if (planned.length === 0) {
+                container.innerHTML = '<p style="color: #a0aec0; text-align: center; padding: 10px;">Geen geplande ritten.</p>';
+            } else {
+                planned.forEach((p, idx) => {
+                    container.innerHTML += `
+                        <div class="list-card">
+                            <div class="list-card-header">
+                                <span>📅 ${p.date} om <span class="badge-green">${p.time}</span> - ${p.company}</span>
+                                <button class="delete-btn" onclick="deletePlanned(${idx})">Wis</button>
+                            </div>
+                            <div class="list-card-row">Naar: ${p.destination} | Chauffeur: ${p.driver}</div>
+                        </div>`;
+                });
+            }
+        }
+
+        async function addPlannedRide() {
+            const dateStr = document.getElementById('planDate').value;
+            const time = document.getElementById('planTime').value;
+            const company = document.getElementById('planCompany').value;
+            const driver = document.getElementById('planDriver').value;
+            const destination = document.getElementById('planDestination').value;
+            const repeat = document.getElementById('planRepeat').value;
+            const endDateStr = document.getElementById('planEndDate').value;
+            const note = document.getElementById('planNote').value.trim();
+
+            if (!dateStr || !company || company === '__new__') {
+                alert('Vul een geldige datum en bedrijf in.');
+                return;
+            }
+
+            let currDate = new Date(dateStr + 'T00:00:00');
+            let limitDate = repeat === 'none' ? new Date(dateStr + 'T00:00:00') : new Date((endDateStr || dateStr) + 'T00:00:00');
+
+            let count = 0;
+            while (currDate <= limitDate && count < 500) {
+                let day = currDate.getDay();
+                let add = false;
+                if (repeat === 'none' && count === 0) add = true;
+                else if (repeat === 'daily') add = true;
+                else if (repeat === 'alternate' && count % 2 === 0) add = true;
+                else if (repeat === 'mwf' && (day === 1 || day === 3 || day === 5)) add = true;
+                else if (repeat === 'tts' && (day === 2 || day === 4 || day === 6)) add = true;
+
+                if (add) {
+                    let y = currDate.getFullYear();
+                    let m = String(currDate.getMonth() + 1).padStart(2, '0');
+                    let d = String(currDate.getDate()).padStart(2, '0');
+                    planned.push({ date: `${y}-${m}-${d}`, time, company, driver, destination, repeat, note });
+                }
+                if (repeat === 'none') break;
+                currDate.setDate(currDate.getDate() + 1);
+                count++;
+            }
+
+            await pushToCloud();
+            checkTodayPlanning();
+            renderPlannedList();
+            closeModal('planningModal');
+            alert('Rit(ten) ingepland!');
+        }
+
+        async function deletePlanned(idx) {
+            planned.splice(idx, 1);
+            await pushToCloud();
+            checkTodayPlanning();
+            renderPlannedList();
+        }
+
+        function renderDiaryList() {
+            const container = document.getElementById('diaryListContainer');
+            container.innerHTML = '';
+            if (rides.length === 0) {
+                container.innerHTML = '<p style="color: #a0aec0; text-align: center; padding: 15px;">Nog geen ritten geregistreerd.</p>';
+            } else {
+                rides.forEach((r, idx) => {
+                    let dur = r.durationMinutes || 0;
+                    let badge = dur >= 48 ? 'badge-red' : 'badge-green';
+                    container.innerHTML += `
+                        <div class="list-card">
+                            <div class="list-card-header">
+                                <span>🚗 ${r.company} (${r.date})</span>
+                                <button class="delete-btn" onclick="deleteRide(${idx})">Wis</button>
+                            </div>
+                            <div class="list-card-row">Duur: <span class="${badge}">${dur} min</span> | Chauffeur: ${r.driver}</div>
+                        </div>`;
+                });
+            }
+        }
+
+        async function deleteRide(idx) {
+            if (confirm('Verwijderen?')) {
+                rides.splice(idx, 1);
+                await pushToCloud();
+                renderDiaryList();
+            }
+        }
+
+        function generatePDFReport() {
+            const start = document.getElementById('startDate').value;
+            const end = document.getElementById('endDate').value;
+            const filtered = rides.filter(r => r.date >= start && r.date <= end);
+            if (filtered.length === 0) { alert('Geen ritten in deze periode.'); return; }
+
+            let html = `<html><head><title>Rapport</title><style>body{font-family:sans-serif;padding:20px;}table{width:100%;border-collapse:collapse;}th,td{border:1px solid #ccc;padding:8px;font-size:12px;}</style></head><body><h2>Rapport</h2><table><tr><th>Datum</th><th>Start</th><th>Stop</th><th>Duur</th><th>Bedrijf</th><th>Chauffeur</th></tr>`;
+            filtered.forEach(r => {
+                html += `<tr><td>${r.date}</td><td>${r.startDateTime}</td><td>${r.stopDateTime}</td><td>${r.durationMinutes}m</td><td>${r.company}</td><td>${r.driver}</td></tr>`;
+            });
+            html += `</table><script>window.onload=()=>window.print();<\/script></body></html>`;
+            let w = window.open(); w.document.write(html); w.document.close();
+            closeModal('reportModal');
+        }
+
+        function saveSettings() {
+            apiKey = document.getElementById('apiKeyInput').value.trim();
+            binId = document.getElementById('binIdInput').value.trim();
+            localStorage.setItem('taxi_jsonbin_apikey', apiKey);
+            localStorage.setItem('taxi_jsonbin_binid', binId);
+            closeModal('settingsModal');
+            syncWithCloud(true);
+        }
+    </script>
+</body>
+</html>
