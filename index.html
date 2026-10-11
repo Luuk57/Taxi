@@ -1,86 +1,72 @@
-
 <!DOCTYPE html>
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Taxi Vervoer Rittenstaat & Planning</title>
+    <title>Tasker - Taxi Monitor</title>
     <style>
-        :root {
-            --bg-base: #030508;
-            --surface-glass: rgba(13, 17, 28, 0.85);
-            --surface-card: rgba(18, 24, 38, 0.75);
-            --border-glass: rgba(0, 242, 254, 0.2);
-            --neon-cyan: #00f2fe;
-            --neon-blue: #4facfe;
-            --neon-green: #10b981;
-            --neon-orange: #f59e0b;
-            --neon-red: #ef4444;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-        }
-
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-        body { background: var(--bg-base); color: var(--text-main); min-height: 100vh; padding: 15px; background-image: radial-gradient(circle at 50% 10%, #0c1425 0%, var(--bg-base) 100%); display: flex; flex-direction: column; align-items: center; }
+        body { background: #f0f3f8; display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: #333; }
 
-        header { background: var(--surface-glass); border: 1px solid var(--border-glass); border-radius: 14px; padding: 12px 18px; width: 100%; max-width: 500px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; backdrop-filter: blur(10px); }
-        .app-title { font-size: 15px; font-weight: 800; color: var(--neon-cyan); letter-spacing: 1px; }
-        .header-btns { display: flex; gap: 6px; align-items: center; }
-        .icon-btn { background: rgba(255,255,255,0.1); border: 1px solid var(--border-glass); color: white; width: 36px; height: 36px; border-radius: 50%; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .icon-btn:active { background: rgba(255,255,255,0.3); transform: scale(0.95); }
+        header { background: linear-gradient(135deg, #0062cc, #007bff); color: white; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,123,255,0.2); z-index: 10; }
+        .app-title { font-size: 18px; font-weight: 700; letter-spacing: 0.3px; }
+        .header-btns { display: flex; gap: 8px; align-items: center; }
+        .icon-btn { background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.3); color: white; width: 38px; height: 38px; border-radius: 50%; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; }
+        .icon-btn:active { background: rgba(255,255,255,0.4); transform: scale(0.94); }
 
-        .auto-pdf-banner { background: rgba(0, 242, 254, 0.1); border: 2px solid var(--neon-cyan); border-radius: 12px; padding: 14px; width: 100%; max-width: 500px; margin-bottom: 15px; display: none; text-align: center; animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(0,242,254, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(0,242,254, 0); } 100% { box-shadow: 0 0 0 0 rgba(0,242,254, 0); } }
-        .auto-pdf-title { font-size: 12px; font-weight: 800; color: var(--neon-cyan); text-transform: uppercase; margin-bottom: 6px; }
-        .btn-auto-pdf { background: var(--neon-cyan); color: #030508; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 800; font-size: 13px; cursor: pointer; width: 100%; margin-top: 6px; }
+        .auto-pdf-banner { background: #e6fffa; border: 2px solid #319795; border-radius: 12px; padding: 12px 15px; margin: 12px 15px 0 15px; display: none; text-align: center; box-shadow: 0 4px 12px rgba(49,151,149,0.2); }
+        .auto-pdf-title { font-size: 12px; font-weight: 800; color: #234e52; text-transform: uppercase; margin-bottom: 4px; }
+        .btn-auto-pdf { background: #319795; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 800; font-size: 13px; cursor: pointer; width: 100%; margin-top: 6px; }
 
-        .main-container { width: 100%; max-width: 500px; display: flex; flex-direction: column; align-items: center; gap: 15px; }
+        .main-container { flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 40px; display: flex; flex-direction: column; align-items: center; gap: 15px; }
 
-        .scheduled-banner { background: rgba(245, 158, 11, 0.12); border: 2px solid var(--neon-orange); border-radius: 14px; padding: 15px; width: 100%; text-align: left; display: none; }
-        .scheduled-title { font-size: 11px; font-weight: 800; color: var(--neon-orange); text-transform: uppercase; margin-bottom: 5px; }
-        .scheduled-details { font-size: 13px; color: var(--text-main); margin-bottom: 10px; font-weight: 600; }
-        .btn-start-scheduled { background: var(--neon-orange); color: #030508; border: none; padding: 8px 14px; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 13px; width: 100%; }
+        .scheduled-banner { background: #fffaf0; border: 2px solid #dd6b20; border-radius: 14px; padding: 15px; width: 100%; max-width: 500px; text-align: left; display: none; box-shadow: 0 4px 12px rgba(221,107,32,0.15); }
+        .scheduled-title { font-size: 11px; font-weight: 800; color: #c05621; text-transform: uppercase; margin-bottom: 5px; }
+        .scheduled-details { font-size: 13px; color: #2d3748; margin-bottom: 10px; font-weight: 600; }
+        .btn-start-scheduled { background: #dd6b20; color: white; border: none; padding: 10px 14px; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 13px; width: 100%; box-shadow: 0 4px 10px rgba(221,107,32,0.25); }
 
-        .meter-card { background: var(--surface-card); border-radius: 16px; padding: 25px; width: 100%; box-shadow: 0 8px 25px rgba(0,0,0,0.4); border: 1px solid var(--border-glass); text-align: center; backdrop-filter: blur(10px); }
-        .meter-status { font-size: 12px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
-        .timer-display { font-size: 38px; font-weight: 900; color: var(--neon-cyan); margin-bottom: 20px; font-variant-numeric: tabular-nums; text-shadow: 0 0 15px rgba(0,242,254,0.3); }
+        .meter-card { background: white; border-radius: 14px; padding: 25px; width: 100%; max-width: 500px; box-shadow: 0 4px 15px rgba(0,0,0,0.04); border: 1px solid #e2e8f0; text-align: center; }
+        .meter-status { font-size: 12px; font-weight: 800; color: #718096; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; }
+        .timer-display { font-size: 38px; font-weight: 900; color: #0097a7; margin-bottom: 20px; font-variant-numeric: tabular-nums; }
         
-        .action-main-btn { width: 100%; padding: 18px; border: none; border-radius: 12px; font-size: 18px; font-weight: 800; cursor: pointer; color: #030508; }
-        .btn-start { background: var(--neon-green); box-shadow: 0 0 15px rgba(16,185,129,0.3); }
-        .btn-stop { background: var(--neon-red); color: white; box-shadow: 0 0 15px rgba(239,68,68,0.3); }
+        .action-main-btn { width: 100%; padding: 18px; border: none; border-radius: 12px; font-size: 18px; font-weight: 800; cursor: pointer; color: white; }
+        .btn-start { background: #28a745; box-shadow: 0 4px 12px rgba(40,167,69,0.3); }
+        .btn-stop { background: #e53e3e; box-shadow: 0 4px 12px rgba(229,62,62,0.3); }
 
         .active-ride-form { margin-top: 20px; text-align: left; display: none; }
-        .active-ride-form label { display: block; font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; margin-top: 10px; }
-        .active-ride-form select, .active-ride-form input, .active-ride-form textarea { width: 100%; padding: 10px; font-size: 14px; border: 1px solid var(--border-glass); border-radius: 8px; outline: none; background: #070a12; font-weight: 600; color: white; }
+        .active-ride-form label { display: block; font-size: 11px; font-weight: 800; color: #4a5568; text-transform: uppercase; margin-bottom: 6px; margin-top: 10px; }
+        .active-ride-form select, .active-ride-form input, .active-ride-form textarea { width: 100%; padding: 12px; font-size: 14px; border: 2px solid #e2e8f0; border-radius: 10px; outline: none; background: #f8fafc; font-weight: 600; color: #2d3748; }
+        .active-ride-form select:focus, .active-ride-form input:focus, .active-ride-form textarea:focus { border-color: #007bff; background: white; }
 
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); justify-content: center; align-items: center; z-index: 100; }
-        .modal-content { background: #0f172a; border: 1px solid var(--border-glass); padding: 22px; border-radius: 16px; width: 90%; max-width: 420px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); max-height: 85vh; overflow-y: auto; }
-        .modal-content h3 { margin-bottom: 16px; color: var(--neon-cyan); font-size: 17px; font-weight: 700; }
-        .modal-content label { display: block; font-size: 11px; font-weight: 700; text-align: left; margin-bottom: 4px; color: var(--text-muted); text-transform: uppercase; margin-top: 10px; }
-        .modal-content input, .modal-content select, .modal-content textarea { width: 100%; padding: 10px; font-size: 14px; border: 1px solid var(--border-glass); border-radius: 8px; margin-bottom: 6px; outline: none; background: #070a12; font-weight: 600; color: white; text-align: left; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); justify-content: center; align-items: center; z-index: 100; }
+        .modal-content { background: white; border-radius: 16px; padding: 24px; width: 90%; max-width: 420px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.2); max-height: 85vh; overflow-y: auto; }
+        .modal-content h3 { margin-bottom: 16px; color: #1a202c; font-size: 18px; font-weight: 700; }
+        .modal-content label { display: block; font-size: 11px; font-weight: 700; text-align: left; margin-bottom: 6px; color: #4a5568; text-transform: uppercase; margin-top: 10px; }
+        .modal-content input, .modal-content select, .modal-content textarea { width: 100%; padding: 12px; font-size: 14px; border: 2px solid #e2e8f0; border-radius: 10px; margin-bottom: 6px; outline: none; background: #f8fafc; font-weight: 600; color: #2d3748; text-align: left; }
+        .modal-content input:focus, .modal-content select:focus, .modal-content textarea:focus { border-color: #007bff; background: white; }
         
         .modal-buttons { display: flex; gap: 10px; margin-top: 15px; }
-        .modal-buttons button { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 14px; }
-        .btn-cancel { background: #1e293b; color: var(--text-muted); }
-        .btn-confirm { background: var(--neon-cyan); color: #030508; }
-        .btn-excel { background: var(--neon-green); color: #030508; }
+        .modal-buttons button { flex: 1; padding: 12px; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 14px; }
+        .btn-cancel { background: #edf2f7; color: #4a5568; }
+        .btn-confirm { background: #007bff; color: white; }
+        .btn-excel { background: #10b981; color: white; }
 
-        .list-container { max-height: 220px; overflow-y: auto; text-align: left; margin-bottom: 12px; border: 1px solid var(--border-glass); padding: 8px; border-radius: 10px; background: #070a12; }
-        .list-card { background: #0f172a; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 10px; margin-bottom: 8px; }
-        .list-card-header { font-weight: 700; font-size: 13px; color: var(--text-main); display: flex; justify-content: space-between; align-items: center; }
-        .list-card-row { font-size: 12px; color: var(--text-muted); padding: 2px 0; }
-        .delete-btn { background: var(--neon-red); color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 700; }
+        .list-container { max-height: 220px; overflow-y: auto; text-align: left; margin-bottom: 12px; border: 2px solid #e2e8f0; padding: 8px; border-radius: 10px; background: #f8fafc; }
+        .list-card { background: white; border: 1px solid #cbd5e0; border-radius: 8px; padding: 10px; margin-bottom: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .list-card-header { font-weight: 700; font-size: 13px; color: #2d3748; display: flex; justify-content: space-between; align-items: center; }
+        .list-card-row { font-size: 12px; color: #718096; padding: 2px 0; }
+        .delete-btn { background: #e53e3e; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 700; }
 
-        .badge-green { background: rgba(16,185,129,0.2); color: var(--neon-green); padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 11px; border: 1px solid var(--neon-green); }
-        .badge-red { background: rgba(239,68,68,0.2); color: var(--neon-red); padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 11px; border: 1px solid var(--neon-red); }
-        .sync-status { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+        .badge-green { background: #e6f4ea; color: #28a745; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 11px; border: 1px solid #28a745; }
+        .badge-red { background: #ffebee; color: #e53e3e; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 11px; border: 1px solid #e53e3e; }
+        .sync-status { font-size: 11px; color: rgba(255,255,255,0.85); margin-top: 3px; font-weight: 500; }
     </style>
 </head>
 <body>
 
     <header>
         <div>
-            <div class="app-title">🚕 TAXI MONITOR</div>
+            <div class="app-title">Tasker - Taxi Monitor</div>
             <div class="sync-status" id="syncStatus">Cloud: Niet ingesteld</div>
         </div>
         <div class="header-btns">
@@ -93,7 +79,7 @@
 
     <div class="auto-pdf-banner" id="autoPdfBanner">
         <div class="auto-pdf-title">⏰ Tijd bereikt! Dagelijkse Taxi PDF nog niet gemaakt</div>
-        <div style="font-size: 12px; color: var(--text-main);">Genereer en download het rapport om de melding te voltooien.</div>
+        <div style="font-size: 12px; color: #234e52; margin-bottom: 6px;">Genereer en download het rapport om de melding te voltooien.</div>
         <button class="btn-auto-pdf" onclick="generateAutoPDF()">📄 GENEREER DAG-PDF NU</button>
     </div>
 
@@ -131,7 +117,7 @@
         <div class="modal-content">
             <h3>Agenda & Planning</h3>
             <div class="list-container" id="plannedListContainer"></div>
-            <hr style="margin: 10px 0; border:0; border-top:1px solid var(--border-glass);">
+            <hr style="margin: 12px 0; border:0; border-top:1px solid #e2e8f0;">
             <label>Startdatum:</label><input type="date" id="planDate">
             <label>Ophaaltijd:</label><input type="time" id="planTime" value="08:00">
             <label>Bedrijf:</label><select id="planCompany" onchange="checkNewOption(this, 'company')"></select>
@@ -149,7 +135,7 @@
                 <label>Tot einddatum:</label><input type="date" id="planEndDate">
             </div>
             <label>Opmerking:</label><input type="text" id="planNote" placeholder="Optioneel">
-            <div class="modal-buttons">
+            <div class="modal-buttons" style="margin-top:15px;">
                 <button class="btn-cancel" onclick="closeModal('planningModal')">Sluiten</button>
                 <button class="btn-confirm" onclick="addPlannedRide()">Inplannen</button>
             </div>
@@ -161,7 +147,7 @@
             <h3>Rapportage & Export</h3>
             <label>Startdatum:</label><input type="date" id="startDate">
             <label>Einddatum:</label><input type="date" id="endDate">
-            <div class="modal-buttons" style="flex-direction:column; gap:8px;">
+            <div class="modal-buttons" style="flex-direction:column; gap:8px; margin-top:15px;">
                 <button class="btn-confirm" onclick="generatePDFReport()">📄 Open & Print PDF</button>
                 <button class="btn-excel" onclick="generateExcelReport()">📊 Exporteer naar Excel (CSV)</button>
                 <button class="btn-cancel" onclick="closeModal('reportModal')">Sluiten</button>
@@ -183,10 +169,10 @@
             <label>Automatische PDF Tijd:</label>
             <input type="time" id="configPdfTime" value="17:00">
             <label style="margin-top: 10px;">JSONBin API Key:</label>
-            <input type="text" id="apiKeyInput" placeholder="API Key ($2a$10$...)">
-            <label>JSONBin Bin ID:</label>
+            <input type="text" id="apiKeyInput" placeholder="API Key">
+            <label style="margin-top: 10px;">JSONBin Bin ID:</label>
             <input type="text" id="binIdInput" placeholder="Bin ID">
-            <div class="modal-buttons">
+            <div class="modal-buttons" style="margin-top:15px;">
                 <button class="btn-cancel" onclick="closeModal('settingsModal')">Sluiten</button>
                 <button class="btn-confirm" onclick="saveSettings()">Opslaan & Sync</button>
             </div>
@@ -363,7 +349,7 @@
                 opt.textContent = item;
                 select.appendChild(opt);
             });
-            select.innerHTML += '<option value="__new__" style="font-weight:bold; color:var(--neon-cyan);">+ Nieuwe toevoegen...</option>';
+            select.innerHTML += '<option value="__new__" style="font-weight:bold; color:#007bff;">+ Nieuwe toevoegen...</option>';
             if (items.includes(currentVal)) select.value = currentVal;
         }
 
@@ -454,7 +440,6 @@
                 const destination = document.getElementById('rideDestination').value || 'Onbekend';
                 const note = document.getElementById('rideNote').value.trim();
 
-                // Nieuwste rit komt bovenaan via unshift()
                 rides.unshift({
                     date: startTime.toISOString().split('T')[0],
                     startDateTime: startTime.toLocaleString('nl-NL'),
@@ -487,7 +472,7 @@
             const container = document.getElementById('plannedListContainer');
             container.innerHTML = '';
             if (planned.length === 0) {
-                container.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 10px;">Geen geplande ritten.</p>';
+                container.innerHTML = '<p style="color: #718096; text-align: center; padding: 10px;">Geen geplande ritten.</p>';
             } else {
                 planned.forEach(function(p, idx) {
                     container.innerHTML += '<div class="list-card"><div class="list-card-header"><span>📅 ' + p.date + ' om <span class="badge-green">' + p.time + '</span> - ' + p.company + '</span><button class="delete-btn" onclick="deletePlanned(' + idx + ')">Wis</button></div><div class="list-card-row">Naar: ' + p.destination + ' | Chauffeur: ' + p.driver + '</div></div>';
@@ -552,7 +537,7 @@
             const container = document.getElementById('diaryListContainer');
             container.innerHTML = '';
             if (rides.length === 0) {
-                container.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 15px;">Nog geen ritten geregistreerd.</p>';
+                container.innerHTML = '<p style="color: #718096; text-align: center; padding: 15px;">Nog geen ritten geregistreerd.</p>';
             } else {
                 rides.forEach(function(r, idx) {
                     let dur = r.durationMinutes || 0;
@@ -576,7 +561,7 @@
             const filtered = rides.filter(function(r) { return r.date >= start && r.date <= end; });
             if (filtered.length === 0) { alert('Geen ritten in deze periode.'); return; }
 
-            let html = '<html><head><title>Taxi Rapport</title><style>body{font-family:sans-serif;padding:25px; color:#1e293b;}h2{color:#0f172a; border-bottom:2px solid #00f2fe; padding-bottom:8px;}table{width:100%;border-collapse:collapse;margin-top:10px;}th,td{border:1px solid #cbd5e1;padding:8px;font-size:12px;text-align:left;}th{background:#f1f5f9;}</style></head><body><h2>🚗 Taxi Rittenstaat Rapport</h2><p>Periode: ' + start + ' t/m ' + end + '</p><table><tr><th>Datum</th><th>Start</th><th>Stop</th><th>Duur</th><th>Bedrijf</th><th>Chauffeur</th><th>Bestemming</th></tr>';
+            let html = '<html><head><title>Taxi Rapport</title><style>body{font-family:Arial,sans-serif;padding:25px; color:#333;}h2{color:#007bff; border-bottom:2px solid #007bff; padding-bottom:8px;}table{width:100%;border-collapse:collapse;margin-top:10px;}th,td{border:1px solid #cbd5e0;padding:8px 12px;font-size:13px;text-align:left;}th{background:#edf2f7;}</style></head><body><h2>Taxi Rittenstaat Rapport</h2><p><b>Periode:</b> ' + start + ' t/m ' + end + '</p><table><tr><th>Datum</th><th>Start</th><th>Stop</th><th>Duur</th><th>Bedrijf</th><th>Chauffeur</th><th>Bestemming</th></tr>';
             filtered.forEach(function(r) {
                 html += '<tr><td>' + r.date + '</td><td>' + r.startDateTime + '</td><td>' + r.stopDateTime + '</td><td>' + r.durationMinutes + 'm</td><td>' + r.company + '</td><td>' + r.driver + '</td><td>' + r.destination + '</td></tr>';
             });
@@ -605,7 +590,7 @@
         }
 
         function saveSettings() {
-            pdfTargetTime = document.getElementById('configPdfTime').value || '06:00';
+            pdfTargetTime = document.getElementById('configPdfTime').value || '17:00';
             localStorage.setItem('taxi_pdf_time', pdfTargetTime);
 
             apiKey = document.getElementById('apiKeyInput').value.trim();
