@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Taxi Command Center - Full Cloud Native Sheets Edition</title>
+    <title>Taxi Command Center - Native Sheet Columns Edition</title>
     <style>
         :root {
             --win-blue: #0078d7;
@@ -121,8 +121,7 @@
             display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 2px solid var(--win-blue); margin-bottom: 15px;
         }
         .history-title-date { font-size: 16px; font-weight: 700; color: #202020; }
-        .history-badge-status { background: #28a745; color: #fff; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; }
-
+        
         .history-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
         .history-section-box { background: #fafafa; border: 1px solid #e5e5e5; border-radius: 4px; padding: 12px; }
         .history-section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
@@ -144,7 +143,7 @@
 
     <div class="win-header">
         <div class="win-title">
-            <span>🚖</span> TAXI COMMAND CENTER <span>// V4.0 CLOUD NATIVE</span>
+            <span>🚖</span> TAXI COMMAND CENTER <span>// V5.0 NATIVE COLUMNS</span>
         </div>
         <div style="display: flex; align-items: center; gap: 12px;">
             <button class="fullscreen-btn" onclick="toggleFullscreen()" style="background:#0078d7; border:none; color:#fff; padding:5px 10px; border-radius:3px; font-size:11px; cursor:pointer;">⛶ Volledig Scherm</button>
@@ -164,7 +163,7 @@
             <div class="dashboard-card" style="grid-column: span 1; grid-row: span 2;">
                 <div class="card-header">
                     <span>Vak 1: Tijden & Status Klokken</span>
-                    <span class="cloud-badge">☁️ Sheets Sync</span>
+                    <span class="cloud-badge">☁️ Sheets Kolommen</span>
                 </div>
                 
                 <div class="form-group">
@@ -202,7 +201,7 @@
             <div class="dashboard-card" style="grid-column: span 1; grid-row: span 2;">
                 <div class="card-header">
                     <span>Vak 2: Route & Details</span>
-                    <span class="cloud-badge">☁️ Sheets Sync</span>
+                    <span class="cloud-badge">☁️ Sheets Kolommen</span>
                 </div>
 
                 <div class="form-group">
@@ -251,7 +250,7 @@
 
         <div class="global-save-bar">
             <button class="btn-global-save" onclick="slaSessieDefinitiefOpOpEenRegel()">
-                <span>💾</span> HELE RIT DEFINITIEF OPSLAAN & SYNC NAAR SHEET
+                <span>💾</span> HELE RIT DEFINITIEF OPSLAAN & IN KOLOMMEN WEGZETTEN
             </button>
         </div>
     </div>
@@ -330,9 +329,9 @@
     </div>
 
     <script>
-        const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbxxWS-ljNRX21LQEvKlTN36vnrzMP2z2h56l0rGROz0GHow6wkJbacANDiMwtnWB1CY/exec";
+        const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbxGkM5U9gfl44DSgcEBapl2SW5t8WBagppprQ3GHbLTyAamiMABp-qRI0F6ZS-mds-s/exec";
         
-        let configLijsten = {
+        let configData = {
             bedrijven: ['Vervoersbedrijf XYZ', 'Taxi Centrale Noord', 'Zorgvervoer Midden'],
             chauffeurs: ['Jan de Vries', 'Piet Jansen', 'Klaas Bakker'],
             adressen: ['Hoofdstraat 1, Groningen', 'Ziekenhuisweg 10, Assen', 'Stationsplein 5, Emmen']
@@ -372,10 +371,10 @@
         }
 
         function vulDropdowns() {
-            laadOptiesInSelect('taxi-bedrijf', configLijsten.bedrijven, '-- Selecteer Bedrijf --');
-            laadOptiesInSelect('taxi-chauffeur', configLijsten.chauffeurs, '-- Selecteer Chauffeur --');
-            laadOptiesInSelect('adres-haal', configLijsten.adressen, '-- Selecteer Haaladres --');
-            laadOptiesInSelect('adres-breng', configLijsten.adressen, '-- Selecteer Brengadres --');
+            laadOptiesInSelect('taxi-bedrijf', configData.bedrijven, '-- Selecteer Bedrijf --');
+            laadOptiesInSelect('taxi-chauffeur', configData.chauffeurs, '-- Selecteer Chauffeur --');
+            laadOptiesInSelect('adres-haal', configData.adressen, '-- Selecteer Haaladres --');
+            laadOptiesInSelect('adres-breng', configData.adressen, '-- Selecteer Brengadres --');
         }
 
         function laadOptiesInSelect(elementId, items, placeholder) {
@@ -403,9 +402,9 @@
                 let nieuweWaarde = prompt("Voer een nieuwe waarde in:");
                 if (nieuweWaarde && nieuweWaarde.trim() !== "") {
                     nieuweWaarde = nieuweWaarde.trim();
-                    if (!configLijsten[categorie].includes(nieuweWaarde)) {
-                        configLijsten[categorie].push(nieuweWaarde);
-                        syncToGoogle('taxi_config', configLijsten);
+                    if (!configData[categorie].includes(nieuweWaarde)) {
+                        configData[categorie].push(nieuweWaarde);
+                        syncConfigToGoogle();
                     }
                     vulDropdowns();
                     selectElem.value = nieuweWaarde;
@@ -413,6 +412,17 @@
                     selectElem.value = "";
                 }
             }
+        }
+
+        function syncConfigToGoogle() {
+            let rows = [];
+            // Zet config om in platte rijen voor de kolommen in Google Sheet
+            ['bedrijven', 'chauffeurs', 'adressen'].forEach(cat => {
+                configData[cat].forEach(val => {
+                    rows.push({ Categorie: cat, Waarde: val });
+                });
+            });
+            stuurNaarGoogle('TaxiConfig', rows);
         }
 
         function zetHuidigeTijd(elementId) {
@@ -494,35 +504,38 @@
                            (mode === 'mawovr' && (dag === 1 || dag === 3 || dag === 5)) || 
                            (mode === 'didoza' && (dag === 2 || dag === 4 || dag === 6)));
                 if (toe) {
-                    planningLijst.push({ id: Date.now() + Math.random(), datum: new Date(huidigeDatum).toISOString(), type, note });
+                    planningLijst.push({ 
+                        ID: Date.now() + Math.random(), 
+                        DatumTijd: new Date(huidigeDatum).toLocaleString(), 
+                        Type: type, 
+                        Details: note || '-' 
+                    });
                 }
                 huidigeDatum.setDate(huidigeDatum.getDate() + (mode === 'omdedag' ? 2 : 1));
                 if (mode === 'geen') break;
             }
 
             sorterEnRenderPlanning();
-            syncToGoogle('taxi_planning', planningLijst);
+            stuurNaarGoogle('TaxiPlanning', planningLijst);
             document.getElementById('plan-datum').value = '';
             document.getElementById('plan-note').value = '';
         }
 
         function sorterEnRenderPlanning() {
-            planningLijst.sort((a, b) => new Date(a.datum) - new Date(b.datum));
             let body = document.getElementById('plan-table-body');
             body.innerHTML = '';
             let dagenNamen = ['Zondag', 'Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag'];
 
             planningLijst.forEach((p) => {
-                let d = new Date(p.datum);
                 let tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td><b>${d.toLocaleString([], {year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute:'2-digit'})}</b></td>
-                    <td>${dagenNamen[d.getDay()]}</td>
-                    <td>${p.type}</td>
-                    <td>${p.note || '-'}</td>
+                    <td><b>${p.DatumTijd}</b></td>
+                    <td>-</td>
+                    <td>${p.Type}</td>
+                    <td>${p.Details}</td>
                     <td style="text-align:center;">
-                        <button class="btn-table-action btn-edit" onclick="laadPlanningInLive('${p.datum}', '${p.type}', '${p.note || ''}')">✏️ Laad</button>
-                        <button class="btn-table-action btn-delete" onclick="verwijderPlanningItem('${p.id}')">✕</button>
+                        <button class="btn-table-action btn-edit" onclick="laadPlanningInLive('${p.DatumTijd}', '${p.Type}', '${p.Details}')">✏️ Laad</button>
+                        <button class="btn-table-action btn-delete" onclick="verwijderPlanningItem('${p.ID}')">✕</button>
                     </td>
                 `;
                 body.appendChild(tr);
@@ -530,33 +543,33 @@
         }
 
         function verwijderPlanningItem(id) {
-            planningLijst = planningLijst.filter(p => p.id != id);
+            planningLijst = planningLijst.filter(p => p.ID != id);
             sorterEnRenderPlanning();
-            syncToGoogle('taxi_planning', planningLijst);
+            stuurNaarGoogle('TaxiPlanning', planningLijst);
         }
 
-        function laadPlanningInLive(datumIso, type, note) {
-            document.getElementById('t-ophalen').value = formatDateTimeLocal(new Date(datumIso));
+        function laadPlanningInLive(datumTijdStr, type, note) {
             document.getElementById('plan-note').value = note;
             openTab('tab-live', 'btn-tab-live');
         }
 
         function slaSessieDefinitiefOpOpEenRegel() {
-            let v1 = { ophalen: document.getElementById('t-ophalen').value, vertrek: document.getElementById('t-vertrek').value, aankomst: document.getElementById('t-aankomst').value };
-            let v2 = { bedrijf: document.getElementById('taxi-bedrijf').value, chauffeur: document.getElementById('taxi-chauffeur').value, haaladres: document.getElementById('adres-haal').value, brengadres: document.getElementById('adres-breng').value };
-            let v4 = document.getElementById('notities-text').value;
-
-            let completeRit = {
-                datumSync: new Date().toISOString(),
-                tijden: v1,
-                routeEnDetails: v2,
-                notities: v4
+            let nieuweRit = {
+                SyncTijd: new Date().toLocaleString(),
+                Ophaaltijd: document.getElementById('t-ophalen').value || '-',
+                Vertrektijd: document.getElementById('t-vertrek').value || '-',
+                Aankomsttijd: document.getElementById('t-aankomst').value || '-',
+                Bedrijf: document.getElementById('taxi-bedrijf').value || '-',
+                Chauffeur: document.getElementById('taxi-chauffeur').value || '-',
+                Haaladres: document.getElementById('adres-haal').value || '-',
+                Brengadres: document.getElementById('adres-breng').value || '-',
+                Notities: document.getElementById('notities-text').value || '-'
             };
 
-            historieRecords.unshift(completeRit);
-            syncToGoogle('taxi_historie', historieRecords);
+            historieRecords.unshift(nieuweRit);
+            stuurNaarGoogle('TaxiHistorie', historieRecords);
             renderHistorie();
-            alert("Rit opgeslagen en direct naar tabblad 'taxi_historie' in Google Sheets gestuurd!");
+            alert("Rit opgeslagen in echte kolommen in tabblad 'TaxiHistorie'!");
         }
 
         function renderHistorie() {
@@ -572,32 +585,29 @@
 
             counter.innerText = `Record ${huidigRecordIndex + 1} van ${historieRecords.length}`;
             let rec = historieRecords[huidigRecordIndex];
-            let t = rec.tijden || {};
-            let r = rec.routeEnDetails || {};
-            let n = rec.notities || '';
 
             view.innerHTML = `
                 <div class="history-card-report">
                     <div class="history-header-bar">
-                        <div class="history-title-date">🚖 Rittencentralerapport van ${new Date(rec.datumSync).toLocaleString()}</div>
+                        <div class="history-title-date">🚖 Rit Rapport (${rec.SyncTijd})</div>
                         <button style="background:#28a745; color:#fff; border:none; padding:6px 14px; border-radius:4px; font-weight:700; cursor:pointer;" onclick="window.print()">🖨️ Print PDF</button>
                     </div>
                     <div class="history-grid">
                         <div class="history-section-box">
                             <div class="history-section-title" style="color:#0078d7;">⏱️ Tijden</div>
                             <table class="history-table">
-                                <tr><td>Ophaal:</td><td>${t.ophalen ? new Date(t.ophalen).toLocaleString() : '-'}</td></tr>
-                                <tr><td>Vertrek:</td><td>${t.vertrek ? new Date(t.vertrek).toLocaleString() : '-'}</td></tr>
-                                <tr><td>Aankomst:</td><td>${t.aankomst ? new Date(t.aankomst).toLocaleString() : '-'}</td></tr>
+                                <tr><td>Ophaal:</td><td>${rec.Ophaaltijd}</td></tr>
+                                <tr><td>Vertrek:</td><td>${rec.Vertrektijd}</td></tr>
+                                <tr><td>Aankomst:</td><td>${rec.Aankomsttijd}</td></tr>
                             </table>
                         </div>
                         <div class="history-section-box">
                             <div class="history-section-title" style="color:#28a745;">🚗 Route</div>
                             <table class="history-table">
-                                <tr><td>Bedrijf:</td><td><b>${r.bedrijf || '-'}</b></td></tr>
-                                <tr><td>Chauffeur:</td><td>${r.chauffeur || '-'}</td></tr>
-                                <tr><td>Haal:</td><td>${r.haaladres || '-'}</td></tr>
-                                <tr><td>Breng:</td><td>${r.brengadres || '-'}</td></tr>
+                                <tr><td>Bedrijf:</td><td><b>${rec.Bedrijf}</b></td></tr>
+                                <tr><td>Chauffeur:</td><td>${rec.Chauffeur}</td></tr>
+                                <tr><td>Haal:</td><td>${rec.Haaladres}</td></tr>
+                                <tr><td>Breng:</td><td>${rec.Brengadres}</td></tr>
                             </table>
                         </div>
                     </div>
@@ -628,10 +638,15 @@
 
         function formatDateTimeLocal(date) { return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}T${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`; }
 
-        function syncToGoogle(key, valueObj) {
-            let valStr = encodeURIComponent(JSON.stringify(valueObj));
-            let url = `${GOOGLE_SHEETS_URL}?key=${key}&value=${valStr}`;
-            fetch(url, { method: 'GET', mode: 'no-cors' }).catch(e => {});
+        // Stuurt platte tabellen naar Google Sheet om echte kolommen te vullen
+        function stuurNaarGoogle(sheetNaam, rijLijst) {
+            let payload = JSON.stringify({ sheet: sheetNaam, rows: rijLijst });
+            fetch(GOOGLE_SHEETS_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: payload
+            }).catch(e => {});
         }
 
         async function syncFromGoogle() {
@@ -639,18 +654,28 @@
                 let res = await fetch(GOOGLE_SHEETS_URL);
                 let data = await res.json();
                 
-                if(data['taxi_config']) {
-                    configLijsten = JSON.parse(data['taxi_config']);
+                // Config inlezen
+                if(data['TaxiConfig'] && Array.isArray(data['TaxiConfig'])) {
+                    configData.bedrijven = [];
+                    configData.chauffeurs = [];
+                    configData.adressen = [];
+                    data['TaxiConfig'].forEach(r => {
+                        if(r.Categorie === 'bedrijven') configData.bedrijven.push(r.Waarde);
+                        if(r.Categorie === 'chauffeurs') configData.chauffeurs.push(r.Waarde);
+                        if(r.Categorie === 'adressen') configData.adressen.push(r.Waarde);
+                    });
                 }
                 vulDropdowns();
 
-                if(data['taxi_planning']) {
-                    planningLijst = JSON.parse(data['taxi_planning']);
+                // Planning inlezen
+                if(data['TaxiPlanning'] && Array.isArray(data['TaxiPlanning'])) {
+                    planningLijst = data['TaxiPlanning'];
                     sorterEnRenderPlanning();
                 }
 
-                if(data['taxi_historie']) {
-                    historieRecords = JSON.parse(data['taxi_historie']);
+                // Historie inlezen
+                if(data['TaxiHistorie'] && Array.isArray(data['TaxiHistorie'])) {
+                    historieRecords = data['TaxiHistorie'];
                     renderHistorie();
                 }
             } catch(e){}
