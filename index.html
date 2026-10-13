@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Taxi Command Center - 15m Margin Edition</title>
+    <title>Taxi Command Center - Triple Status Clock Edition</title>
     <style>
         :root {
             --win-blue: #0078d7;
@@ -69,22 +69,23 @@
 
         .draft-badge { font-size: 10px; font-weight: normal; text-transform: none; color: #888; background: #eee; padding: 2px 6px; border-radius: 3px; }
 
-        .form-group { margin-bottom: 8px; }
-        .form-group label { display: block; font-size: 11px; font-weight: 600; color: #555; margin-bottom: 3px; }
+        .form-group { margin-bottom: 6px; }
+        .form-group label { display: block; font-size: 11px; font-weight: 600; color: #555; margin-bottom: 2px; }
         .form-group input[type="number"], .form-group input[type="text"], .form-group input[type="date"], .form-group input[type="datetime-local"], .form-group select, .form-group textarea {
-            width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px; font-size: 12px; background: #fafafa;
+            width: 100%; padding: 5px; border: 1px solid #ccc; border-radius: 3px; font-size: 11px; background: #fafafa;
         }
 
-        .calc-box { background: #eef6fc; border-left: 4px solid var(--win-blue); padding: 8px; margin-top: 6px; font-size: 11px; line-height: 1.4; }
+        .calc-box { background: #eef6fc; border-left: 4px solid var(--win-blue); padding: 6px; margin-top: 4px; font-size: 11px; line-height: 1.3; }
 
-        /* Digitale Status Klok in Vak 1 (15m Marge) */
-        .status-clock-box {
-            background: #1b1b1b; border-radius: 5px; padding: 10px; text-align: center; margin-top: 8px; border: 1px solid #333;
+        /* Kleine sub-klokjes onder elk veld */
+        .sub-clock-box {
+            background: #1b1b1b; border-radius: 3px; padding: 4px 8px; text-align: center; margin-bottom: 8px; border: 1px solid #333;
         }
-        .status-clock-label { font-size: 9px; color: #aaa; text-transform: uppercase; margin-bottom: 3px; letter-spacing: 0.5px; }
-        .status-clock-display { font-size: 18px; font-weight: bold; font-family: monospace; }
-        .status-green { color: #28a745; text-shadow: 0 0 8px rgba(40,167,69,0.4); }
-        .status-red { color: #dc3545; text-shadow: 0 0 8px rgba(220,53,69,0.4); }
+        .sub-clock-label { font-size: 8px; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; }
+        .sub-clock-display { font-size: 12px; font-weight: bold; font-family: monospace; }
+        .status-green { color: #28a745; }
+        .status-red { color: #dc3545; }
+        .status-blue { color: #00ffcc; }
 
         /* Grote Digitale Klok in Vak 3 */
         .big-clock-container {
@@ -167,7 +168,7 @@
 
     <div class="win-header">
         <div class="win-title">
-            <span>🚖</span> TAXI COMMAND CENTER <span>// V1.4</span>
+            <span>🚖</span> TAXI COMMAND CENTER <span>// V1.5</span>
         </div>
         <div style="display: flex; align-items: center; gap: 12px;">
             <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ Volledig Scherm</button>
@@ -194,33 +195,42 @@
             <!-- VAK 1 -->
             <div class="dashboard-card" style="grid-column: span 1; grid-row: span 2;">
                 <div class="card-header">
-                    <span>Vak 1: Tijden & Status Klok</span>
+                    <span>Vak 1: Tijden & Status Klokken</span>
                     <span class="draft-badge">Auto-Save</span>
                 </div>
                 
+                <!-- 1. Ophaaltijd -->
                 <div class="form-group">
                     <label>Geplande Ophaaltijd:</label>
                     <input type="datetime-local" id="t-ophalen" oninput="berekenRitTijden(); opslaanConceptVak1();">
                 </div>
+                <div class="sub-clock-box">
+                    <div class="sub-clock-label">Ophaaltijd Status (Marge: 15 min)</div>
+                    <div class="sub-clock-display status-green" id="clock-ophalen">--:--</div>
+                </div>
                 
+                <!-- 2. Daadwerkelijk Vertrek -->
                 <div class="form-group">
                     <label>Daadwerkelijk Vertrek:</label>
                     <input type="datetime-local" id="t-vertrek" oninput="opslaanConceptVak1();">
                 </div>
+                <div class="sub-clock-box">
+                    <div class="sub-clock-label">Vertrek Status</div>
+                    <div class="sub-clock-display status-blue" id="clock-vertrek">--:--</div>
+                </div>
 
+                <!-- 3. Verwachte Aankomst -->
                 <div class="form-group">
                     <label>Verwachte / Werkelijke Aankomst:</label>
                     <input type="datetime-local" id="t-aankomst" oninput="berekenRitTijden(); opslaanConceptVak1();">
                 </div>
-
-                <div class="calc-box" id="resultaten-tijden">
-                    <b>Ritduur:</b> nog niet berekend
+                <div class="sub-clock-box">
+                    <div class="sub-clock-label">Aankomst Status</div>
+                    <div class="sub-clock-display status-blue" id="clock-aankomst">--:--</div>
                 </div>
 
-                <!-- DIGITALE STATUS KLOK (Marge 15 min) -->
-                <div class="status-clock-box">
-                    <div class="status-clock-label">Status Ophaaltijd (Marge: 15 min)</div>
-                    <div class="status-clock-display status-green" id="status-clock-display">--:--</div>
+                <div class="calc-box" id="resultaten-tijden" style="margin-top: 4px;">
+                    <b>Ritduur:</b> nog niet berekend
                 </div>
             </div>
 
@@ -406,7 +416,7 @@
         setInterval(() => {
             document.getElementById('system-clock').innerText = new Date().toLocaleString();
             updateCountdown();
-            updateStatusClock();
+            updateAllSubClocks();
         }, 1000);
 
         function openTab(tabId, btnId) {
@@ -430,29 +440,57 @@
             }
         }
 
-        /* --- STATUS KLOK LOGICA (15 MINUTEN MARGE) --- */
-        function updateStatusClock() {
-            let clockDisplay = document.getElementById('status-clock-display');
-            let oph = document.getElementById('t-ophalen').value;
-            
-            if(!oph) {
-                clockDisplay.innerText = "--:--";
-                clockDisplay.className = "status-clock-display status-green";
-                return;
+        /* --- TRIPLE SUB-CLOCKS LOGICA (VAK 1) --- */
+        function updateAllSubClocks() {
+            let nu = new Date();
+
+            // 1. Ophaaltijd Klok (Marge 15 min)
+            let ophVal = document.getElementById('t-ophalen').value;
+            let clockOphalen = document.getElementById('clock-ophalen');
+            if (!ophVal) {
+                clockOphalen.innerText = "--:--";
+                clockOphalen.className = "sub-clock-display status-green";
+            } else {
+                let ophTijd = new Date(ophVal);
+                let diffMin = Math.floor((nu - ophTijd) / (1000 * 60));
+                if (diffMin <= 15) {
+                    clockOphalen.innerText = diffMin < 0 ? `OP TIJD` : `+${diffMin}m - OP TIJD`;
+                    clockOphalen.className = "sub-clock-display status-green";
+                } else {
+                    clockOphalen.innerText = `+${diffMin}m - TE LAAT`;
+                    clockOphalen.className = "sub-clock-display status-red";
+                }
             }
 
-            let ophaalTijd = new Date(oph);
-            let nu = new Date();
-            let diffMinuten = Math.floor((nu - ophaalTijd) / (1000 * 60));
-
-            if (diffMinuten <= 15) {
-                // Groen t/m 15 minuten na de geplande tijd (bijv. 07:00 t/m 07:15)
-                clockDisplay.innerText = diffMinuten < 0 ? `OP TIJD` : `+${diffMinuten}m - OP TIJD`;
-                clockDisplay.className = "status-clock-display status-green";
+            // 2. Vertrek Klok
+            let vertVal = document.getElementById('t-vertrek').value;
+            let clockVertrek = document.getElementById('clock-vertrek');
+            if (!vertVal) {
+                clockVertrek.innerText = "Nog niet vertrokken";
+                clockVertrek.className = "sub-clock-display";
             } else {
-                // Rood vanaf 16 minuten te laat (vanaf 07:16)
-                clockDisplay.innerText = `+${diffMinuten}m - TE LAAT`;
-                clockDisplay.className = "status-clock-display status-red";
+                let vertTijd = new Date(vertVal);
+                let diffVert = Math.floor((nu - vertTijd) / (1000 * 60));
+                clockVertrek.innerText = diffVert < 0 ? `Over ${Math.abs(diffVert)} min` : `Vertrokken (${diffVert}m geleden)`;
+                clockVertrek.className = "sub-clock-display status-blue";
+            }
+
+            // 3. Aankomst Klok
+            let aankVal = document.getElementById('t-aankomst').value;
+            let clockAankomst = document.getElementById('clock-aankomst');
+            if (!aankVal) {
+                clockAankomst.innerText = "Geen aankomsttijd";
+                clockAankomst.className = "sub-clock-display";
+            } else {
+                let aankTijd = new Date(aankVal);
+                let diffAank = Math.floor((aankTijd - nu) / (1000 * 60));
+                if (diffAank > 0) {
+                    clockAankomst.innerText = `Nog ca. ${diffAank} min`;
+                    clockAankomst.className = "sub-clock-display status-blue";
+                } else {
+                    clockAankomst.innerText = `Aangekomen (${Math.abs(diffAank)}m geleden)`;
+                    clockAankomst.className = "sub-clock-display status-green";
+                }
             }
         }
 
