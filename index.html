@@ -1,688 +1,1197 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Taxi Command Center - Bulletproof Sheets Edition</title>
-    <style>
-        :root {
-            --win-blue: #0078d7;
-            --win-bg: #f3f3f3;
-            --win-dark: #202020;
-            --card-bg: #ffffff;
-            --border-color: #e1e1e1;
-            --font-ui: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Taxi Command Center</title>
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-ui); }
-        body, html { width: 100%; height: 100%; overflow: hidden; background: var(--win-bg); color: var(--win-dark); }
+<style>
+:root {
+  --blue: #0078d7;
+  --green: #218838;
+  --red: #dc3545;
+  --bg: #f1f4f8;
+  --card: #fff;
+  --border: #dce2e8;
+  --text: #202b38;
+}
 
-        .win-header {
-            height: 50px; background: var(--card-bg); border-bottom: 1px solid var(--border-color);
-            display: flex; align-items: center; justify-content: space-between; padding: 0 20px;
-        }
-        .win-title { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
-        .win-title span { color: var(--win-blue); }
+* { box-sizing: border-box; }
 
-        .tab-bar {
-            display: flex; background: #e5e5e5; border-bottom: 1px solid var(--border-color); padding: 0 20px; gap: 5px; height: 38px;
-        }
-        .tab-btn {
-            padding: 8px 16px; font-size: 12px; font-weight: 600; background: #d6d6d6; border: none;
-            border-top-left-radius: 4px; border-top-right-radius: 4px; cursor: pointer; color: #444; transition: 0.2s; outline: none;
-        }
-        .tab-btn.active {
-            background: var(--card-bg); color: var(--win-blue); border-bottom: 3px solid var(--win-blue); font-weight: bold;
-        }
-        .tab-btn:hover:not(.active) { background: #e0e0e0; }
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
 
-        .tab-content { display: none; width: 100%; height: calc(100vh - 88px); padding: 15px 20px 20px 20px; overflow-y: auto; }
-        .tab-content.active { display: block !important; }
+header {
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  padding: 14px 18px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
 
-        .dashboard-grid {
-            display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); gap: 15px; height: calc(100% - 45px);
-        }
+h1 { font-size: 20px; margin: 0; }
 
-        .dashboard-card {
-            background: var(--card-bg); border: 1px solid var(--border-color);
-            border-radius: 4px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-            display: flex; flex-direction: column; overflow-y: auto; position: relative;
-        }
-        .card-header {
-            font-size: 13px; font-weight: 600; color: var(--win-blue);
-            margin-bottom: 12px; border-bottom: 2px solid var(--win-blue); padding-bottom: 5px;
-            text-transform: uppercase; letter-spacing: 0.5px; display: flex; justify-content: space-between; align-items: center;
-        }
+#status {
+  padding: 10px 14px;
+  background: #e7f1ff;
+  border-bottom: 1px solid #cbdcf2;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
 
-        .cloud-badge { font-size: 10px; font-weight: normal; text-transform: none; color: #28a745; background: #e8f5e9; padding: 2px 6px; border-radius: 3px; border: 1px solid #c8e6c9; }
+#status.error {
+  background: #ffeded;
+  color: #a00000;
+}
 
-        .form-group { margin-bottom: 8px; }
-        .form-group label { display: block; font-size: 11px; font-weight: 600; color: #555; margin-bottom: 2px; }
-        .form-group input[type="text"], .form-group input[type="date"], .form-group input[type="datetime-local"], .form-group select, .form-group textarea {
-            width: 100%; padding: 5px; border: 1px solid #ccc; border-radius: 3px; font-size: 11px; background: #fafafa;
-        }
+#status.success {
+  background: #e7f6eb;
+  color: #17652a;
+}
 
-        .calc-box { background: #eef6fc; border-left: 4px solid var(--win-blue); padding: 6px; margin-top: 4px; font-size: 11px; line-height: 1.3; }
+nav {
+  display: flex;
+  gap: 5px;
+  padding: 10px;
+  background: #e3e9f0;
+  overflow-x: auto;
+}
 
-        .sub-clock-box {
-            background: #1b1b1b; border-radius: 3px; padding: 6px 8px; text-align: center; margin-bottom: 8px; border: 1px solid #333; cursor: pointer; transition: 0.2s;
-        }
-        .sub-clock-box:hover { background: #2b2b2b; }
-        
-        .border-green { border: 1px solid #28a745 !important; }
-        .border-red { border: 1px solid #dc3545 !important; }
-        .border-blue { border: 1px solid #0078d7 !important; }
+button, input, select, textarea {
+  font: inherit;
+}
 
-        .sub-clock-label { font-size: 8px; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; }
-        .sub-clock-display { font-size: 12px; font-weight: bold; font-family: monospace; }
-        .status-green { color: #28a745; }
-        .status-red { color: #dc3545; }
-        .status-blue { color: #00ffcc; }
+button {
+  cursor: pointer;
+  border: 0;
+  border-radius: 7px;
+  padding: 12px 15px;
+  font-weight: bold;
+}
 
-        .big-clock-container {
-            flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            background: #1b1b1b; border-radius: 6px; box-shadow: inset 0 0 20px rgba(0,0,0,0.9); padding: 15px; margin-top: 5px; position: relative;
-        }
-        .big-clock-label { font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
-        .big-clock-timer { font-size: 28px; font-weight: bold; font-family: monospace; color: #00ffcc; text-shadow: 0 0 10px rgba(0,255,204,0.4); margin-bottom: 8px; }
-        
-        .btn-stop-timer {
-            background: #dc3545; color: #fff; border: none; padding: 4px 12px; border-radius: 3px; font-size: 11px; font-weight: bold; cursor: pointer; transition: 0.2s;
-        }
-        .btn-stop-timer:hover { background: #c82333; }
+nav button {
+  background: #fff;
+  color: #334155;
+  white-space: nowrap;
+}
 
-        .global-save-bar {
-            height: 38px; margin-top: 10px; display: flex; align-items: center; justify-content: center;
-        }
-        .btn-global-save {
-            width: 100%; height: 100%; background: #28a745; color: #fff; border: none; border-radius: 4px;
-            font-size: 13px; font-weight: 700; cursor: pointer; letter-spacing: 0.5px; transition: 0.2s;
-            display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .btn-global-save:hover { background: #218838; }
+nav button.active { background: var(--blue); color: white; }
 
-        .plan-table { width: 100%; border-collapse: collapse; margin-top: 10px; background: #fff; }
-        .plan-table th, .plan-table td { border: 1px solid #ddd; padding: 8px; font-size: 12px; text-align: left; }
-        .plan-table th { background: #0078d7; color: white; }
+main { padding: 14px; }
 
-        .btn-table-action {
-            padding: 3px 8px; border: none; border-radius: 3px; font-size: 11px; cursor: pointer; color: #fff; font-weight: 600; margin-right: 4px;
-        }
-        .btn-edit { background: #ffc107; color: #000; }
-        .btn-delete { background: #dc3545; }
+.tab { display: none; }
+.tab.active { display: block; }
 
-        .record-navigator { display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 10px 20px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 15px; }
-        .nav-btn { padding: 6px 14px; background: var(--win-blue); color: #fff; border: none; border-radius: 3px; cursor: pointer; font-weight: 600; }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
 
-        .history-card-report {
-            background: #fff; border: 1px solid #dcdcdc; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); padding: 20px; margin-top: 10px;
-        }
-        .history-header-bar {
-            display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 2px solid var(--win-blue); margin-bottom: 15px;
-        }
-        .history-title-date { font-size: 16px; font-weight: 700; color: #202020; }
-        
-        .history-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
-        .history-section-box { background: #fafafa; border: 1px solid #e5e5e5; border-radius: 4px; padding: 12px; }
-        .history-section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
-        
-        .history-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 5px; }
-        .history-table td, .history-table th { padding: 5px 8px; border-bottom: 1px solid #eee; text-align: left; }
-        .history-table th { background: #f0f0f0; font-weight: 600; color: #555; }
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  min-width: 0;
+}
 
-        @media print {
-            body * { visibility: hidden; }
-            .tab-content.active, .tab-content.active * { visibility: visible; }
-            .tab-content.active { position: absolute; left: 0; top: 0; width: 100%; padding: 0; }
-            .win-header, .tab-bar, .record-navigator, button { display: none !important; }
-            .history-card-report { border: none; box-shadow: none; padding: 0; }
-        }
-    </style>
+.card h2 {
+  font-size: 17px;
+  margin: 0 0 15px;
+  color: var(--blue);
+}
+
+.field { margin-bottom: 13px; }
+
+label {
+  display: block;
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+input, select, textarea {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px;
+  border: 1px solid #bdc7d3;
+  border-radius: 7px;
+  background: white;
+}
+
+textarea { min-height: 90px; resize: vertical; }
+
+.primary { background: var(--blue); color: white; }
+.green { background: var(--green); color: white; }
+.red { background: var(--red); color: white; }
+.gray { background: #e5eaf0; color: #263445; }
+
+.wide { width: 100%; margin-top: 10px; }
+
+.timer {
+  font-size: clamp(28px, 5vw, 48px);
+  font-weight: bold;
+  font-family: monospace;
+  text-align: center;
+  padding: 18px 4px;
+  color: #00a98f;
+  background: #15212c;
+  border-radius: 10px;
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  background: white;
+  margin-top: 12px;
+}
+
+th, td {
+  border: 1px solid var(--border);
+  padding: 9px;
+  text-align: left;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+th { background: #e9f1fa; }
+
+.table-wrap { overflow-x: auto; }
+
+.muted { color: #637083; font-size: 13px; }
+
+@media (max-width: 700px) {
+  .grid { grid-template-columns: 1fr; }
+  main { padding: 9px; }
+  .card { padding: 13px; }
+  header { padding: 12px; }
+  h1 { font-size: 17px; }
+  th, td { padding: 7px; font-size: 12px; }
+}
+
+@media print {
+  header, nav, #status, .no-print, button { display: none !important; }
+  .tab { display: none !important; }
+  #historie { display: block !important; }
+  body { background: white; }
+}
+</style>
 </head>
+
 <body>
 
-    <div class="win-header">
-        <div class="win-title">
-            <span>🚖</span> TAXI COMMAND CENTER <span>// V5.1 BULLETPROOF</span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 12px;">
-            <button class="fullscreen-btn" onclick="toggleFullscreen()" style="background:#0078d7; border:none; color:#fff; padding:5px 10px; border-radius:3px; font-size:11px; cursor:pointer;">⛶ Volledig Scherm</button>
-            <div id="system-clock" style="font-size: 13px; font-weight: 500; color: #666;"></div>
-        </div>
+<header>
+  <h1>🚖 Taxi Command Center</h1>
+  <div id="klok">--:--:--</div>
+</header>
+
+<div id="status">Verbinding met Google Sheets controleren...</div>
+
+<nav class="no-print">
+  <button class="active" data-tab="live">🚖 Live rit</button>
+  <button data-tab="planning">📅 Planning</button>
+  <button data-tab="historie">📁 Rittenarchief</button>
+  <button id="btn-vernieuw" class="gray">↻ Vernieuwen</button>
+</nav>
+
+<main>
+
+<!-- LIVE RIT -->
+<section id="live" class="tab active">
+  <div class="grid">
+
+    <div class="card">
+      <h2>⏱️ Tijden</h2>
+
+      <div class="field">
+        <label for="t-ophalen">Geplande ophaaltijd</label>
+        <input type="datetime-local" id="t-ophalen">
+      </div>
+
+      <p id="clock-ophalen" class="muted">Geen ophaaltijd ingesteld.</p>
+
+      <div class="field">
+        <label for="t-vertrek">Daadwerkelijk vertrek</label>
+        <input type="datetime-local" id="t-vertrek">
+        <button class="primary wide" data-now="t-vertrek">
+          ⚡ Vertrek: nu
+        </button>
+      </div>
+
+      <div class="field">
+        <label for="t-aankomst">Aankomst</label>
+        <input type="datetime-local" id="t-aankomst">
+        <button class="primary wide" data-now="t-aankomst">
+          ⚡ Aankomst: nu
+        </button>
+      </div>
+
+      <p id="ritduur">Ritduur: nog niet berekend</p>
+
+      <h2>⏱️ Stopwatch</h2>
+      <div id="timer" class="timer">00:00:00</div>
+
+      <div class="actions no-print" style="margin-top:10px">
+        <button id="timer-start" class="green">Start / hervat</button>
+        <button id="timer-stop" class="red">Stop</button>
+        <button id="timer-reset" class="gray">Reset</button>
+      </div>
     </div>
 
-    <div class="tab-bar">
-        <button class="tab-btn active" id="btn-tab-live" onclick="openTab('tab-live', 'btn-tab-live')">🚖 Live Rit</button>
-        <button class="tab-btn" id="btn-tab-planning" onclick="openTab('tab-planning', 'btn-tab-planning')">📅 Planning & Agenda</button>
-        <button class="tab-btn" id="btn-tab-historie" onclick="openTab('tab-historie', 'btn-tab-historie')">📁 Ritten Archief (<span id="count-gereed">0</span>)</button>
+    <div class="card">
+      <h2>🚗 Route en chauffeur</h2>
+
+      <div class="field">
+        <label for="bedrijf">Taxibedrijf</label>
+        <select id="bedrijf" data-config="bedrijven"></select>
+        <button class="gray wide" data-add="bedrijven">+ Bedrijf toevoegen</button>
+      </div>
+
+      <div class="field">
+        <label for="chauffeur">Chauffeur</label>
+        <select id="chauffeur" data-config="chauffeurs"></select>
+        <button class="gray wide" data-add="chauffeurs">+ Chauffeur toevoegen</button>
+      </div>
+
+      <div class="field">
+        <label for="haaladres">Haaladres</label>
+        <select id="haaladres" data-config="adressen"></select>
+        <button class="gray wide" data-add="adressen">+ Adres toevoegen</button>
+      </div>
+
+      <div class="field">
+        <label for="brengadres">Brengadres</label>
+        <select id="brengadres" data-config="adressen"></select>
+      </div>
+
+      <div class="field">
+        <label for="notities">Notities</label>
+        <textarea id="notities" placeholder="Wachttijd, bijzonderheden..."></textarea>
+      </div>
+
+      <button id="rit-opslaan" class="green wide">
+        💾 Rit definitief opslaan
+      </button>
+
+      <button id="live-leeg" class="gray wide">
+        Nieuwe rit invoeren
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- PLANNING -->
+<section id="planning" class="tab">
+  <div class="card">
+    <h2>📅 Rittenplanning</h2>
+
+    <div class="grid">
+      <div class="field">
+        <label for="plan-datum">Eerste datum en tijd</label>
+        <input type="datetime-local" id="plan-datum">
+      </div>
+
+      <div class="field">
+        <label for="plan-herhaling">Herhaling</label>
+        <select id="plan-herhaling">
+          <option value="geen">Eenmalig</option>
+          <option value="elkedag">Elke dag</option>
+          <option value="omdedag">Om de dag</option>
+          <option value="mawovr">Maandag, woensdag, vrijdag</option>
+          <option value="didoza">Dinsdag, donderdag, zaterdag</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="plan-einddatum">Einddatum herhaling</label>
+        <input type="date" id="plan-einddatum">
+      </div>
+
+      <div class="field">
+        <label for="plan-type">Soort rit</label>
+        <select id="plan-type">
+          <option>Ziekenvervoer</option>
+          <option>Rolstoelvervoer</option>
+          <option>Zakelijk</option>
+          <option>Privé</option>
+        </select>
+      </div>
     </div>
 
-    <!-- TAB 1: LIVE RIT -->
-    <div id="tab-live" class="tab-content active">
-        <div class="dashboard-grid">
-            <div class="dashboard-card" style="grid-column: span 1; grid-row: span 2;">
-                <div class="card-header">
-                    <span>Vak 1: Tijden & Status Klokken</span>
-                    <span class="cloud-badge">☁️ Sheets Kolommen</span>
-                </div>
-                
-                <div class="form-group">
-                    <label>Geplande Ophaaltijd:</label>
-                    <input type="datetime-local" id="t-ophalen" oninput="berekenRitTijden();">
-                </div>
-                <div class="sub-clock-box border-blue">
-                    <div class="sub-clock-label">Ophaaltijd Countdown / Status</div>
-                    <div class="sub-clock-display status-green" id="clock-ophalen">--:--</div>
-                </div>
-                
-                <div class="form-group">
-                    <label>Daadwerkelijk Vertrek:</label>
-                    <input type="datetime-local" id="t-vertrek">
-                </div>
-                <div class="sub-clock-box border-green" onclick="zetHuidigeTijd('t-vertrek')">
-                    <div class="sub-clock-label">⚡ Klik hier voor Huidige Tijd (Vertrek)</div>
-                    <div class="sub-clock-display status-green" id="clock-vertrek">Klik om in te stellen</div>
-                </div>
-
-                <div class="form-group">
-                    <label>Verwachte / Werkelijke Aankomst:</label>
-                    <input type="datetime-local" id="t-aankomst" oninput="berekenRitTijden();">
-                </div>
-                <div class="sub-clock-box border-red" onclick="zetHuidigeTijd('t-aankomst')">
-                    <div class="sub-clock-label">⚡ Klik hier voor Huidige Tijd (Aankomst)</div>
-                    <div class="sub-clock-display status-red" id="clock-aankomst">Klik om in te stellen</div>
-                </div>
-
-                <div class="calc-box" id="resultaten-tijden" style="margin-top: 4px;">
-                    <b>Ritduur:</b> nog niet berekend
-                </div>
-            </div>
-
-            <div class="dashboard-card" style="grid-column: span 1; grid-row: span 2;">
-                <div class="card-header">
-                    <span>Vak 2: Route & Details</span>
-                    <span class="cloud-badge">☁️ Sheets Kolommen</span>
-                </div>
-
-                <div class="form-group">
-                    <label>Bedrijf:</label>
-                    <select id="taxi-bedrijf" onchange="checkNieuweOptie(this, 'bedrijven')">
-                        <option value="">-- Selecteer Bedrijf --</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Chauffeur:</label>
-                    <select id="taxi-chauffeur" onchange="checkNieuweOptie(this, 'chauffeurs')">
-                        <option value="">-- Selecteer Chauffeur --</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Haaladres:</label>
-                    <select id="adres-haal" onchange="checkNieuweOptie(this, 'adressen')">
-                        <option value="">-- Selecteer Haaladres --</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Brengadres:</label>
-                    <select id="adres-breng" onchange="checkNieuweOptie(this, 'adressen')">
-                        <option value="">-- Selecteer Brengadres --</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="dashboard-card">
-                <div class="card-header"><span>Vak 3: Actieve Rit Stopwatch</span></div>
-                <div class="big-clock-container">
-                    <div class="big-clock-label">Lopende Rit Tijd</div>
-                    <div class="big-clock-timer" id="countdown-display">00:00:00</div>
-                    <button class="btn-stop-timer" onclick="stopStopwatch()">🛑 STOP TIMER</button>
-                </div>
-            </div>
-
-            <div class="dashboard-card">
-                <div class="card-header"><span>Vak 4: Notities & Bijzonderheden</span></div>
-                <textarea id="notities-text" placeholder="Bijv. wachttijd 15 min..." style="flex-grow: 1; resize: none; padding: 8px; font-size: 12px; border: 1px solid #ccc;"></textarea>
-            </div>
-        </div>
-
-        <div class="global-save-bar">
-            <button class="btn-global-save" onclick="slaSessieDefinitiefOpOpEenRegel()">
-                <span>💾</span> HELE RIT DEFINITIEF OPSLAAN & IN KOLOMMEN WEGZETTEN
-            </button>
-        </div>
+    <div class="field">
+      <label for="plan-details">Bedrijf, route en bijzonderheden</label>
+      <input id="plan-details" type="text" placeholder="Bijvoorbeeld: taxi naar ziekenhuis">
     </div>
 
-    <!-- TAB 2: PLANNING -->
-    <div id="tab-planning" class="tab-content">
-        <div class="dashboard-card" style="max-width: 900px; margin: 0 auto;">
-            <div class="card-header"><span>📅 Ritten Planning Invoeren</span></div>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
-                <div class="form-group">
-                    <label>Eerste Datum & Tijd:</label>
-                    <input type="datetime-local" id="plan-datum">
-                </div>
-                <div class="form-group">
-                    <label>Herhaling Patroon:</label>
-                    <select id="plan-herhaling" onchange="toggleEinddatumVeld()">
-                        <option value="geen">Geen (Eenmalig)</option>
-                        <option value="elkedag">Elke dag</option>
-                        <option value="omdedag">Om de dag</option>
-                        <option value="mawovr">Ma - Wo - Vr</option>
-                        <option value="didoza">Di - Do - Za</option>
-                    </select>
-                </div>
-                <div class="form-group" id="einddatum-box" style="display: none;">
-                    <label>Einddatum Herhaling:</label>
-                    <input type="date" id="plan-einddatum">
-                </div>
-            </div>
+    <button id="plan-toevoegen" class="primary wide">
+      + Planning toevoegen
+    </button>
 
-            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 12px;">
-                <div class="form-group">
-                    <label>Soort Rit:</label>
-                    <select id="plan-type">
-                        <option value="Ziekenvervoer">Ziekenvervoer</option>
-                        <option value="Rolstoelvervoer">Rolstoelvervoer</option>
-                        <option value="Zakelijk">Zakelijk</option>
-                        <option value="Prive">Privé</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Route & Bedrijfsdetails:</label>
-                    <input type="text" id="plan-note" placeholder="Bedrijf, Haaladres naar Brengadres...">
-                </div>
-            </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Datum / tijd</th>
+            <th>Type</th>
+            <th>Details</th>
+            <th>Acties</th>
+          </tr>
+        </thead>
+        <tbody id="plan-tabel"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
 
-            <button style="margin-bottom: 20px; padding: 9px; background: var(--win-blue); color:#fff; border:none; border-radius:3px; cursor:pointer; font-weight: bold;" onclick="voegPlanningToe()">+ GENEREREN & TOEVOEGEN AAN PLANNING</button>
+<!-- HISTORIE -->
+<section id="historie" class="tab">
+  <div class="card">
+    <h2>📁 Rittenarchief</h2>
 
-            <table class="plan-table">
-                <thead>
-                    <tr>
-                        <th>Datum / Tijd</th>
-                        <th>Dag</th>
-                        <th>Type</th>
-                        <th>Details</th>
-                        <th style="width: 140px; text-align: center;">Acties</th>
-                    </tr>
-                </thead>
-                <tbody id="plan-table-body"></tbody>
-            </table>
-        </div>
+    <div class="actions no-print">
+      <button id="vorige" class="primary">◀ Vorige</button>
+      <button id="volgende" class="primary">Volgende ▶</button>
+      <button id="print" class="gray">🖨️ Afdrukken / PDF</button>
     </div>
 
-    <!-- TAB 3: HISTORIE & ARCHIEF -->
-    <div id="tab-historie" class="tab-content">
-        <div style="max-width: 950px; margin: 0 auto;">
-            <div class="record-navigator">
-                <button class="nav-btn" onclick="bladerRecord(-1)">◀ Vorige Rit</button>
-                <span style="font-weight: 700; font-size: 14px; color: var(--win-blue);" id="record-counter-text">Record 0 van 0</span>
-                <button class="nav-btn" onclick="bladerRecord(1)">Volgende Rit ▶</button>
-            </div>
-            <div id="history-record-view">
-                <p style="text-align: center; color: #888; padding-top: 50px;">Geen afgeronde ritten gevonden in het archief.</p>
-            </div>
-        </div>
+    <p id="record-info" class="muted">Geen rit geselecteerd.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Opgeslagen</th>
+            <th>Ophaaltijd</th>
+            <th>Vertrek</th>
+            <th>Aankomst</th>
+            <th>Bedrijf</th>
+            <th>Chauffeur</th>
+            <th>Haaladres</th>
+            <th>Brengadres</th>
+            <th>Notities</th>
+          </tr>
+        </thead>
+        <tbody id="historie-tabel"></tbody>
+      </table>
     </div>
+  </div>
+</section>
 
-    <script>
-        const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbxGkM5U9gfl44DSgcEBapl2SW5t8WBagppprQ3GHbLTyAamiMABp-qRI0F6ZS-mds-s/exec";
-        
-        let configData = {
-            bedrijven: ['Vervoersbedrijf XYZ', 'Taxi Centrale Noord', 'Zorgvervoer Midden'],
-            chauffeurs: ['Jan de Vries', 'Piet Jansen', 'Klaas Bakker'],
-            adressen: ['Hoofdstraat 1, Groningen', 'Ziekenhuisweg 10, Assen', 'Stationsplein 5, Emmen']
-        };
+</main>
 
-        let stopwatchStartTijd = null;
-        let stopwatchGestopt = false;
-        let planningLijst = [];
-        let historieRecords = [];
-        let huidigRecordIndex = 0;
+<script>
+"use strict";
 
-        window.addEventListener('DOMContentLoaded', () => {
-            syncFromGoogle();
-        });
+/*
+ * JOUW BESTAANDE GOOGLE APPS SCRIPT-URL
+ */
+const GOOGLE_SHEETS_URL =
+"https://script.google.com/macros/s/AKfycbxGkM5U9gfl44DSgcEBapl2SW5t8WBagppprQ3GHbLTyAamiMABp-qRI0F6ZS-mds-s/exec";
 
-        setInterval(() => {
-            document.getElementById('system-clock').innerText = new Date().toLocaleString();
-            updateAllSubClocks();
-            updateStopwatch();
-        }, 1000);
+const config = {
+  bedrijven: [],
+  chauffeurs: [],
+  adressen: []
+};
 
-        function openTab(tabId, btnId) {
-            let contents = document.getElementsByClassName('tab-content');
-            for (let i = 0; i < contents.length; i++) { contents[i].classList.remove('active'); }
-            let buttons = document.getElementsByClassName('tab-btn');
-            for (let i = 0; i < buttons.length; i++) { buttons[i].classList.remove('active'); }
-            document.getElementById(tabId).classList.add('active');
-            document.getElementById(btnId).classList.add('active');
+let planning = [];
+let historie = [];
+let recordIndex = 0;
+let busy = false;
+
+let timerStart = null;
+let timerVerstreken = 0;
+let timerActief = false;
+
+
+/* ALGEMENE FUNCTIES */
+
+const $ = id => document.getElementById(id);
+
+function status(tekst, soort = "") {
+  $("status").textContent = tekst;
+  $("status").className = soort;
+}
+
+function datumTijdLocal(d = new Date()) {
+  const pad = n => String(n).padStart(2, "0");
+
+  return d.getFullYear() + "-" +
+    pad(d.getMonth() + 1) + "-" +
+    pad(d.getDate()) + "T" +
+    pad(d.getHours()) + ":" +
+    pad(d.getMinutes());
+}
+
+function toonDatum(waarde) {
+  if (!waarde) return "-";
+
+  const s = String(waarde);
+  const d = new Date(s);
+
+  if (!Number.isNaN(d.getTime())) {
+    return d.toLocaleString("nl-NL");
+  }
+
+  return s;
+}
+
+function maakCel(tr, waarde) {
+  const td = document.createElement("td");
+  td.textContent = waarde == null || waarde === ""
+    ? "-"
+    : String(waarde);
+  tr.appendChild(td);
+  return td;
+}
+
+function maakKnop(tekst, klasse, actie) {
+  const b = document.createElement("button");
+  b.textContent = tekst;
+  b.className = klasse;
+  b.addEventListener("click", actie);
+  return b;
+}
+
+
+/* TABS */
+
+document.querySelectorAll("[data-tab]").forEach(knop => {
+  knop.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(tab => {
+      tab.classList.remove("active");
+    });
+
+    document.querySelectorAll("nav button[data-tab]").forEach(b => {
+      b.classList.remove("active");
+    });
+
+    $(knop.dataset.tab).classList.add("active");
+    knop.classList.add("active");
+  });
+});
+
+
+/* GOOGLE SHEETS: GEGEVENS OPHALEN */
+
+async function haalGoogleDataOp() {
+  const response = await fetch(
+    GOOGLE_SHEETS_URL + "?t=" + Date.now(),
+    { method: "GET", cache: "no-store" }
+  );
+
+  if (!response.ok) {
+    throw new Error("Google Sheets gaf HTTP " + response.status);
+  }
+
+  const data = await response.json();
+
+  if (data.ok === false) {
+    throw new Error(data.error || "Apps Script gaf een foutmelding.");
+  }
+
+  return data;
+}
+
+
+/*
+ * OPSLAAN VIA EEN VERBORGEN FORMULIER.
+ *
+ * Dit voorkomt dat de browser naar een nieuw tabblad springt.
+ * Daarna lezen we de gegevens opnieuw uit om de opslag te controleren.
+ */
+async function schrijfNaarGoogle(sheetNaam, rows) {
+  if (busy) {
+    throw new Error("Er wordt al een wijziging verwerkt. Probeer opnieuw.");
+  }
+
+  busy = true;
+
+  try {
+    status("Bezig met opslaan in Google Sheets...");
+
+    let frame = $("google-save-frame");
+
+    if (!frame) {
+      frame = document.createElement("iframe");
+      frame.id = "google-save-frame";
+      frame.name = "google-save-frame";
+      frame.style.display = "none";
+      document.body.appendChild(frame);
+    }
+
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = GOOGLE_SHEETS_URL;
+    form.target = frame.name;
+    form.style.display = "none";
+
+    const input = document.createElement("input");
+    input.type = "hidden";
+    input.name = "payload";
+    input.value = JSON.stringify({
+      sheet: sheetNaam,
+      rows: rows
+    });
+
+    form.appendChild(input);
+    document.body.appendChild(form);
+    form.submit();
+    form.remove();
+
+    // Geef Apps Script tijd om de gegevens weg te schrijven.
+    await new Promise(resolve => setTimeout(resolve, 1200));
+
+    // GET werkt bij deze web-app en controleert of de nieuwe
+    // lijst zichtbaar is. Dit controleert het aantal rijen.
+    const controle = await haalGoogleDataOp();
+    const ontvangen = controle[sheetNaam];
+
+    if (!Array.isArray(ontvangen)) {
+      throw new Error(
+        "Het tabblad " + sheetNaam + " is niet teruggekomen."
+      );
+    }
+
+    if (ontvangen.length !== rows.length) {
+      throw new Error(
+        "Opslag niet bevestigd. Verwacht " + rows.length +
+        " rijen, maar Google Sheets geeft " +
+        ontvangen.length + " terug. Controleer het tabblad."
+      );
+    }
+
+    status(
+      "✓ " + rows.length + " regels gecontroleerd in " + sheetNaam,
+      "success"
+    );
+
+    return controle;
+
+  } finally {
+    busy = false;
+  }
+}
+
+
+/* CONFIGURATIE EN DROPDOWNS */
+
+function vulDropdown(id, categorie) {
+  const select = $(id);
+  const oud = select.value;
+
+  select.replaceChildren();
+
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = "-- Selecteer --";
+  select.appendChild(placeholder);
+
+  config[categorie].forEach(waarde => {
+    const option = document.createElement("option");
+    option.value = waarde;
+    option.textContent = waarde;
+    select.appendChild(option);
+  });
+
+  select.value = oud;
+}
+
+function vulAlleDropdowns() {
+  vulDropdown("bedrijf", "bedrijven");
+  vulDropdown("chauffeur", "chauffeurs");
+  vulDropdown("haaladres", "adressen");
+  vulDropdown("brengadres", "adressen");
+}
+
+async function voegConfigToe(categorie) {
+  const waarde = prompt("Voer de nieuwe waarde in:");
+
+  if (!waarde || !waarde.trim()) return;
+
+  const nieuw = waarde.trim();
+
+  if (config[categorie].includes(nieuw)) {
+    status("Deze waarde bestaat al.");
+    return;
+  }
+
+  try {
+    // Eerst de nieuwste configuratie ophalen, om zo min mogelijk
+    // bestaande waarden per ongeluk te overschrijven.
+    const server = await haalGoogleDataOp();
+
+    const lijst = (server.TaxiConfig || []).map(r => ({
+      Categorie: r.Categorie || "",
+      Waarde: r.Waarde || ""
+    }));
+
+    lijst.push({
+      Categorie: categorie,
+      Waarde: nieuw
+    });
+
+    const gecontroleerd = await schrijfNaarGoogle(
+      "TaxiConfig",
+      lijst
+    );
+
+    verwerkServerData(gecontroleerd);
+    status("Nieuwe optie opgeslagen.", "success");
+
+  } catch (e) {
+    status("Optie opslaan mislukt: " + e.message, "error");
+  }
+}
+
+document.querySelectorAll("[data-add]").forEach(knop => {
+  knop.addEventListener("click", () => {
+    voegConfigToe(knop.dataset.add);
+  });
+});
+
+
+/* LIVE RIT */
+
+function leesLiveRit() {
+  const vertrek = $("t-vertrek").value;
+  const aankomst = $("t-aankomst").value;
+
+  let duur = "";
+
+  if (vertrek && aankomst) {
+    const verschil = new Date(aankomst) - new Date(vertrek);
+
+    if (verschil >= 0) {
+      const minuten = Math.floor(verschil / 60000);
+      duur = Math.floor(minuten / 60) + "u " +
+        (minuten % 60) + "m";
+    }
+  }
+
+  return {
+    SyncTijd: new Date().toLocaleString("nl-NL"),
+    Ophaaltijd: $("t-ophalen").value || "-",
+    Vertrektijd: vertrek || "-",
+    Aankomsttijd: aankomst || "-",
+    Bedrijf: $("bedrijf").value || "-",
+    Chauffeur: $("chauffeur").value || "-",
+    Haaladres: $("haaladres").value || "-",
+    Brengadres: $("brengadres").value || "-",
+    Notities: $("notities").value || "-"
+  };
+}
+
+function berekenDuur() {
+  const vertrek = $("t-vertrek").value;
+  const aankomst = $("t-aankomst").value;
+
+  if (!vertrek || !aankomst) {
+    $("ritduur").textContent = "Ritduur: nog niet berekend";
+    return;
+  }
+
+  const verschil = new Date(aankomst) - new Date(vertrek);
+
+  if (verschil < 0) {
+    $("ritduur").textContent =
+      "Controleer de vertrek- en aankomsttijd.";
+    return;
+  }
+
+  const minuten = Math.floor(verschil / 60000);
+
+  $("ritduur").textContent =
+    "Ritduur: " + Math.floor(minuten / 60) +
+    " uur en " + (minuten % 60) + " minuten";
+}
+
+["t-vertrek", "t-aankomst"].forEach(id => {
+  $(id).addEventListener("input", berekenDuur);
+});
+
+document.querySelectorAll("[data-now]").forEach(knop => {
+  knop.addEventListener("click", () => {
+    const id = knop.dataset.now;
+    $(id).value = datumTijdLocal();
+
+    if (id === "t-vertrek") {
+      timerStart = Date.now();
+      timerVerstreken = 0;
+      timerActief = true;
+    }
+
+    berekenDuur();
+  });
+});
+
+$("t-ophalen").addEventListener("input", updateOphaalklok);
+
+function updateOphaalklok() {
+  const waarde = $("t-ophalen").value;
+
+  if (!waarde) {
+    $("clock-ophalen").textContent = "Geen ophaaltijd ingesteld.";
+    return;
+  }
+
+  const verschil = new Date(waarde).getTime() - Date.now();
+  const minuten = Math.round(Math.abs(verschil) / 60000);
+
+  if (verschil > 0) {
+    $("clock-ophalen").textContent =
+      "Nog " + Math.floor(minuten / 60) +
+      " uur en " + (minuten % 60) + " minuten";
+  } else {
+    $("clock-ophalen").textContent =
+      "Ophaaltijd verstreken: " + minuten + " minuten";
+  }
+}
+
+
+/* STOPWATCH */
+
+function updateTimer() {
+  let ms = timerVerstreken;
+
+  if (timerActief && timerStart !== null) {
+    ms += Date.now() - timerStart;
+  }
+
+  const totaal = Math.floor(ms / 1000);
+  const h = String(Math.floor(totaal / 3600)).padStart(2, "0");
+  const m = String(Math.floor((totaal % 3600) / 60)).padStart(2, "0");
+  const s = String(totaal % 60).padStart(2, "0");
+
+  $("timer").textContent = h + ":" + m + ":" + s;
+}
+
+$("timer-start").addEventListener("click", () => {
+  if (!timerActief) {
+    timerStart = Date.now();
+    timerActief = true;
+  }
+});
+
+$("timer-stop").addEventListener("click", () => {
+  if (timerActief && timerStart !== null) {
+    timerVerstreken += Date.now() - timerStart;
+  }
+
+  timerStart = null;
+  timerActief = false;
+  updateTimer();
+});
+
+$("timer-reset").addEventListener("click", () => {
+  timerStart = null;
+  timerVerstreken = 0;
+  timerActief = false;
+  updateTimer();
+});
+
+
+/* RIT OPSLAAN */
+
+$("rit-opslaan").addEventListener("click", async () => {
+  if (!confirm("Deze rit definitief opslaan in Google Sheets?")) {
+    return;
+  }
+
+  try {
+    // Eerst de actuele historie ophalen.
+    const server = await haalGoogleDataOp();
+
+    const bestaande = Array.isArray(server.TaxiHistorie)
+      ? server.TaxiHistorie
+      : [];
+
+    // De nieuwe rit wordt achteraan toegevoegd.
+    const nieuweRit = leesLiveRit();
+    const nieuweHistorie = bestaande.concat([nieuweRit]);
+
+    const bijgewerkt = await schrijfNaarGoogle(
+      "TaxiHistorie",
+      nieuweHistorie
+    );
+
+    verwerkServerData(bijgewerkt);
+
+    alert("De rit is opgeslagen en gecontroleerd.");
+
+  } catch (e) {
+    status("Rit opslaan mislukt: " + e.message, "error");
+    alert("De rit kon niet worden bevestigd.\n\n" + e.message);
+  }
+});
+
+$("live-leeg").addEventListener("click", () => {
+  if (!confirm("Een nieuwe lege rit beginnen?")) return;
+
+  [
+    "t-ophalen",
+    "t-vertrek",
+    "t-aankomst",
+    "notities"
+  ].forEach(id => $(id).value = "");
+
+  [
+    "bedrijf",
+    "chauffeur",
+    "haaladres",
+    "brengadres"
+  ].forEach(id => $(id).value = "");
+
+  timerStart = null;
+  timerVerstreken = 0;
+  timerActief = false;
+
+  berekenDuur();
+  updateTimer();
+  updateOphaalklok();
+});
+
+
+/* PLANNING */
+
+function datumVoorSheets(d) {
+  return d.toLocaleString("nl-NL");
+}
+
+$("plan-toevoegen").addEventListener("click", async () => {
+  const startWaarde = $("plan-datum").value;
+
+  if (!startWaarde) {
+    alert("Vul de eerste datum en tijd in.");
+    return;
+  }
+
+  const start = new Date(startWaarde);
+  const mode = $("plan-herhaling").value;
+  const eindWaarde = $("plan-einddatum").value;
+
+  const eind = eindWaarde
+    ? new Date(eindWaarde + "T23:59:59")
+    : new Date(start);
+
+  if (mode !== "geen" && !eindWaarde) {
+    alert("Vul voor een herhaling ook de einddatum in.");
+    return;
+  }
+
+  if (eind < start) {
+    alert("De einddatum ligt vóór de begindatum.");
+    return;
+  }
+
+  const toevoegingen = [];
+  const maxDagen = 3660;
+  const datum = new Date(start);
+
+  for (let i = 0; i < maxDagen && datum <= eind; i++) {
+    const dag = datum.getDay();
+
+    const opnemen =
+      mode === "geen" ||
+      mode === "elkedag" ||
+      mode === "omdedag" ||
+      (mode === "mawovr" &&
+        [1, 3, 5].includes(dag)) ||
+      (mode === "didoza" &&
+        [2, 4, 6].includes(dag));
+
+    if (opnemen) {
+      toevoegingen.push({
+        DatumTijd: datumVoorSheets(new Date(datum)),
+        Type: $("plan-type").value,
+        Details: $("plan-details").value || "-"
+      });
+    }
+
+    if (mode === "geen") break;
+
+    datum.setDate(
+      datum.getDate() + (mode === "omdedag" ? 2 : 1)
+    );
+  }
+
+  if (toevoegingen.length === 0) {
+    alert("Er zijn geen geplande ritten gegenereerd.");
+    return;
+  }
+
+  if (toevoegingen.length > 500) {
+    alert("Deze planning bevat meer dan 500 ritten. Kies een kortere periode.");
+    return;
+  }
+
+  try {
+    // Eerst de nieuwste planning ophalen.
+    const server = await haalGoogleDataOp();
+
+    const bestaand = Array.isArray(server.TaxiPlanning)
+      ? server.TaxiPlanning
+      : [];
+
+    const nieuwePlanning = bestaand.concat(toevoegingen);
+
+    const bijgewerkt = await schrijfNaarGoogle(
+      "TaxiPlanning",
+      nieuwePlanning
+    );
+
+    verwerkServerData(bijgewerkt);
+
+    $("plan-datum").value = "";
+    $("plan-einddatum").value = "";
+    $("plan-details").value = "";
+
+    alert(
+      toevoegingen.length +
+      " geplande rit(ten) opgeslagen."
+    );
+
+  } catch (e) {
+    status("Planning opslaan mislukt: " + e.message, "error");
+  }
+});
+
+function renderPlanning() {
+  const body = $("plan-tabel");
+  body.replaceChildren();
+
+  planning.forEach((rit, index) => {
+    const tr = document.createElement("tr");
+
+    maakCel(tr, rit.DatumTijd);
+    maakCel(tr, rit.Type);
+    maakCel(tr, rit.Details);
+
+    const td = document.createElement("td");
+    const acties = document.createElement("div");
+    acties.className = "actions";
+
+    acties.appendChild(maakKnop("Laden", "primary", () => {
+      openLiveTab();
+
+      $("plan-details").value = rit.Details || "";
+
+      const d = new Date(rit.DatumTijd);
+
+      if (!Number.isNaN(d.getTime())) {
+        $("t-ophalen").value = datumTijdLocal(d);
+        updateOphaalklok();
+      }
+    }));
+
+    acties.appendChild(maakKnop("Verwijderen", "red", async () => {
+      if (!confirm("Deze geplande rit verwijderen?")) return;
+
+      try {
+        const server = await haalGoogleDataOp();
+        const actueel = server.TaxiPlanning || [];
+
+        // De lijst wordt bij voorkeur vergeleken met de actuele
+        // gegevens voordat deze wijziging wordt opgeslagen.
+        const doel = actueel[index];
+
+        if (!doel) {
+          throw new Error("De planning is gewijzigd. Vernieuw eerst.");
         }
 
-        function toggleFullscreen() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(e => {});
-            } else {
-                if (document.exitFullscreen) document.exitFullscreen();
-            }
-        }
+        actueel.splice(index, 1);
 
-        function vulDropdowns() {
-            laadOptiesInSelect('taxi-bedrijf', configData.bedrijven, '-- Selecteer Bedrijf --');
-            laadOptiesInSelect('taxi-chauffeur', configData.chauffeurs, '-- Selecteer Chauffeur --');
-            laadOptiesInSelect('adres-haal', configData.adressen, '-- Selecteer Haaladres --');
-            laadOptiesInSelect('adres-breng', configData.adressen, '-- Selecteer Brengadres --');
-        }
+        const bijgewerkt = await schrijfNaarGoogle(
+          "TaxiPlanning",
+          actueel
+        );
 
-        function laadOptiesInSelect(elementId, items, placeholder) {
-            let sel = document.getElementById(elementId);
-            let huidigeWaarde = sel.value;
-            sel.innerHTML = `<option value="">${placeholder}</option>`;
-            if(Array.isArray(items)) {
-                items.forEach(item => {
-                    let opt = document.createElement('option');
-                    opt.value = item;
-                    opt.innerText = item;
-                    sel.appendChild(opt);
-                });
-            }
-            let extraOpt = document.createElement('option');
-            extraOpt.value = "VOEG_NIEUWE_TOE";
-            extraOpt.innerText = "+ Voeg nieuwe toe...";
-            extraOpt.style.fontWeight = "bold";
-            sel.appendChild(extraOpt);
-            sel.value = huidigeWaarde;
-        }
+        verwerkServerData(bijgewerkt);
 
-        function checkNieuweOptie(selectElem, categorie) {
-            if (selectElem.value === "VOEG_NIEUWE_TOE") {
-                let nieuweWaarde = prompt("Voer een nieuwe waarde in:");
-                if (nieuweWaarde && nieuweWaarde.trim() !== "") {
-                    nieuweWaarde = nieuweWaarde.trim();
-                    if (!configData[categorie].includes(nieuweWaarde)) {
-                        configData[categorie].push(nieuweWaarde);
-                        syncConfigToGoogle();
-                    }
-                    vulDropdowns();
-                    selectElem.value = nieuweWaarde;
-                } else {
-                    selectElem.value = "";
-                }
-            }
-        }
+      } catch (e) {
+        status("Verwijderen mislukt: " + e.message, "error");
+      }
+    }));
 
-        function syncConfigToGoogle() {
-            let rows = [];
-            ['bedrijven', 'chauffeurs', 'adressen'].forEach(cat => {
-                configData[cat].forEach(val => {
-                    rows.push({ Categorie: cat, Waarde: val });
-                });
-            });
-            stuurNaarGoogle('TaxiConfig', rows);
-        }
+    td.appendChild(acties);
+    tr.appendChild(td);
+    body.appendChild(tr);
+  });
 
-        function zetHuidigeTijd(elementId) {
-            let nu = new Date();
-            let formattedLocal = formatDateTimeLocal(nu);
-            document.getElementById(elementId).value = formattedLocal;
-            if(elementId === 't-vertrek') {
-                stopwatchStartTijd = nu;
-                stopwatchGestopt = false;
-            }
-            berekenRitTijden();
-            updateAllSubClocks();
-        }
+  if (planning.length === 0) {
+    const tr = document.createElement("tr");
+    const td = maakCel(tr, "Geen geplande ritten.");
+    td.colSpan = 4;
+    body.appendChild(tr);
+  }
+}
 
-        function stopStopwatch() {
-            stopwatchGestopt = true;
-            let aankVal = document.getElementById('t-aankomst').value;
-            if(!aankVal) zetHuidigeTijd('t-aankomst');
-        }
 
-        function updateStopwatch() {
-            let timerDisplay = document.getElementById('countdown-display');
-            let vertVal = document.getElementById('t-vertrek').value;
-            if (!vertVal) { timerDisplay.innerText = "00:00:00"; return; }
-            if (!stopwatchStartTijd) stopwatchStartTijd = new Date(vertVal);
-            if (stopwatchGestopt) return;
+/* ARCHIEF */
 
-            let diffMs = new Date() - stopwatchStartTijd;
-            if(diffMs < 0) diffMs = 0;
-            let u = Math.floor(diffMs / (1000 * 60 * 60));
-            let m = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-            let s = Math.floor((diffMs % (1000 * 60)) / 1000);
-            timerDisplay.innerText = `${String(u).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-        }
+function renderHistorie() {
+  const body = $("historie-tabel");
+  body.replaceChildren();
 
-        function updateAllSubClocks() {
-            let nu = new Date();
-            let ophVal = document.getElementById('t-ophalen').value;
-            let clockOphalen = document.getElementById('clock-ophalen');
-            if (!ophVal) {
-                clockOphalen.innerText = "--:--";
-                clockOphalen.className = "sub-clock-display status-green";
-            } else {
-                let diffMs = new Date(ophVal) - nu;
-                let diffMin = Math.floor(Math.abs(diffMs) / (1000 * 60));
-                let u = Math.floor(diffMin / 60);
-                let m = diffMin % 60;
-                if (diffMs > 0) {
-                    clockOphalen.innerText = `Nog ${u > 0 ? u + 'u ' : ''}${m}m (OP TIJD)`;
-                    clockOphalen.className = "sub-clock-display status-green";
-                } else {
-                    clockOphalen.innerText = diffMin <= 15 ? `+${diffMin}m - OP TIJD` : `+${diffMin}m - TE LAAT`;
-                    clockOphalen.className = diffMin <= 15 ? "sub-clock-display status-green" : "sub-clock-display status-red";
-                }
-            }
-        }
+  $("record-info").textContent =
+    historie.length
+      ? historie.length + " ritten opgeslagen in Google Sheets."
+      : "Geen ritten in het archief.";
 
-        function toggleEinddatumVeld() {
-            let mode = document.getElementById('plan-herhaling').value;
-            document.getElementById('einddatum-box').style.display = (mode === 'geen') ? 'none' : 'block';
-        }
+  historie.forEach(rit => {
+    const tr = document.createElement("tr");
 
-        function voegPlanningToe() {
-            let startVal = document.getElementById('plan-datum').value;
-            let mode = document.getElementById('plan-herhaling').value;
-            let eindVal = document.getElementById('plan-einddatum').value;
-            let type = document.getElementById('plan-type').value;
-            let note = document.getElementById('plan-note').value;
+    [
+      rit.SyncTijd,
+      rit.Ophaaltijd,
+      rit.Vertrektijd,
+      rit.Aankomsttijd,
+      rit.Bedrijf,
+      rit.Chauffeur,
+      rit.Haaladres,
+      rit.Brengadres,
+      rit.Notities
+    ].forEach(waarde => maakCel(tr, waarde));
 
-            if (!startVal) { alert("Kies de eerste datum & tijd!"); return; }
+    body.appendChild(tr);
+  });
 
-            let startDatum = new Date(startVal);
-            let eindDatum = eindVal ? new Date(eindVal + 'T23:59:59') : new Date(startDatum);
+  if (historie.length === 0) {
+    const tr = document.createElement("tr");
+    const td = maakCel(tr, "Er zijn nog geen ritten.");
+    td.colSpan = 9;
+    body.appendChild(tr);
+  }
+}
 
-            let huidigeDatum = new Date(startDatum);
-            while (huidigeDatum <= eindDatum) {
-                let dag = huidigeDatum.getDay();
-                let toe = (mode === 'geen' || mode === 'elkedag' || mode === 'omdedag' || 
-                           (mode === 'mawovr' && (dag === 1 || dag === 3 || dag === 5)) || 
-                           (mode === 'didoza' && (dag === 2 || dag === 4 || dag === 6)));
-                if (toe) {
-                    planningLijst.push({ 
-                        ID: Date.now() + Math.random(), 
-                        DatumTijd: new Date(huidigeDatum).toLocaleString(), 
-                        Type: type, 
-                        Details: note || '-' 
-                    });
-                }
-                huidigeDatum.setDate(huidigeDatum.getDate() + (mode === 'omdedag' ? 2 : 1));
-                if (mode === 'geen') break;
-            }
+function openLiveTab() {
+  document.querySelector('[data-tab="live"]').click();
+}
 
-            sorterEnRenderPlanning();
-            stuurNaarGoogle('TaxiPlanning', planningLijst);
-            document.getElementById('plan-datum').value = '';
-            document.getElementById('plan-note').value = '';
-        }
+$("vorige").addEventListener("click", () => {
+  if (historie.length === 0) return;
+  recordIndex = Math.max(0, recordIndex - 1);
+  toonRecord();
+});
 
-        function sorterEnRenderPlanning() {
-            let body = document.getElementById('plan-table-body');
-            body.innerHTML = '';
-            let dagenNamen = ['Zondag', 'Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag'];
+$("volgende").addEventListener("click", () => {
+  if (historie.length === 0) return;
+  recordIndex = Math.min(historie.length - 1, recordIndex + 1);
+  toonRecord();
+});
 
-            planningLijst.forEach((p) => {
-                let tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td><b>${p.DatumTijd}</b></td>
-                    <td>-</td>
-                    <td>${p.Type}</td>
-                    <td>${p.Details}</td>
-                    <td style="text-align:center;">
-                        <button class="btn-table-action btn-edit" onclick="laadPlanningInLive('${p.DatumTijd}', '${p.Type}', '${p.Details}')">✏️ Laad</button>
-                        <button class="btn-table-action btn-delete" onclick="verwijderPlanningItem('${p.ID}')">✕</button>
-                    </td>
-                `;
-                body.appendChild(tr);
-            });
-        }
+function toonRecord() {
+  if (historie.length === 0) {
+    $("record-info").textContent = "Geen rit geselecteerd.";
+    return;
+  }
 
-        function verwijderPlanningItem(id) {
-            planningLijst = planningLijst.filter(p => p.ID != id);
-            sorterEnRenderPlanning();
-            stuurNaarGoogle('TaxiPlanning', planningLijst);
-        }
+  const rit = historie[recordIndex];
 
-        function laadPlanningInLive(datumTijdStr, type, note) {
-            document.getElementById('plan-note').value = note;
-            openTab('tab-live', 'btn-tab-live');
-        }
+  $("record-info").textContent =
+    "Record " + (recordIndex + 1) +
+    " van " + historie.length +
+    " — " + (rit.SyncTijd || "");
+}
 
-        function slaSessieDefinitiefOpOpEenRegel() {
-            let nieuweRit = {
-                SyncTijd: new Date().toLocaleString(),
-                Ophaaltijd: document.getElementById('t-ophalen').value || '-',
-                Vertrektijd: document.getElementById('t-vertrek').value || '-',
-                Aankomsttijd: document.getElementById('t-aankomst').value || '-',
-                Bedrijf: document.getElementById('taxi-bedrijf').value || '-',
-                Chauffeur: document.getElementById('taxi-chauffeur').value || '-',
-                Haaladres: document.getElementById('adres-haal').value || '-',
-                Brengadres: document.getElementById('adres-breng').value || '-',
-                Notities: document.getElementById('notities-text').value || '-'
-            };
+$("print").addEventListener("click", () => window.print());
 
-            historieRecords.unshift(nieuweRit);
-            stuurNaarGoogle('TaxiHistorie', historieRecords);
-            renderHistorie();
-            alert("Rit opgeslagen in echte kolommen in tabblad 'TaxiHistorie'!");
-        }
 
-        function renderHistorie() {
-            document.getElementById('count-gereed').innerText = historieRecords.length;
-            let counter = document.getElementById('record-counter-text');
-            let view = document.getElementById('history-record-view');
+/* DATA VERWERKEN */
 
-            if(!Array.isArray(historieRecords) || historieRecords.length === 0) {
-                counter.innerText = "Record 0 van 0";
-                view.innerHTML = `<p style="text-align: center; color: #888; padding-top: 50px;">Geen ritten in archief.</p>`;
-                return;
-            }
+function verwerkServerData(data) {
+  const rijen = Array.isArray(data.TaxiConfig)
+    ? data.TaxiConfig
+    : [];
 
-            counter.innerText = `Record ${huidigRecordIndex + 1} van ${historieRecords.length}`;
-            let rec = historieRecords[huidigRecordIndex];
+  config.bedrijven = [];
+  config.chauffeurs = [];
+  config.adressen = [];
 
-            view.innerHTML = `
-                <div class="history-card-report">
-                    <div class="history-header-bar">
-                        <div class="history-title-date">🚖 Rit Rapport (${rec.SyncTijd})</div>
-                        <button style="background:#28a745; color:#fff; border:none; padding:6px 14px; border-radius:4px; font-weight:700; cursor:pointer;" onclick="window.print()">🖨️ Print PDF</button>
-                    </div>
-                    <div class="history-grid">
-                        <div class="history-section-box">
-                            <div class="history-section-title" style="color:#0078d7;">⏱️ Tijden</div>
-                            <table class="history-table">
-                                <tr><td>Ophaal:</td><td>${rec.Ophaaltijd}</td></tr>
-                                <tr><td>Vertrek:</td><td>${rec.Vertrektijd}</td></tr>
-                                <tr><td>Aankomst:</td><td>${rec.Aankomsttijd}</td></tr>
-                            </table>
-                        </div>
-                        <div class="history-section-box">
-                            <div class="history-section-title" style="color:#28a745;">🚗 Route</div>
-                            <table class="history-table">
-                                <tr><td>Bedrijf:</td><td><b>${rec.Bedrijf}</b></td></tr>
-                                <tr><td>Chauffeur:</td><td>${rec.Chauffeur}</td></tr>
-                                <tr><td>Haal:</td><td>${rec.Haaladres}</td></tr>
-                                <tr><td>Breng:</td><td>${rec.Brengadres}</td></tr>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
+  rijen.forEach(r => {
+    const categorie = r.Categorie;
+    const waarde = r.Waarde;
 
-        function bladerRecord(r) {
-            huidigRecordIndex += r;
-            if(huidigRecordIndex < 0) huidigRecordIndex = 0;
-            if(huidigRecordIndex >= historieRecords.length) huidigRecordIndex = historieRecords.length - 1;
-            renderHistorie();
-        }
+    if (
+      Object.prototype.hasOwnProperty.call(config, categorie) &&
+      waarde &&
+      !config[categorie].includes(waarde)
+    ) {
+      config[categorie].push(waarde);
+    }
+  });
 
-        function berekenRitTijden() {
-            let vert = document.getElementById('t-vertrek').value;
-            let aank = document.getElementById('t-aankomst').value;
-            let resBox = document.getElementById('resultaten-tijden');
-            if (vert && aank) {
-                let diff = new Date(aank) - new Date(vert);
-                if (diff >= 0) {
-                    let u = Math.floor(diff / (1000 * 60 * 60));
-                    let m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                    resBox.innerHTML = `<b>Ritduur:</b> ${u}u ${m}m`;
-                }
-            }
-        }
+  vulAlleDropdowns();
 
-        function formatDateTimeLocal(date) { return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}T${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`; }
+  planning = Array.isArray(data.TaxiPlanning)
+    ? data.TaxiPlanning
+    : [];
 
-        // Onverwoestbare verzending via een verborgen formulier om CORS volledig te omzeilen
-        function stuurNaarGoogle(sheetNaam, rijLijst) {
-            let form = document.createElement('form');
-            form.method = 'POST';
-            form.action = GOOGLE_SHEETS_URL;
-            form.target = '_blank'; // opent eventueel op achtergrond of onzichtbaar te maken via iframe
+  historie = Array.isArray(data.TaxiHistorie)
+    ? data.TaxiHistorie
+    : [];
 
-            let input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'payload';
-            input.value = JSON.stringify({ sheet: sheetNaam, rows: rijLijst });
+  renderPlanning();
+  renderHistorie();
 
-            form.appendChild(input);
-            document.body.appendChild(form);
-            form.submit();
-            document.body.removeChild(form);
-        }
+  if (historie.length > 0) {
+    recordIndex = Math.min(recordIndex, historie.length - 1);
+    toonRecord();
+  }
+}
 
-        async function syncFromGoogle() {
-            try {
-                let res = await fetch(GOOGLE_SHEETS_URL);
-                let data = await res.json();
-                
-                if(data['TaxiConfig'] && Array.isArray(data['TaxiConfig'])) {
-                    configData.bedrijven = [];
-                    configData.chauffeurs = [];
-                    configData.adressen = [];
-                    data['TaxiConfig'].forEach(r => {
-                        if(r.Categorie === 'bedrijven') configData.bedrijven.push(r.Waarde);
-                        if(r.Categorie === 'chauffeurs') configData.chauffeurs.push(r.Waarde);
-                        if(r.Categorie === 'adressen') configData.adressen.push(r.Waarde);
-                    });
-                }
-                vulDropdowns();
 
-                if(data['TaxiPlanning'] && Array.isArray(data['TaxiPlanning'])) {
-                    planningLijst = data['TaxiPlanning'];
-                    sorterEnRenderPlanning();
-                }
+/* START EN VERVERSEN */
 
-                if(data['TaxiHistorie'] && Array.isArray(data['TaxiHistorie'])) {
-                    historieRecords = data['TaxiHistorie'];
-                    renderHistorie();
-                }
-            } catch(e){}
-        }
-    </script>
+async function synchroniseer() {
+  try {
+    status("Gegevens ophalen uit Google Sheets...");
+
+    const data = await haalGoogleDataOp();
+
+    verwerkServerData(data);
+
+    status(
+      "✓ Verbonden met Google Sheets. " +
+      planning.length + " geplande ritten en " +
+      historie.length + " historische ritten geladen.",
+      "success"
+    );
+
+  } catch (e) {
+    status(
+      "Verbinding mislukt: " + e.message,
+      "error"
+    );
+  }
+}
+
+$("btn-vernieuw").addEventListener("click", synchroniseer);
+
+setInterval(() => {
+  $("klok").textContent = new Date().toLocaleString("nl-NL");
+  updateOphaalklok();
+  updateTimer();
+}, 1000);
+
+window.addEventListener("DOMContentLoaded", synchroniseer);
+</script>
+
 </body>
 </html>
