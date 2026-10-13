@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Taxi Command Center - Triple Status Clock Edition</title>
+    <title>Taxi Command Center - Interactive Click & Countdown Edition</title>
     <style>
         :root {
             --win-blue: #0078d7;
@@ -69,7 +69,7 @@
 
         .draft-badge { font-size: 10px; font-weight: normal; text-transform: none; color: #888; background: #eee; padding: 2px 6px; border-radius: 3px; }
 
-        .form-group { margin-bottom: 6px; }
+        .form-group { margin-bottom: 4px; }
         .form-group label { display: block; font-size: 11px; font-weight: 600; color: #555; margin-bottom: 2px; }
         .form-group input[type="number"], .form-group input[type="text"], .form-group input[type="date"], .form-group input[type="datetime-local"], .form-group select, .form-group textarea {
             width: 100%; padding: 5px; border: 1px solid #ccc; border-radius: 3px; font-size: 11px; background: #fafafa;
@@ -77,10 +77,11 @@
 
         .calc-box { background: #eef6fc; border-left: 4px solid var(--win-blue); padding: 6px; margin-top: 4px; font-size: 11px; line-height: 1.3; }
 
-        /* Kleine sub-klokjes onder elk veld */
+        /* Klikbare sub-klokjes */
         .sub-clock-box {
-            background: #1b1b1b; border-radius: 3px; padding: 4px 8px; text-align: center; margin-bottom: 8px; border: 1px solid #333;
+            background: #1b1b1b; border-radius: 3px; padding: 6px 8px; text-align: center; margin-bottom: 8px; border: 1px solid #333; cursor: pointer; transition: 0.2s;
         }
+        .sub-clock-box:hover { background: #2b2b2b; border-color: var(--win-blue); }
         .sub-clock-label { font-size: 8px; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; }
         .sub-clock-display { font-size: 12px; font-weight: bold; font-family: monospace; }
         .status-green { color: #28a745; }
@@ -168,7 +169,7 @@
 
     <div class="win-header">
         <div class="win-title">
-            <span>🚖</span> TAXI COMMAND CENTER <span>// V1.5</span>
+            <span>🚖</span> TAXI COMMAND CENTER <span>// V1.6</span>
         </div>
         <div style="display: flex; align-items: center; gap: 12px;">
             <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ Volledig Scherm</button>
@@ -209,24 +210,24 @@
                     <div class="sub-clock-display status-green" id="clock-ophalen">--:--</div>
                 </div>
                 
-                <!-- 2. Daadwerkelijk Vertrek -->
+                <!-- 2. Daadwerkelijk Vertrek (Klikbaar om huidige tijd in te stellen) -->
                 <div class="form-group">
                     <label>Daadwerkelijk Vertrek:</label>
                     <input type="datetime-local" id="t-vertrek" oninput="opslaanConceptVak1();">
                 </div>
-                <div class="sub-clock-box">
-                    <div class="sub-clock-label">Vertrek Status</div>
-                    <div class="sub-clock-display status-blue" id="clock-vertrek">--:--</div>
+                <div class="sub-clock-box" onclick="zetHuidigeTijd('t-vertrek')" title="Klik om huidige tijd in te stellen">
+                    <div class="sub-clock-label">⚡ Klik hier voor Huidige Tijd (Vertrek)</div>
+                    <div class="sub-clock-display status-blue" id="clock-vertrek">Klik om in te stellen</div>
                 </div>
 
-                <!-- 3. Verwachte Aankomst -->
+                <!-- 3. Verwachte Aankomst (Klikbaar om huidige tijd in te stellen) -->
                 <div class="form-group">
                     <label>Verwachte / Werkelijke Aankomst:</label>
                     <input type="datetime-local" id="t-aankomst" oninput="berekenRitTijden(); opslaanConceptVak1();">
                 </div>
-                <div class="sub-clock-box">
-                    <div class="sub-clock-label">Aankomst Status</div>
-                    <div class="sub-clock-display status-blue" id="clock-aankomst">--:--</div>
+                <div class="sub-clock-box" onclick="zetHuidigeTijd('t-aankomst')" title="Klik om huidige tijd in te stellen">
+                    <div class="sub-clock-label">⚡ Klik hier voor Huidige Tijd (Aankomst)</div>
+                    <div class="sub-clock-display status-blue" id="clock-aankomst">Klik om in te stellen</div>
                 </div>
 
                 <div class="calc-box" id="resultaten-tijden" style="margin-top: 4px;">
@@ -440,11 +441,22 @@
             }
         }
 
+        /* --- SNELLE TIJD KNOP FUNCTIE --- */
+        function zetHuidigeTijd(elementId) {
+            let nu = new Date();
+            let formattedLocal = formatDateTimeLocal(nu);
+            document.getElementById(elementId).value = formattedLocal;
+            
+            if(elementId === 't-vertrek') opslaanConceptVak1();
+            if(elementId === 't-aankomst') { berekenRitTijden(); opslaanConceptVak1(); }
+            updateAllSubClocks();
+        }
+
         /* --- TRIPLE SUB-CLOCKS LOGICA (VAK 1) --- */
         function updateAllSubClocks() {
             let nu = new Date();
 
-            // 1. Ophaaltijd Klok (Marge 15 min)
+            // 1. Ophaaltijd Klok (Marge 15 min t.o.v. geplande tijd)
             let ophVal = document.getElementById('t-ophalen').value;
             let clockOphalen = document.getElementById('clock-ophalen');
             if (!ophVal) {
@@ -466,8 +478,8 @@
             let vertVal = document.getElementById('t-vertrek').value;
             let clockVertrek = document.getElementById('clock-vertrek');
             if (!vertVal) {
-                clockVertrek.innerText = "Nog niet vertrokken";
-                clockVertrek.className = "sub-clock-display";
+                clockVertrek.innerText = "Klik om tijd te zetten";
+                clockVertrek.className = "sub-clock-display status-blue";
             } else {
                 let vertTijd = new Date(vertVal);
                 let diffVert = Math.floor((nu - vertTijd) / (1000 * 60));
@@ -479,8 +491,8 @@
             let aankVal = document.getElementById('t-aankomst').value;
             let clockAankomst = document.getElementById('clock-aankomst');
             if (!aankVal) {
-                clockAankomst.innerText = "Geen aankomsttijd";
-                clockAankomst.className = "sub-clock-display";
+                clockAankomst.innerText = "Klik om tijd te zetten";
+                clockAankomst.className = "sub-clock-display status-blue";
             } else {
                 let aankTijd = new Date(aankVal);
                 let diffAank = Math.floor((aankTijd - nu) / (1000 * 60));
@@ -593,7 +605,6 @@
             let formattedLocal = formatDateTimeLocal(d);
 
             document.getElementById('t-ophalen').value = formattedLocal;
-            document.getElementById('t-vertrek').value = formattedLocal;
             document.getElementById('rit-type').value = type;
             document.getElementById('plan-note').value = note;
 
@@ -749,8 +760,11 @@
 
         function updateCountdown() {
             let timerDisplay = document.getElementById('countdown-display');
-            if(!actieveOphaalTijd) { if(timerDisplay) timerDisplay.innerText = "--:--:--"; return; }
-            let nu = new Date(); let restris = actieveOphaalTijd - nu;
+            let oph = document.getElementById('t-ophalen').value;
+            if(!oph) { if(timerDisplay) timerDisplay.innerText = "--:--:--"; return; }
+            let ophaalTijd = new Date(oph);
+            let nu = new Date(); 
+            let restris = ophaalTijd - nu;
             if(restris <= 0) { if(timerDisplay) timerDisplay.innerText = "TIJD BEREIKT"; return; }
             let u = Math.floor(restris / (1000 * 60 * 60)), m = Math.floor((restris % (1000 * 60 * 60)) / (1000 * 60)), s = Math.floor((restris % (1000 * 60)) / 1000);
             if(timerDisplay) timerDisplay.innerText = `${String(u).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
