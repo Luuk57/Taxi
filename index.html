@@ -3,603 +3,735 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Taxi Monitor</title>
+    <title>Taxi Command Center - Unified Edition</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-        body { background: #f0f3f8; display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: #333; }
+        :root {
+            --win-blue: #0078d7;
+            --win-bg: #f3f3f3;
+            --win-dark: #202020;
+            --card-bg: #ffffff;
+            --border-color: #e1e1e1;
+            --font-ui: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
 
-        header { background: linear-gradient(135deg, #0062cc, #007bff); color: white; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,123,255,0.2); z-index: 10; }
-        .app-title { font-size: 18px; font-weight: 700; letter-spacing: 0.3px; }
-        .header-btns { display: flex; gap: 8px; align-items: center; }
-        .icon-btn { background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.3); color: white; width: 38px; height: 38px; border-radius: 50%; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; }
-        .icon-btn:active { background: rgba(255,255,255,0.4); transform: scale(0.94); }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-ui); }
+        body, html { width: 100%; height: 100%; overflow: hidden; background: var(--win-bg); color: var(--win-dark); }
 
-        .auto-pdf-banner { background: #e6fffa; border: 2px solid #319795; border-radius: 12px; padding: 12px 15px; margin: 12px 15px 0 15px; display: none; text-align: center; box-shadow: 0 4px 12px rgba(49,151,149,0.2); }
-        .auto-pdf-title { font-size: 12px; font-weight: 800; color: #234e52; text-transform: uppercase; margin-bottom: 4px; }
-        .btn-auto-pdf { background: #319795; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 800; font-size: 13px; cursor: pointer; width: 100%; margin-top: 6px; }
+        .win-header {
+            height: 50px; background: var(--card-bg); border-bottom: 1px solid var(--border-color);
+            display: flex; align-items: center; justify-content: space-between; padding: 0 20px;
+        }
+        .win-title { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+        .win-title span { color: var(--win-blue); }
 
-        .main-container { flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 40px; display: flex; flex-direction: column; align-items: center; gap: 15px; }
+        /* TAB BAR */
+        .tab-bar {
+            display: flex; background: #e5e5e5; border-bottom: 1px solid var(--border-color); padding: 0 20px; gap: 5px; height: 38px;
+        }
+        .tab-btn {
+            padding: 8px 16px; font-size: 12px; font-weight: 600; background: #d6d6d6; border: none;
+            border-top-left-radius: 4px; border-top-right-radius: 4px; cursor: pointer; color: #444; transition: 0.2s; outline: none;
+        }
+        .tab-btn.active {
+            background: var(--card-bg); color: var(--win-blue); border-bottom: 3px solid var(--win-blue); font-weight: bold;
+        }
+        .tab-btn:hover:not(.active) { background: #e0e0e0; }
 
-        .scheduled-banner { background: #fffaf0; border: 2px solid #dd6b20; border-radius: 14px; padding: 15px; width: 100%; max-width: 500px; text-align: left; display: none; box-shadow: 0 4px 12px rgba(221,107,32,0.15); }
-        .scheduled-title { font-size: 11px; font-weight: 800; color: #c05621; text-transform: uppercase; margin-bottom: 5px; }
-        .scheduled-details { font-size: 13px; color: #2d3748; margin-bottom: 10px; font-weight: 600; }
-        .btn-start-scheduled { background: #dd6b20; color: white; border: none; padding: 10px 14px; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 13px; width: 100%; box-shadow: 0 4px 10px rgba(221,107,32,0.25); }
+        /* TAB CONTENT VISIBILITY */
+        .tab-content { display: none; width: 100%; height: calc(100vh - 88px); padding: 15px 20px 20px 20px; overflow-y: auto; }
+        .tab-content.active { display: block !important; }
 
-        .meter-card { background: white; border-radius: 14px; padding: 25px; width: 100%; max-width: 500px; box-shadow: 0 4px 15px rgba(0,0,0,0.04); border: 1px solid #e2e8f0; text-align: center; }
-        .meter-status { font-size: 12px; font-weight: 800; color: #718096; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; }
-        .timer-display { font-size: 38px; font-weight: 900; color: #0097a7; margin-bottom: 20px; font-variant-numeric: tabular-nums; }
+        .sync-container {
+            display: flex; align-items: center; gap: 8px; background: #eef6fc;
+            padding: 4px 8px; border-radius: 4px; border: 1px solid #cce4f7;
+        }
+        .sync-input { width: 220px; padding: 4px 8px; border: 1px solid #ccc; border-radius: 3px; font-size: 11px; }
+        .sync-btn, .fullscreen-btn {
+            background: var(--win-blue); border: none; color: #fff;
+            padding: 5px 10px; border-radius: 3px; font-size: 11px; font-weight: 600; cursor: pointer; transition: 0.2s;
+        }
+        .sync-btn:hover, .fullscreen-btn:hover { background: #005a9e; }
+
+        .dashboard-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); gap: 15px; height: calc(100% - 45px);
+        }
+
+        .dashboard-card {
+            background: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 4px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            display: flex; flex-direction: column; overflow-y: auto; position: relative;
+        }
+        .card-header {
+            font-size: 13px; font-weight: 600; color: var(--win-blue);
+            margin-bottom: 12px; border-bottom: 2px solid var(--win-blue); padding-bottom: 5px;
+            text-transform: uppercase; letter-spacing: 0.5px; display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .draft-badge { font-size: 10px; font-weight: normal; text-transform: none; color: #888; background: #eee; padding: 2px 6px; border-radius: 3px; }
+
+        .form-group { margin-bottom: 8px; }
+        .form-group label { display: block; font-size: 11px; font-weight: 600; color: #555; margin-bottom: 3px; }
+        .form-group input[type="number"], .form-group input[type="text"], .form-group input[type="date"], .form-group input[type="datetime-local"], .form-group select, .form-group textarea {
+            width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px; font-size: 12px; background: #fafafa;
+        }
+
+        .calc-box { background: #eef6fc; border-left: 4px solid var(--win-blue); padding: 8px; margin-top: 6px; font-size: 11px; line-height: 1.4; }
+
+        /* Ronde Klok */
+        .circular-timer-container {
+            position: relative; width: 130px; height: 130px; margin: 8px auto;
+            display: flex; align-items: center; justify-content: center;
+            background: #1b1b1b; border-radius: 50%; box-shadow: inset 0 0 15px rgba(0,0,0,0.9);
+        }
+        .progress-ring { transform: rotate(-90deg); }
+        .progress-ring-bg { stroke: #333; }
+        .progress-ring-fill { stroke: #0078d7; transition: stroke-dashoffset 0.5s linear, stroke 0.5s ease; stroke-linecap: round; }
+        .timer-center { position: absolute; text-align: center; }
+        .countdown-label { font-size: 9px; color: #aaa; text-transform: uppercase; margin-bottom: 2px; }
+        .countdown-timer { font-size: 14px; font-weight: bold; font-family: monospace; color: #fff; }
+
+        /* Centrale Opslaan Knop */
+        .global-save-bar {
+            height: 38px; margin-top: 10px; display: flex; align-items: center; justify-content: center;
+        }
+        .btn-global-save {
+            width: 100%; height: 100%; background: #28a745; color: #fff; border: none; border-radius: 4px;
+            font-size: 13px; font-weight: 700; cursor: pointer; letter-spacing: 0.5px; transition: 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .btn-global-save:hover { background: #218838; }
+
+        /* PLANNING & HISTORIE STYLES */
+        .plan-table { width: 100%; border-collapse: collapse; margin-top: 10px; background: #fff; }
+        .plan-table th, .plan-table td { border: 1px solid #ddd; padding: 8px; font-size: 12px; text-align: left; }
+        .plan-table th { background: #0078d7; color: white; }
+
+        .btn-table-action {
+            padding: 3px 8px; border: none; border-radius: 3px; font-size: 11px; cursor: pointer; color: #fff; font-weight: 600; margin-right: 4px;
+        }
+        .btn-edit { background: #ffc107; color: #000; }
+        .btn-edit:hover { background: #e0a800; }
+        .btn-delete { background: #dc3545; }
+        .btn-delete:hover { background: #c82333; }
+
+        .pdf-export-box {
+            background: #eef6fc; border: 1px solid #cce4f7; padding: 10px; border-radius: 4px; margin-bottom: 15px;
+            display: flex; align-items: center; justify-content: space-between; gap: 10px;
+        }
+
+        .record-navigator { display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 10px 20px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 15px; }
+        .nav-btn { padding: 6px 14px; background: var(--win-blue); color: #fff; border: none; border-radius: 3px; cursor: pointer; font-weight: 600; }
+        .nav-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+        /* HISTORIE RAPPORT STYLING */
+        .history-card-report {
+            background: #fff; border: 1px solid #dcdcdc; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); padding: 20px; margin-top: 10px;
+        }
+        .history-header-bar {
+            display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 2px solid var(--win-blue); margin-bottom: 15px;
+        }
+        .history-title-date { font-size: 16px; font-weight: 700; color: #202020; }
+        .history-badge-status { background: #28a745; color: #fff; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; }
+
+        .history-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        .history-section-box { background: #fafafa; border: 1px solid #e5e5e5; border-radius: 4px; padding: 12px; }
+        .history-section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
         
-        .action-main-btn { width: 100%; padding: 18px; border: none; border-radius: 12px; font-size: 18px; font-weight: 800; cursor: pointer; color: white; }
-        .btn-start { background: #28a745; box-shadow: 0 4px 12px rgba(40,167,69,0.3); }
-        .btn-stop { background: #e53e3e; box-shadow: 0 4px 12px rgba(229,62,62,0.3); }
+        .history-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 5px; }
+        .history-table td, .history-table th { padding: 5px 8px; border-bottom: 1px solid #eee; text-align: left; }
+        .history-table th { background: #f0f0f0; font-weight: 600; color: #555; }
 
-        .active-ride-form { margin-top: 20px; text-align: left; display: none; }
-        .active-ride-form label { display: block; font-size: 11px; font-weight: 800; color: #4a5568; text-transform: uppercase; margin-bottom: 6px; margin-top: 10px; }
-        .active-ride-form select, .active-ride-form input, .active-ride-form textarea { width: 100%; padding: 12px; font-size: 14px; border: 2px solid #e2e8f0; border-radius: 10px; outline: none; background: #f8fafc; font-weight: 600; color: #2d3748; }
-        .active-ride-form select:focus, .active-ride-form input:focus, .active-ride-form textarea:focus { border-color: #007bff; background: white; }
+        .pill-badge { display: inline-block; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; background: #e0e0e0; color: #333; margin-right: 3px; }
+        .pill-active { background: #cce5ff; color: #004085; }
 
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.55); backdrop-filter: blur(3px); justify-content: center; align-items: center; z-index: 100; }
-        .modal-content { background: white; border-radius: 16px; padding: 24px; width: 90%; max-width: 420px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.2); max-height: 85vh; overflow-y: auto; }
-        .modal-content h3 { margin-bottom: 16px; color: #1a202c; font-size: 18px; font-weight: 700; }
-        .modal-content label { display: block; font-size: 11px; font-weight: 700; text-align: left; margin-bottom: 6px; color: #4a5568; text-transform: uppercase; margin-top: 10px; }
-        .modal-content input, .modal-content select, .modal-content textarea { width: 100%; padding: 12px; font-size: 14px; border: 2px solid #e2e8f0; border-radius: 10px; margin-bottom: 6px; outline: none; background: #f8fafc; font-weight: 600; color: #2d3748; text-align: left; }
-        .modal-content input:focus, .modal-content select:focus, .modal-content textarea:focus { border-color: #007bff; background: white; }
-        
-        .modal-buttons { display: flex; gap: 10px; margin-top: 15px; }
-        .modal-buttons button { flex: 1; padding: 12px; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 14px; }
-        .btn-cancel { background: #edf2f7; color: #4a5568; }
-        .btn-confirm { background: #007bff; color: white; }
-        .btn-excel { background: #10b981; color: white; }
+        .btn-print-history {
+            background: #28a745; color: #fff; border: none; padding: 6px 14px; border-radius: 4px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 0.2s;
+        }
+        .btn-print-history:hover { background: #218838; }
 
-        .list-container { max-height: 220px; overflow-y: auto; text-align: left; margin-bottom: 12px; border: 2px solid #e2e8f0; padding: 8px; border-radius: 10px; background: #f8fafc; }
-        .list-card { background: white; border: 1px solid #cbd5e0; border-radius: 8px; padding: 10px; margin-bottom: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-        .list-card-header { font-weight: 700; font-size: 13px; color: #2d3748; display: flex; justify-content: space-between; align-items: center; }
-        .list-card-row { font-size: 12px; color: #718096; padding: 2px 0; }
-        .delete-btn { background: #e53e3e; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 700; }
-
-        .badge-green { background: #e6f4ea; color: #28a745; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 11px; border: 1px solid #28a745; }
-        .badge-red { background: #ffebee; color: #e53e3e; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 11px; border: 1px solid #e53e3e; }
-        .sync-status { font-size: 11px; color: rgba(255,255,255,0.85); margin-top: 3px; font-weight: 500; }
+        /* PRINT STYLES VOOR PDF EXPORT */
+        @media print {
+            body * { visibility: hidden; }
+            .tab-content.active, .tab-content.active * { visibility: visible; }
+            .tab-content.active { position: absolute; left: 0; top: 0; width: 100%; padding: 0; }
+            .win-header, .tab-bar, .record-navigator, .btn-print-history, button, .pdf-export-box { display: none !important; }
+            .history-card-report { border: none; box-shadow: none; padding: 0; }
+        }
     </style>
 </head>
 <body>
 
-    <header>
-        <div>
-            <div class="app-title">Taxi Monitor</div>
-            <div class="sync-status" id="syncStatus">Cloud: Niet ingesteld</div>
+    <div class="win-header">
+        <div class="win-title">
+            <span>🚖</span> TAXI COMMAND CENTER <span>// V1.0</span>
         </div>
-        <div class="header-btns">
-            <button class="icon-btn" onclick="openModal('planningModal')" title="Agenda & Planning">📅</button>
-            <button class="icon-btn" onclick="openModal('reportModal')" title="Rapport & Export">📄</button>
-            <button class="icon-btn" onclick="openModal('diaryModal')" title="Opgeslagen Ritten">📊</button>
-            <button class="icon-btn" onclick="openModal('settingsModal')" title="Instellingen & Cloud">☁️</button>
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ Volledig Scherm</button>
+            <div class="sync-container">
+                <span style="font-size: 11px; font-weight: 600; color: #0078d7;">☁️ Google Sheet URL:</span>
+                <input type="text" id="sheets-url-input" class="sync-input" placeholder="Plak hier je Apps Script URL...">
+                <button class="sync-btn" onclick="bewaarSyncUrl()">Opslaan</button>
+            </div>
+            <div id="system-clock" style="font-size: 13px; font-weight: 500; color: #666;"></div>
         </div>
-    </header>
-
-    <div class="auto-pdf-banner" id="autoPdfBanner">
-        <div class="auto-pdf-title">⏰ Tijd bereikt! Dagelijkse Taxi PDF nog niet gemaakt</div>
-        <div style="font-size: 12px; color: #234e52; margin-bottom: 6px;">Genereer en download het rapport om de melding te voltooien.</div>
-        <button class="btn-auto-pdf" onclick="generateAutoPDF()">📄 GENEREER DAG-PDF NU</button>
     </div>
 
-    <div class="main-container">
-        <div class="scheduled-banner" id="scheduledBanner">
-            <div class="scheduled-title">📌 Geplande Rit voor Vandaag!</div>
-            <div class="scheduled-details" id="scheduledDetailsText"></div>
-            <button class="btn-start-scheduled" onclick="startFirstScheduledRide()">Start eerstvolgende rit</button>
-        </div>
+    <!-- TAB NAVIGATIE -->
+    <div class="tab-bar">
+        <button class="tab-btn active" id="btn-tab-live" onclick="openTab('tab-live', 'btn-tab-live')">🚖 Live Rit</button>
+        <button class="tab-btn" id="btn-tab-planning" onclick="openTab('tab-planning', 'btn-tab-planning')">📅 Planning & Agenda</button>
+        <button class="tab-btn" id="btn-tab-historie" onclick="openTab('tab-historie', 'btn-tab-historie')">📁 Ritten Archief (<span id="count-gereed">0</span>)</button>
+    </div>
 
-        <div class="meter-card">
-            <div class="meter-status" id="meterStatus">Status: Vrij / Klaar voor rit</div>
-            <div class="timer-display" id="timerDisplay">00:00:00</div>
-
-            <button class="action-main-btn btn-start" id="mainActionBtn" onclick="toggleRide()">RIT STARTEN</button>
-
-            <div class="active-ride-form" id="activeRideForm">
-                <label>Bedrijf:</label>
-                <select id="rideCompany"></select>
+    <!-- TAB 1: LIVE RIT DASHBOARD -->
+    <div id="tab-live" class="tab-content active">
+        <div class="dashboard-grid">
+            
+            <!-- VAK 1 -->
+            <div class="dashboard-card" style="grid-column: span 1; grid-row: span 2;">
+                <div class="card-header">
+                    <span>Vak 1: Tijden & Countdown</span>
+                    <span class="draft-badge">Auto-Save</span>
+                </div>
                 
-                <label>Chauffeur:</label>
-                <select id="rideDriver"></select>
+                <div class="form-group">
+                    <label>Geplande Ophaaltijd:</label>
+                    <input type="datetime-local" id="t-ophalen" oninput="berekenRitTijden(); opslaanConceptVak1();">
+                </div>
+                
+                <div class="form-group">
+                    <label>Daadwerkelijk Vertrek:</label>
+                    <input type="datetime-local" id="t-vertrek" oninput="opslaanConceptVak1();">
+                </div>
 
-                <label>Bestemming:</label>
-                <select id="rideDestination"></select>
+                <div class="form-group">
+                    <label>Verwachte / Werkelijke Aankomst:</label>
+                    <input type="datetime-local" id="t-aankomst" oninput="berekenRitTijden(); opslaanConceptVak1();">
+                </div>
 
-                <label>Opmerking:</label>
-                <textarea id="rideNote" rows="2" placeholder="Bijv. bijzonderheden"></textarea>
+                <div class="calc-box" id="resultaten-tijden">
+                    <b>Ritduur:</b> nog niet berekend
+                </div>
+
+                <!-- KLOK -->
+                <div class="circular-timer-container">
+                    <svg class="progress-ring" width="130" height="130">
+                        <circle class="progress-ring-bg" stroke-width="8" fill="transparent" r="54" cx="65" cy="65"/>
+                        <circle id="progress-ring-circle" class="progress-ring-fill" stroke-width="8" fill="transparent" r="54" cx="65" cy="65"/>
+                    </svg>
+                    <div class="timer-center">
+                        <div class="countdown-label">Tijd tot ophalen</div>
+                        <div class="countdown-timer" id="countdown-display">--:--:--</div>
+                    </div>
+                </div>
             </div>
+
+            <!-- VAK 2 -->
+            <div class="dashboard-card" style="grid-column: span 1; grid-row: span 2;">
+                <div class="card-header">
+                    <span>Vak 2: Klant & Locatie</span>
+                    <span class="draft-badge">Auto-Save</span>
+                </div>
+                
+                <div class="form-group">
+                    <label>Soort Rit / Vervoer:</label>
+                    <select id="rit-type" onchange="opslaanConceptVak2()">
+                        <option value="Ziekenvervoer">Ziekenvervoer</option>
+                        <option value="Rolstoelvervoer">Rolstoelvervoer</option>
+                        <option value="Zakelijk">Zakelijk</option>
+                        <option value="Prive">Privé</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Naam Passagier:</label>
+                    <input type="text" id="klant-naam" placeholder="bijv. J. Jansen" oninput="opslaanConceptVak2()">
+                </div>
+
+                <div class="form-group">
+                    <label>Ophaaladres:</label>
+                    <input type="text" id="adres-van" placeholder="Straat + Huisnummer, Plaats" oninput="opslaanConceptVak2()">
+                </div>
+
+                <div class="form-group">
+                    <label>Bestemmingsadres:</label>
+                    <input type="text" id="adres-naar" placeholder="Straat + Huisnummer, Plaats" oninput="opslaanConceptVak2()">
+                </div>
+
+                <div class="form-group">
+                    <label>Tarief / Kosten (€):</label>
+                    <input type="number" step="0.50" id="rit-kosten" placeholder="bijv. 35.00" oninput="opslaanConceptVak2()">
+                </div>
+            </div>
+
+            <!-- VAK 3: KILOMETERS -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <span>Vak 3: Kilometers</span>
+                </div>
+                <div class="form-group">
+                    <label>Beginstand KM:</label>
+                    <input type="number" step="0.1" id="km-begin" placeholder="bijv. 45200" oninput="berekenKilometers(); opslaanConceptVak3();">
+                </div>
+                <div class="form-group">
+                    <label>Eindstand KM:</label>
+                    <input type="number" step="0.1" id="km-eind" placeholder="bijv. 45235" oninput="berekenKilometers(); opslaanConceptVak3();">
+                </div>
+                <div class="calc-box" id="resultaten-km">
+                    <b>Totaal Gereden:</b> -- km
+                </div>
+            </div>
+
+            <!-- VAK 4: NOTITIES -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <span>Vak 4: Notities & Bijzonderheden</span>
+                </div>
+                <textarea id="notities-text" placeholder="Bijv. wachttijd 15 min, rollator mee..." oninput="opslaanConceptVak4()" style="flex-grow: 1; resize: none; padding: 8px; font-size: 12px; border: 1px solid #ccc;"></textarea>
+            </div>
+
+        </div>
+
+        <!-- EÉN CENTRALE OPSLAAN KNOP -->
+        <div class="global-save-bar">
+            <button class="btn-global-save" onclick="slaSessieDefinitiefOpOpEenRegel()">
+                <span>💾</span> HELE RIT DEFINITIEF OPSLAAN & SYNC
+            </button>
         </div>
     </div>
 
-    <!-- Modals -->
-    <div class="modal" id="planningModal">
-        <div class="modal-content">
-            <h3>Agenda & Planning</h3>
-            <div class="list-container" id="plannedListContainer"></div>
-            <hr style="margin: 12px 0; border:0; border-top:1px solid #e2e8f0;">
-            <label>Startdatum:</label><input type="date" id="planDate">
-            <label>Ophaaltijd:</label><input type="time" id="planTime" value="08:00">
-            <label>Bedrijf:</label><select id="planCompany" onchange="checkNewOption(this, 'company')"></select>
-            <label>Chauffeur:</label><select id="planDriver" onchange="checkNewOption(this, 'driver')"></select>
-            <label>Bestemming:</label><select id="planDestination" onchange="checkNewOption(this, 'destination')"></select>
-            <label>Herhaling:</label>
-            <select id="planRepeat" onchange="toggleEndDate()">
-                <option value="none">Geen (eenmalig)</option>
-                <option value="daily">Elke dag</option>
-                <option value="alternate">Om de dag</option>
-                <option value="mwf">Ma, Wo, Vrij</option>
-                <option value="tts">Di, Do, Za</option>
-            </select>
-            <div id="endDateContainer" style="display: none;">
-                <label>Tot einddatum:</label><input type="date" id="planEndDate">
+    <!-- TAB 2: PLANNING -->
+    <div id="tab-planning" class="tab-content">
+        <div class="dashboard-card" style="max-width: 900px; margin: 0 auto;">
+            <div class="card-header">
+                <span>📅 Ritten Planning Invoeren</span>
             </div>
-            <label>Opmerking:</label><input type="text" id="planNote" placeholder="Optioneel">
-            <div class="modal-buttons" style="margin-top:15px;">
-                <button class="btn-cancel" onclick="closeModal('planningModal')">Sluiten</button>
-                <button class="btn-confirm" onclick="addPlannedRide()">Inplannen</button>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+                <div class="form-group">
+                    <label>Eerste Datum & Tijd:</label>
+                    <input type="datetime-local" id="plan-datum">
+                </div>
+
+                <div class="form-group">
+                    <label>Herhaling Patroon:</label>
+                    <select id="plan-herhaling" onchange="toggleEinddatumVeld()">
+                        <option value="geen">Geen (Eenmalig)</option>
+                        <option value="elkedag">Elke dag</option>
+                        <option value="omdedag">Om de dag</option>
+                        <option value="mawovr">Ma - Wo - Vr</option>
+                        <option value="didoza">Di - Do - Za</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="einddatum-box" style="display: none;">
+                    <label>Einddatum Herhaling:</label>
+                    <input type="date" id="plan-einddatum">
+                </div>
             </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 12px;">
+                <div class="form-group">
+                    <label>Soort Rit:</label>
+                    <select id="plan-type">
+                        <option value="Ziekenvervoer">Ziekenvervoer</option>
+                        <option value="Rolstoelvervoer">Rolstoelvervoer</option>
+                        <option value="Zakelijk">Zakelijk</option>
+                        <option value="Prive">Privé</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Klant & Route Details:</label>
+                    <input type="text" id="plan-note" placeholder="Naam + Ophaaladres naar Bestemming...">
+                </div>
+            </div>
+
+            <button style="margin-bottom: 20px; padding: 9px; background: var(--win-blue); color:#fff; border:none; border-radius:3px; cursor:pointer; font-weight: bold;" onclick="voegPlanningToe()">+ GENEREREN & TOEVOEGEN AAN PLANNING</button>
+
+            <!-- PDF EXPORT BOX -->
+            <div class="pdf-export-box">
+                <div style="display: flex; align-items: center; gap: 10px; font-size: 12px;">
+                    <b>📄 Planning Exporteren naar PDF/Afdruk:</b>
+                    <label>Van: <input type="date" id="pdf-van-datum" style="padding: 3px; border: 1px solid #ccc;"></label>
+                    <label>Tot: <input type="date" id="pdf-tot-datum" style="padding: 3px; border: 1px solid #ccc;"></label>
+                </div>
+                <button onclick="exporteerPlanningPdf()" style="padding: 5px 12px; background: #28a745; color:#fff; border:none; border-radius:3px; font-weight:bold; cursor:pointer;">🖨️ PDF / Print</button>
+            </div>
+
+            <div class="card-header">
+                <span>📋 Geplande Ritten (Gesorteerd op Datum)</span>
+            </div>
+
+            <table class="plan-table">
+                <thead>
+                    <tr>
+                        <th>Datum / Tijd</th>
+                        <th>Dag</th>
+                        <th>Type</th>
+                        <th>Details</th>
+                        <th style="width: 140px; text-align: center;">Acties</th>
+                    </tr>
+                </thead>
+                <tbody id="plan-table-body"></tbody>
+            </table>
         </div>
     </div>
 
-    <div class="modal" id="reportModal">
-        <div class="modal-content">
-            <h3>Rapportage & Export</h3>
-            <label>Startdatum:</label><input type="date" id="startDate">
-            <label>Einddatum:</label><input type="date" id="endDate">
-            <div class="modal-buttons" style="flex-direction:column; gap:8px; margin-top:15px;">
-                <button class="btn-confirm" onclick="generatePDFReport()">📄 Open & Print PDF</button>
-                <button class="btn-excel" onclick="generateExcelReport()">📊 Exporteer naar Excel (CSV)</button>
-                <button class="btn-cancel" onclick="closeModal('reportModal')">Sluiten</button>
+    <!-- TAB 3: HISTORIE & ARCHIEF -->
+    <div id="tab-historie" class="tab-content">
+        <div style="max-width: 950px; margin: 0 auto;">
+            <div class="record-navigator">
+                <button class="nav-btn" id="btn-prev-rec" onclick="bladerRecord(-1)">◀ Vorige Rit</button>
+                <span style="font-weight: 700; font-size: 14px; color: var(--win-blue);" id="record-counter-text">Record 0 van 0</span>
+                <button class="nav-btn" id="btn-next-rec" onclick="bladerRecord(1)">Volgende Rit ▶</button>
             </div>
-        </div>
-    </div>
 
-    <div class="modal" id="diaryModal">
-        <div class="modal-content">
-            <h3>Opgeslagen Ritten</h3>
-            <div class="list-container" id="diaryListContainer"></div>
-            <button class="btn-confirm" onclick="closeModal('diaryModal')" style="width:100%;">Sluiten</button>
-        </div>
-    </div>
-
-    <div class="modal" id="settingsModal">
-        <div class="modal-content">
-            <h3>Instellingen & Cloud</h3>
-            <label>Automatische PDF Tijd:</label>
-            <input type="time" id="configPdfTime" value="17:00">
-            <label style="margin-top: 10px;">JSONBin API Key:</label>
-            <input type="text" id="apiKeyInput" placeholder="API Key">
-            <label style="margin-top: 10px;">JSONBin Bin ID:</label>
-            <input type="text" id="binIdInput" placeholder="Bin ID">
-            <div class="modal-buttons" style="margin-top:15px;">
-                <button class="btn-cancel" onclick="closeModal('settingsModal')">Sluiten</button>
-                <button class="btn-confirm" onclick="saveSettings()">Opslaan & Sync</button>
+            <div id="history-record-view">
+                <p style="text-align: center; color: #888; padding-top: 50px;">Geen afgeronde ritten gevonden in het archief.</p>
             </div>
         </div>
     </div>
 
     <script>
-        let rides = [];
-        let planned = [];
-        let optionsList = {
-            company: ['Zorginstelling A', 'Cliënt B', 'Dagbesteding C'],
-            driver: ['Chauffeur 1', 'Chauffeur 2'],
-            destination: ['Plantage', 'Ziekenhuis', 'Stadscentrum']
-        };
+        let actieveOphaalTijd = null;
+        let googleSheetsUrl = localStorage.getItem('taxi_sheets_url') || '';
+        
+        const radius = 54;
+        const circumference = 2 * Math.PI * radius;
+        let planningLijst = [];
+        let historieRecords = [];
+        let huidigRecordIndex = 0;
 
-        let isDriving = false;
-        let startTime = null;
-        let timerInterval = null;
-
-        let pdfTargetTime = localStorage.getItem('taxi_pdf_time') || '17:00';
-        let pdfGeneratedDays = JSON.parse(localStorage.getItem('taxi_pdf_generated')) || {};
-        let apiKey = localStorage.getItem('taxi_jsonbin_apikey') || '';
-        let binId = localStorage.getItem('taxi_jsonbin_binid') || '';
-
-        window.onload = async function() {
-            const todayStr = new Date().toISOString().split('T')[0];
-            document.getElementById('startDate').value = todayStr;
-            document.getElementById('endDate').value = todayStr;
-            document.getElementById('planDate').value = todayStr;
-            document.getElementById('planEndDate').value = todayStr;
-
-            updateDropdowns();
-
-            if (apiKey && binId) {
-                await syncWithCloud(false);
-            } else {
-                document.getElementById('syncStatus').innerText = 'Cloud: Niet ingesteld';
+        window.addEventListener('DOMContentLoaded', () => {
+            const ring = document.getElementById('progress-ring-circle');
+            if(ring) {
+                ring.style.strokeDasharray = `${circumference} ${circumference}`;
+                ring.style.strokeDashoffset = circumference;
             }
-            checkTodayPlanning();
-            checkAutoPDFTrigger();
-            setInterval(checkAutoPDFTrigger, 60000);
-        };
+            
+            document.getElementById('sheets-url-input').value = googleSheetsUrl;
+            laadConcepten();
 
-        function checkAutoPDFTrigger() {
-            const todayStr = new Date().toISOString().split('T')[0];
-            if (pdfGeneratedDays[todayStr]) {
-                document.getElementById('autoPdfBanner').style.display = 'none';
+            if(googleSheetsUrl) syncFromGoogle();
+        });
+
+        setInterval(() => {
+            document.getElementById('system-clock').innerText = new Date().toLocaleString();
+            updateCountdown();
+        }, 1000);
+
+        function openTab(tabId, btnId) {
+            let contents = document.getElementsByClassName('tab-content');
+            for (let i = 0; i < contents.length; i++) {
+                contents[i].classList.remove('active');
+            }
+            let buttons = document.getElementsByClassName('tab-btn');
+            for (let i = 0; i < buttons.length; i++) {
+                buttons[i].classList.remove('active');
+            }
+            document.getElementById(tabId).classList.add('active');
+            document.getElementById(btnId).classList.add('active');
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(e => alert(e.message));
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+            }
+        }
+
+        /* --- PLANNING UTILITIES --- */
+        function toggleEinddatumVeld() {
+            let mode = document.getElementById('plan-herhaling').value;
+            document.getElementById('einddatum-box').style.display = (mode === 'geen') ? 'none' : 'block';
+        }
+
+        function voegPlanningToe() {
+            let startVal = document.getElementById('plan-datum').value;
+            let mode = document.getElementById('plan-herhaling').value;
+            let eindVal = document.getElementById('plan-einddatum').value;
+            let type = document.getElementById('plan-type').value;
+            let note = document.getElementById('plan-note').value;
+
+            if (!startVal) { alert("Kies de eerste datum & tijd!"); return; }
+
+            let startDatum = new Date(startVal);
+            let eindDatum = eindVal ? new Date(eindVal + 'T23:59:59') : new Date(startDatum);
+
+            if (mode !== 'geen' && !eindVal) {
+                alert("Kies een einddatum voor de herhaling!");
                 return;
             }
 
-            const now = new Date();
-            const currentTime = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+            let huidigeDatum = new Date(startDatum);
 
-            if (currentTime >= pdfTargetTime) {
-                document.getElementById('autoPdfBanner').style.display = 'block';
-            } else {
-                document.getElementById('autoPdfBanner').style.display = 'none';
-            }
-        }
+            while (huidigeDatum <= eindDatum) {
+                let dagVanWeek = huidigeDatum.getDay();
+                let toevoegen = false;
 
-        function generateAutoPDF() {
-            const todayStr = new Date().toISOString().split('T')[0];
-            document.getElementById('startDate').value = todayStr;
-            document.getElementById('endDate').value = todayStr;
-            generatePDFReport();
+                if (mode === 'geen' || mode === 'elkedag' || mode === 'omdedag') {
+                    toevoegen = true;
+                } else if (mode === 'mawovr') {
+                    if (dagVanWeek === 1 || dagVanWeek === 3 || dagVanWeek === 5) toevoegen = true;
+                } else if (mode === 'didoza') {
+                    if (dagVanWeek === 2 || dagVanWeek === 4 || dagVanWeek === 6) toevoegen = true;
+                }
 
-            pdfGeneratedDays[todayStr] = true;
-            localStorage.setItem('taxi_pdf_generated', JSON.stringify(pdfGeneratedDays));
-            document.getElementById('autoPdfBanner').style.display = 'none';
-        }
-
-        function openModal(modalId) {
-            if (modalId === 'planningModal') renderPlannedList();
-            if (modalId === 'diaryModal') renderDiaryList();
-            if (modalId === 'settingsModal') {
-                document.getElementById('configPdfTime').value = pdfTargetTime;
-                document.getElementById('apiKeyInput').value = apiKey;
-                document.getElementById('binIdInput').value = binId;
-            }
-            document.getElementById(modalId).style.display = 'flex';
-        }
-
-        function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
-        }
-
-        async function syncWithCloud(showAlert) {
-            if (!apiKey) {
-                if (showAlert) alert('Stel eerst je API Key in via het wolkje (☁️).');
-                return;
-            }
-
-            document.getElementById('syncStatus').innerText = 'Cloud: Synchroniseren...';
-
-            try {
-                if (!binId) {
-                    const createRes = await fetch('https://api.jsonbin.io/v3/b', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-Master-Key': apiKey,
-                            'X-Bin-Private': 'true'
-                        },
-                        body: JSON.stringify({ rides: [], planned: [], optionsList: optionsList, pdfTargetTime: pdfTargetTime, pdfGeneratedDays: pdfGeneratedDays })
+                if (toevoegen) {
+                    planningLijst.push({
+                        id: Date.now() + Math.random(),
+                        datum: new Date(huidigeDatum).toISOString(),
+                        type: type,
+                        note: note
                     });
-                    const createData = await createRes.json();
-                    if (createData.metadata && createData.metadata.id) {
-                        binId = createData.metadata.id;
-                        localStorage.setItem('taxi_jsonbin_binid', binId);
-                    }
                 }
 
-                const getRes = await fetch('https://api.jsonbin.io/v3/b/' + binId + '/latest', {
-                    headers: { 'X-Master-Key': apiKey }
-                });
-                const getData = await getRes.json();
-
-                if (getData.record) {
-                    if (getData.record.rides) rides = getData.record.rides;
-                    if (getData.record.planned) planned = getData.record.planned;
-                    if (getData.record.optionsList) optionsList = getData.record.optionsList;
-                    if (getData.record.pdfTargetTime) {
-                        pdfTargetTime = getData.record.pdfTargetTime;
-                        localStorage.setItem('taxi_pdf_time', pdfTargetTime);
-                    }
-                    if (getData.record.pdfGeneratedDays) {
-                        pdfGeneratedDays = getData.record.pdfGeneratedDays;
-                        localStorage.setItem('taxi_pdf_generated', JSON.stringify(pdfGeneratedDays));
-                    }
-                    document.getElementById('syncStatus').innerText = 'Cloud: Verbonden';
-                    if (showAlert) alert('Verbonden & gesynchroniseerd!');
-                }
-                updateDropdowns();
-                checkTodayPlanning();
-                checkAutoPDFTrigger();
-            } catch (error) {
-                console.error(error);
-                document.getElementById('syncStatus').innerText = 'Cloud: Fout bij sync';
-            }
-        }
-
-        async function pushToCloud() {
-            if (!apiKey || !binId) return;
-            try {
-                await fetch('https://api.jsonbin.io/v3/b/' + binId, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Master-Key': apiKey
-                    },
-                    body: JSON.stringify({ rides: rides, planned: planned, optionsList: optionsList, pdfTargetTime: pdfTargetTime, pdfGeneratedDays: pdfGeneratedDays })
-                });
-                document.getElementById('syncStatus').innerText = 'Cloud: Opgeslagen';
-            } catch (error) {
-                console.error(error);
-                document.getElementById('syncStatus').innerText = 'Cloud: Opslaan mislukt';
-            }
-        }
-
-        function updateDropdowns() {
-            ['rideCompany', 'planCompany'].forEach(function(id) { populateSelect(id, optionsList.company); });
-            ['rideDriver', 'planDriver'].forEach(function(id) { populateSelect(id, optionsList.driver); });
-            ['rideDestination', 'planDestination'].forEach(function(id) { populateSelect(id, optionsList.destination); });
-        }
-
-        function populateSelect(elementId, items) {
-            const select = document.getElementById(elementId);
-            if (!select) return;
-            const currentVal = select.value;
-            select.innerHTML = '<option value="">-- Maak keuze of voeg toe --</option>';
-            items.forEach(function(item) {
-                const opt = document.createElement('option');
-                opt.value = item;
-                opt.textContent = item;
-                select.appendChild(opt);
-            });
-            select.innerHTML += '<option value="__new__" style="font-weight:bold; color:#007bff;">+ Nieuwe toevoegen...</option>';
-            if (items.includes(currentVal)) select.value = currentVal;
-        }
-
-        async function checkNewOption(selectElement, type) {
-            if (selectElement.value === '__new__') {
-                const newVal = prompt('Voer een nieuwe naam in:');
-                if (newVal && newVal.trim() !== '') {
-                    const cleaned = newVal.trim();
-                    if (!optionsList[type].includes(cleaned)) {
-                        optionsList[type].push(cleaned);
-                        await pushToCloud();
-                        updateDropdowns();
-                        selectElement.value = cleaned;
-                    } else {
-                        selectElement.value = cleaned;
-                    }
+                if (mode === 'omdedag') {
+                    huidigeDatum.setDate(huidigeDatum.getDate() + 2);
                 } else {
-                    selectElement.value = '';
+                    huidigeDatum.setDate(huidigeDatum.getDate() + 1);
                 }
+
+                if (mode === 'geen') break;
             }
+
+            sorterEnRenderPlanning();
+            syncToGoogle('taxi_planning', planningLijst);
+
+            document.getElementById('plan-datum').value = '';
+            document.getElementById('plan-note').value = '';
         }
 
-        function toggleEndDate() {
-            const repeat = document.getElementById('planRepeat').value;
-            document.getElementById('endDateContainer').style.display = repeat === 'none' ? 'none' : 'block';
+        function sorterEnRenderPlanning() {
+            planningLijst.sort((a, b) => new Date(a.datum) - new Date(b.datum));
+
+            let body = document.getElementById('plan-table-body');
+            body.innerHTML = '';
+
+            let dagenNamen = ['Zondag', 'Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag'];
+
+            planningLijst.forEach((p) => {
+                let d = new Date(p.datum);
+                let tr = document.createElement('tr');
+
+                tr.innerHTML = `
+                    <td><b>${d.toLocaleString([], {year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute:'2-digit'})}</b></td>
+                    <td>${dagenNamen[d.getDay()]}</td>
+                    <td>${p.type}</td>
+                    <td>${p.note || '-'}</td>
+                    <td style="text-align:center;">
+                        <button class="btn-table-action btn-edit" onclick="laadPlanningInLive('${p.datum}', '${p.type}', '${p.note || ''}')">✏️ Bewerken</button>
+                        <button class="btn-table-action btn-delete" onclick="verwijderPlanningItem('${p.id}')">✕</button>
+                    </td>
+                `;
+                body.appendChild(tr);
+            });
         }
 
-        function checkTodayPlanning() {
-            const todayStr = new Date().toISOString().split('T')[0];
-            const todayRides = planned.filter(function(p) { return p.date === todayStr; });
-            const banner = document.getElementById('scheduledBanner');
-
-            if (todayRides.length > 0) {
-                let html = '';
-                todayRides.forEach(function(r) {
-                    html += '<div>⏰ <span class="badge-green">' + (r.time || '00:00') + '</span> - 🚗 <b>' + r.company + '</b> naar ' + r.destination + '</div>';
-                });
-                document.getElementById('scheduledDetailsText').innerHTML = html;
-                banner.style.display = 'block';
-            } else {
-                banner.style.display = 'none';
-            }
+        function verwijderPlanningItem(id) {
+            planningLijst = planningLijst.filter(p => p.id != id && p.id !== undefined);
+            sorterEnRenderPlanning();
+            syncToGoogle('taxi_planning', planningLijst);
         }
 
-        function startFirstScheduledRide() {
-            const todayStr = new Date().toISOString().split('T')[0];
-            const match = planned.find(function(p) { return p.date === todayStr; });
+        function laadPlanningInLive(datumIso, type, note) {
+            let d = new Date(datumIso);
+            let formattedLocal = formatDateTimeLocal(d);
 
-            if (match) {
-                document.getElementById('rideCompany').value = match.company;
-                document.getElementById('rideDriver').value = match.driver;
-                document.getElementById('rideDestination').value = match.destination;
-                document.getElementById('rideNote').value = match.note || '';
+            document.getElementById('t-ophalen').value = formattedLocal;
+            document.getElementById('t-vertrek').value = formattedLocal;
+            document.getElementById('rit-type').value = type;
+            document.getElementById('plan-note').value = note;
 
-                planned = planned.filter(function(p) { return p !== match; });
-                pushToCloud();
-                checkTodayPlanning();
-            }
-            toggleRide();
+            opslaanConceptVak1();
+            opslaanConceptVak2();
+
+            openTab('tab-live', 'btn-tab-live');
+            alert("Rit ingeladen in 'Live Rit'!");
         }
 
-        function toggleRide() {
-            const btn = document.getElementById('mainActionBtn');
-            const status = document.getElementById('meterStatus');
-            const form = document.getElementById('activeRideForm');
+        function exporteerPlanningPdf() { window.print(); }
+        function printHistorieRapport() { window.print(); }
 
-            if (!isDriving) {
-                isDriving = true;
-                startTime = new Date();
-                
-                btn.innerText = 'RIT STOPPEN & OPSLAAN';
-                btn.className = 'action-main-btn btn-stop';
-                status.innerText = 'Status: Rit bezig...';
-                form.style.display = 'block';
+        /* --- 1 SINGLE SAVE FUNCTIE --- */
+        function slaSessieDefinitiefOpOpEenRegel() {
+            let v1 = localStorage.getItem('taxi_draft_vak1') ? JSON.parse(localStorage.getItem('taxi_draft_vak1')) : {};
+            let v2 = localStorage.getItem('taxi_draft_vak2') ? JSON.parse(localStorage.getItem('taxi_draft_vak2')) : {};
+            let v3 = localStorage.getItem('taxi_draft_vak3') ? JSON.parse(localStorage.getItem('taxi_draft_vak3')) : {};
+            let v4 = localStorage.getItem('taxi_draft_vak4') || '';
 
-                timerInterval = setInterval(function() {
-                    const now = new Date();
-                    const diff = Math.floor((now - startTime) / 1000);
-                    const h = String(Math.floor(diff / 3600)).padStart(2, '0');
-                    const m = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
-                    const s = String(diff % 60).padStart(2, '0');
-                    document.getElementById('timerDisplay').innerText = h + ':' + m + ':' + s;
-                }, 1000);
-            } else {
-                const stopTime = new Date();
-                const company = document.getElementById('rideCompany').value || 'Onbekend';
-                const driver = document.getElementById('rideDriver').value || 'Onbekend';
-                const destination = document.getElementById('rideDestination').value || 'Onbekend';
-                const note = document.getElementById('rideNote').value.trim();
+            let completeRit = {
+                datumSync: new Date().toISOString(),
+                tijden: v1,
+                klantEnRit: v2,
+                kilometers: v3,
+                notities: v4
+            };
 
-                rides.unshift({
-                    date: startTime.toISOString().split('T')[0],
-                    startDateTime: startTime.toLocaleString('nl-NL'),
-                    stopDateTime: stopTime.toLocaleString('nl-NL'),
-                    durationMinutes: Math.floor((stopTime - startTime) / 60000),
-                    company: company,
-                    driver: driver,
-                    destination: destination,
-                    note: note
-                });
+            historieRecords.unshift(completeRit);
+            syncToGoogle('taxi_historie', historieRecords);
+            renderHistorie();
 
-                pushToCloud();
-                clearInterval(timerInterval);
-                isDriving = false;
-                btn.innerText = 'RIT STARTEN';
-                btn.className = 'action-main-btn btn-start';
-                status.innerText = 'Status: Vrij / Rit opgeslagen';
-                document.getElementById('timerDisplay').innerText = '00:00:00';
-                form.style.display = 'none';
-
-                document.getElementById('rideCompany').value = '';
-                document.getElementById('rideDriver').value = '';
-                document.getElementById('rideDestination').value = '';
-                document.getElementById('rideNote').value = '';
-                alert('Rit succesvol opgeslagen en gesynchroniseerd!');
-            }
+            alert("De rit is succesvol opgeslagen & gesynchroniseerd naar Google Sheets!");
         }
 
-        function renderPlannedList() {
-            const container = document.getElementById('plannedListContainer');
-            container.innerHTML = '';
-            if (planned.length === 0) {
-                container.innerHTML = '<p style="color: #718096; text-align: center; padding: 10px;">Geen geplande ritten.</p>';
-            } else {
-                planned.forEach(function(p, idx) {
-                    container.innerHTML += '<div class="list-card"><div class="list-card-header"><span>📅 ' + p.date + ' om <span class="badge-green">' + p.time + '</span> - ' + p.company + '</span><button class="delete-btn" onclick="deletePlanned(' + idx + ')">Wis</button></div><div class="list-card-row">Naar: ' + p.destination + ' | Chauffeur: ' + p.driver + '</div></div>';
-                });
-            }
-        }
+        /* --- HISTORIE RAPPORT --- */
+        function renderHistorie() {
+            document.getElementById('count-gereed').innerText = historieRecords.length;
+            let counter = document.getElementById('record-counter-text');
+            let view = document.getElementById('history-record-view');
 
-        async function addPlannedRide() {
-            const dateStr = document.getElementById('planDate').value;
-            const time = document.getElementById('planTime').value;
-            const company = document.getElementById('planCompany').value;
-            const driver = document.getElementById('planDriver').value;
-            const destination = document.getElementById('planDestination').value;
-            const repeat = document.getElementById('planRepeat').value;
-            const endDateStr = document.getElementById('planEndDate').value;
-            const note = document.getElementById('planNote').value.trim();
-
-            if (!dateStr || !company || company === '__new__') {
-                alert('Vul een geldige datum en bedrijf in.');
+            if(historieRecords.length === 0) {
+                counter.innerText = "Record 0 van 0";
+                view.innerHTML = `<p style="text-align: center; color: #888; padding-top: 50px;">Geen afgeronde ritten gevonden in het archief.</p>`;
                 return;
             }
 
-            let currDate = new Date(dateStr + 'T00:00:00');
-            let limitDate = repeat === 'none' ? new Date(dateStr + 'T00:00:00') : new Date((endDateStr || dateStr) + 'T00:00:00');
+            counter.innerText = `Record ${huidigRecordIndex + 1} van ${historieRecords.length}`;
+            let rec = historieRecords[huidigRecordIndex];
+            let t = rec.tijden || {};
+            let k = rec.klantEnRit || {};
+            let km = rec.kilometers || {};
+            let n = rec.notities || '';
 
-            let count = 0;
-            while (currDate <= limitDate && count < 500) {
-                let day = currDate.getDay();
-                let add = false;
-                if (repeat === 'none' && count === 0) add = true;
-                else if (repeat === 'daily') add = true;
-                else if (repeat === 'alternate' && count % 2 === 0) add = true;
-                else if (repeat === 'mwf' && (day === 1 || day === 3 || day === 5)) add = true;
-                else if (repeat === 'tts' && (day === 2 || day === 4 || day === 6)) add = true;
+            let totaalKm = (km.eind && km.begin) ? (parseFloat(km.eind) - parseFloat(km.begin)).toFixed(1) : '--';
 
-                if (add) {
-                    let y = currDate.getFullYear();
-                    let m = String(currDate.getMonth() + 1).padStart(2, '0');
-                    let d = String(currDate.getDate()).padStart(2, '0');
-                    planned.push({ date: y + '-' + m + '-' + d, time: time, company: company, driver: driver, destination: destination, repeat: repeat, note: note });
-                }
-                if (repeat === 'none') break;
-                currDate.setDate(currDate.getDate() + 1);
-                count++;
+            view.innerHTML = `
+                <div class="history-card-report">
+                    <div class="history-header-bar">
+                        <div class="history-title-date">🚖 Rittencentralerapport van ${new Date(rec.datumSync).toLocaleString()}</div>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <button class="btn-print-history" onclick="printHistorieRapport()">🖨️ Afdrukken / Opslaan als PDF</button>
+                            <div class="history-badge-status">✓ VOLTOOID</div>
+                        </div>
+                    </div>
+
+                    <div class="history-grid">
+                        <div class="history-section-box">
+                            <div class="history-section-title" style="color:#0078d7;">⏱️ Tijden & Planning</div>
+                            <table class="history-table">
+                                <tr><td><b>Ophaaltijd:</b></td><td>${t.ophalen ? new Date(t.ophalen).toLocaleString() : '-'}</td></tr>
+                                <tr><td><b>Vertrektijd:</b></td><td>${t.vertrek ? new Date(t.vertrek).toLocaleString() : '-'}</td></tr>
+                                <tr><td><b>Aankomsttijd:</b></td><td>${t.aankomst ? new Date(t.aankomst).toLocaleString() : '-'}</td></tr>
+                            </table>
+                        </div>
+
+                        <div class="history-section-box">
+                            <div class="history-section-title" style="color:#28a745;">👤 Klant & Route</div>
+                            <table class="history-table">
+                                <tr><td><b>Passagier:</b></td><td><b>${k.naam || '-'}</b></td></tr>
+                                <tr><td><b>Soort Rit:</b></td><td><span class="pill-badge pill-active">${k.type || 'Ziekenvervoer'}</span></td></tr>
+                                <tr><td><b>Van:</b></td><td>${k.van || '-'}</td></tr>
+                                <tr><td><b>Naar:</b></td><td>${k.naar || '-'}</td></tr>
+                                <tr><td><b>Tarief:</b></td><td><b>€ ${k.kosten ? parseFloat(k.kosten).toFixed(2) : '-'}</b></td></tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="history-grid">
+                        <div class="history-section-box">
+                            <div class="history-section-title" style="color:#6f42c1;">📏 Kilometers</div>
+                            <table class="history-table">
+                                <tr><td><b>Beginstand:</b></td><td>${km.begin || '-'} km</td></tr>
+                                <tr><td><b>Eindstand:</b></td><td>${km.eind || '-'} km</td></tr>
+                                <tr><td><b>Totaal Gereden:</b></td><td><b>${totaalKm} km</b></td></tr>
+                            </table>
+                        </div>
+
+                        <div class="history-section-box">
+                            <div class="history-section-title" style="color:#6c757d;">📝 Notities</div>
+                            <div style="font-size: 12px; font-style: italic; color: #444; background: #fff; padding: 8px; border: 1px solid #eee; border-radius: 3px; min-height: 60px;">
+                                ${n ? n : 'Geen notities ingevoerd.'}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function bladerRecord(richting) {
+            huidigRecordIndex += richting;
+            if(huidigRecordIndex < 0) huidigRecordIndex = 0;
+            if(huidigRecordIndex >= historieRecords.length) huidigRecordIndex = historieRecords.length - 1;
+            renderHistorie();
+        }
+
+        /* --- AUTO-SAVE CONCEPTEN --- */
+        function opslaanConceptVak1() {
+            let data = { ophalen: document.getElementById('t-ophalen').value, vertrek: document.getElementById('t-vertrek').value, aankomst: document.getElementById('t-aankomst').value };
+            localStorage.setItem('taxi_draft_vak1', JSON.stringify(data));
+        }
+
+        function opslaanConceptVak2() {
+            let data = { type: document.getElementById('rit-type').value, naam: document.getElementById('klant-naam').value, van: document.getElementById('adres-van').value, naar: document.getElementById('adres-naar').value, kosten: document.getElementById('rit-kosten').value };
+            localStorage.setItem('taxi_draft_vak2', JSON.stringify(data));
+        }
+
+        function opslaanConceptVak3() {
+            let data = { begin: document.getElementById('km-begin').value, eind: document.getElementById('km-eind').value };
+            localStorage.setItem('taxi_draft_vak3', JSON.stringify(data));
+        }
+
+        function opslaanConceptVak4() { localStorage.setItem('taxi_draft_vak4', document.getElementById('notities-text').value); }
+
+        function laadConcepten() {
+            let d1 = localStorage.getItem('taxi_draft_vak1');
+            if(d1) { let d = JSON.parse(d1); document.getElementById('t-ophalen').value = d.ophalen || ''; document.getElementById('t-vertrek').value = d.vertrek || ''; document.getElementById('t-aankomst').value = d.aankomst || ''; berekenRitTijden(); }
+            
+            let d2 = localStorage.getItem('taxi_draft_vak2');
+            if(d2) { let d = JSON.parse(d2); document.getElementById('rit-type').value = d.type || 'Ziekenvervoer'; document.getElementById('klant-naam').value = d.naam || ''; document.getElementById('adres-van').value = d.van || ''; document.getElementById('adres-naar').value = d.naar || ''; document.getElementById('rit-kosten').value = d.kosten || ''; }
+
+            let d3 = localStorage.getItem('taxi_draft_vak3');
+            if(d3) { let d = JSON.parse(d3); document.getElementById('km-begin').value = d.begin || ''; document.getElementById('km-eind').value = d.eind || ''; berekenKilometers(); }
+
+            let d4 = localStorage.getItem('taxi_draft_vak4'); if(d4) document.getElementById('notities-text').value = d4;
+        }
+
+        function berekenKilometers() {
+            let b = parseFloat(document.getElementById('km-begin').value) || 0;
+            let e = parseFloat(document.getElementById('km-eind').value) || 0;
+            document.getElementById('resultaten-km').innerHTML = `<b>Totaal Gereden:</b> ${(e > b) ? (e - b).toFixed(1) : '--'} km`;
+        }
+
+        function berekenRitTijden() {
+            let oph = document.getElementById('t-ophalen').value;
+            let aank = document.getElementById('t-aankomst').value;
+            if(oph) actieveOphaaltijd = new Date(oph);
+            if(oph && aank) {
+                let diff = new Date(aank) - new Date(oph);
+                let u = Math.floor(diff / (1000 * 60 * 60));
+                let m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                document.getElementById('resultaten-tijden').innerHTML = `<b>Ritduur:</b> ${u}u ${m}m`;
             }
-
-            await pushToCloud();
-            checkTodayPlanning();
-            renderPlannedList();
-            closeModal('planningModal');
-            alert('Rit(ten) ingepland!');
         }
 
-        async function deletePlanned(idx) {
-            planned.splice(idx, 1);
-            await pushToCloud();
-            checkTodayPlanning();
-            renderPlannedList();
+        function updateCountdown() {
+            let timerDisplay = document.getElementById('countdown-display');
+            if(!actieveOphaaltijd) { if(timerDisplay) timerDisplay.innerText = "--:--:--"; return; }
+            let nu = new Date(); let restris = actieveOphaaltijd - nu;
+            if(restris <= 0) { if(timerDisplay) timerDisplay.innerText = "TIJD BEREIKT"; return; }
+            let u = Math.floor(restris / (1000 * 60 * 60)), m = Math.floor((restris % (1000 * 60 * 60)) / (1000 * 60)), s = Math.floor((restris % (1000 * 60)) / 1000);
+            if(timerDisplay) timerDisplay.innerText = `${String(u).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
         }
 
-        function renderDiaryList() {
-            const container = document.getElementById('diaryListContainer');
-            container.innerHTML = '';
-            if (rides.length === 0) {
-                container.innerHTML = '<p style="color: #718096; text-align: center; padding: 15px;">Nog geen ritten geregistreerd.</p>';
-            } else {
-                rides.forEach(function(r, idx) {
-                    let dur = r.durationMinutes || 0;
-                    let badge = dur >= 48 ? 'badge-red' : 'badge-green';
-                    container.innerHTML += '<div class="list-card"><div class="list-card-header"><span>🚗 ' + r.company + ' (' + r.date + ')</span><button class="delete-btn" onclick="deleteRide(' + idx + ')">Wis</button></div><div class="list-card-row">Duur: <span class="' + badge + '">' + dur + ' min</span> | Chauffeur: ' + r.driver + '</div></div>';
-                });
-            }
+        function formatDateTimeLocal(date) { return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}T${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`; }
+
+        function bewaarSyncUrl() { googleSheetsUrl = document.getElementById('sheets-url-input').value.trim(); localStorage.setItem('taxi_sheets_url', googleSheetsUrl); alert("Google Sheets URL opgeslagen!"); if(googleSheetsUrl) syncFromGoogle(); }
+
+        async function syncToGoogle(key, valueObj) {
+            if (!googleSheetsUrl) return;
+            try { await fetch(googleSheetsUrl, { method: 'POST', mode: 'no-cors', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ key: key, value: JSON.stringify(valueObj) }) }); } catch(e){}
         }
 
-        async function deleteRide(idx) {
-            if (confirm('Verwijderen?')) {
-                rides.splice(idx, 1);
-                await pushToCloud();
-                renderDiaryList();
-            }
-        }
-
-        function generatePDFReport() {
-            const start = document.getElementById('startDate').value;
-            const end = document.getElementById('endDate').value;
-            const filtered = rides.filter(function(r) { return r.date >= start && r.date <= end; });
-            if (filtered.length === 0) { alert('Geen ritten in deze periode.'); return; }
-
-            let html = '<html><head><title>Taxi Rapport</title><style>body{font-family:Arial,sans-serif;padding:25px; color:#333;}h2{color:#007bff; border-bottom:2px solid #007bff; padding-bottom:8px;}table{width:100%;border-collapse:collapse;margin-top:10px;}th,td{border:1px solid #cbd5e0;padding:8px 12px;font-size:13px;text-align:left;}th{background:#edf2f7;}</style></head><body><h2>Taxi Rittenstaat Rapport</h2><p><b>Periode:</b> ' + start + ' t/m ' + end + '</p><table><tr><th>Datum</th><th>Start</th><th>Stop</th><th>Duur</th><th>Bedrijf</th><th>Chauffeur</th><th>Bestemming</th></tr>';
-            filtered.forEach(function(r) {
-                html += '<tr><td>' + r.date + '</td><td>' + r.startDateTime + '</td><td>' + r.stopDateTime + '</td><td>' + r.durationMinutes + 'm</td><td>' + r.company + '</td><td>' + r.driver + '</td><td>' + r.destination + '</td></tr>';
-            });
-            html += '</table><script>window.onload=function(){window.print();}<\/script></body></html>';
-            let w = window.open(); w.document.write(html); w.document.close();
-            closeModal('reportModal');
-        }
-
-        function generateExcelReport() {
-            const start = document.getElementById('startDate').value;
-            const end = document.getElementById('endDate').value;
-            const filtered = rides.filter(function(r) { return r.date >= start && r.date <= end; });
-            if (filtered.length === 0) { alert('Geen ritten in deze periode.'); return; }
-
-            let csv = 'Datum;Start;Stop;Duur (min);Bedrijf;Chauffeur;Bestemming;Notitie\n';
-            filtered.forEach(function(r) {
-                csv += '"' + r.date + '";"' + r.startDateTime + '";"' + r.stopDateTime + '";"' + r.durationMinutes + '";"' + r.company + '";"' + r.driver + '";"' + r.destination + '";"' + (r.note || '') + '"\n';
-            });
-
-            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = 'Taxi_Rapport_' + start + '_tot_' + end + '.csv';
-            link.click();
-            closeModal('reportModal');
-        }
-
-        function saveSettings() {
-            pdfTargetTime = document.getElementById('configPdfTime').value || '17:00';
-            localStorage.setItem('taxi_pdf_time', pdfTargetTime);
-
-            apiKey = document.getElementById('apiKeyInput').value.trim();
-            binId = document.getElementById('binIdInput').value.trim();
-            localStorage.setItem('taxi_jsonbin_apikey', apiKey);
-            localStorage.setItem('taxi_jsonbin_binid', binId);
-            closeModal('settingsModal');
-            syncWithCloud(true);
-            checkAutoPDFTrigger();
+        async function syncFromGoogle() {
+            if (!googleSheetsUrl) return;
+            try {
+                let res = await fetch(googleSheetsUrl); let data = await res.json();
+                if(data['taxi_planning']) { planningLijst = JSON.parse(data['taxi_planning']); sorterEnRenderPlanning(); }
+                if(data['taxi_historie']) { historieRecords = JSON.parse(data['taxi_historie']); renderHistorie(); }
+            } catch(e){}
         }
     </script>
 </body>
