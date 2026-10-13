@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Taxi Command Center - Colored Border Clocks Edition</title>
+    <title>Taxi Command Center - Exact Trip Duration Edition</title>
     <style>
         :root {
             --win-blue: #0078d7;
@@ -175,7 +175,7 @@
 
     <div class="win-header">
         <div class="win-title">
-            <span>🚖</span> TAXI COMMAND CENTER <span>// V1.8</span>
+            <span>🚖</span> TAXI COMMAND CENTER <span>// V1.9</span>
         </div>
         <div style="display: flex; align-items: center; gap: 12px;">
             <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ Volledig Scherm</button>
@@ -219,7 +219,7 @@
                 <!-- 2. Daadwerkelijk Vertrek (Groene Rand) -->
                 <div class="form-group">
                     <label>Daadwerkelijk Vertrek:</label>
-                    <input type="datetime-local" id="t-vertrek" oninput="opslaanConceptVak1();">
+                    <input type="datetime-local" id="t-vertrek" oninput="berekenRitTijden(); opslaanConceptVak1();">
                 </div>
                 <div class="sub-clock-box border-green" onclick="zetHuidigeTijd('t-vertrek')" title="Klik om huidige tijd in te stellen">
                     <div class="sub-clock-label">⚡ Klik hier voor Huidige Tijd (Vertrek)</div>
@@ -454,7 +454,9 @@
             document.getElementById(elementId).value = formattedLocal;
             
             if(elementId === 't-vertrek') opslaanConceptVak1();
-            if(elementId === 't-aankomst') { berekenRitTijden(); opslaanConceptVak1(); }
+            if(elementId === 't-aankomst') opslaanConceptVak1();
+            
+            berekenRitTijden();
             updateAllSubClocks();
         }
 
@@ -761,15 +763,27 @@
             let d4 = localStorage.getItem('taxi_draft_vak4'); if(d4) document.getElementById('notities-text').value = d4;
         }
 
+        /* --- AANGEPASTE RITDUUR BEREKENING: AANKOMST - VERTREK --- */
         function berekenRitTijden() {
             let oph = document.getElementById('t-ophalen').value;
+            let vert = document.getElementById('t-vertrek').value;
             let aank = document.getElementById('t-aankomst').value;
+
             if(oph) actieveOphaalTijd = new Date(oph);
-            if(oph && aank) {
-                let diff = new Date(aank) - new Date(oph);
-                let u = Math.floor(diff / (1000 * 60 * 60));
-                let m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                document.getElementById('resultaten-tijden').innerHTML = `<b>Ritduur:</b> ${u}u ${m}m`;
+
+            let resBox = document.getElementById('resultaten-tijden');
+
+            if (vert && aank) {
+                let diff = new Date(aank) - new Date(vert);
+                if (diff >= 0) {
+                    let u = Math.floor(diff / (1000 * 60 * 60));
+                    let m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    resBox.innerHTML = `<b>Ritduur (Aankomst - Vertrek):</b> ${u}u ${m}m`;
+                } else {
+                    resBox.innerHTML = `<b>Ritduur:</b> Fout (Aankomst ligt voor vertrek)`;
+                }
+            } else {
+                resBox.innerHTML = `<b>Ritduur:</b> Vul vertrek & aankomst in`;
             }
         }
 
