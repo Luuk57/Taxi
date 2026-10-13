@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Taxi Command Center - Silent Background Sync Edition</title>
+    <title>Taxi Command Center - Native Sheet Storage Edition</title>
     <style>
         :root {
             --win-blue: #0078d7;
@@ -40,17 +40,6 @@
         /* TAB CONTENT VISIBILITY */
         .tab-content { display: none; width: 100%; height: calc(100vh - 88px); padding: 15px 20px 20px 20px; overflow-y: auto; }
         .tab-content.active { display: block !important; }
-
-        .sync-container {
-            display: flex; align-items: center; gap: 8px; background: #eef6fc;
-            padding: 4px 8px; border-radius: 4px; border: 1px solid #cce4f7;
-        }
-        .sync-input { width: 220px; padding: 4px 8px; border: 1px solid #ccc; border-radius: 3px; font-size: 11px; }
-        .sync-btn, .fullscreen-btn {
-            background: var(--win-blue); border: none; color: #fff;
-            padding: 5px 10px; border-radius: 3px; font-size: 11px; font-weight: 600; cursor: pointer; transition: 0.2s;
-        }
-        .sync-btn:hover, .fullscreen-btn:hover { background: #005a9e; }
 
         .dashboard-grid {
             display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); gap: 15px; height: calc(100% - 45px);
@@ -162,7 +151,6 @@
         }
         .btn-print-history:hover { background: #218838; }
 
-        /* PRINT STYLES VOOR PDF EXPORT */
         @media print {
             body * { visibility: hidden; }
             .tab-content.active, .tab-content.active * { visibility: visible; }
@@ -176,14 +164,10 @@
 
     <div class="win-header">
         <div class="win-title">
-            <span>🚖</span> TAXI COMMAND CENTER <span>// V2.2</span>
+            <span>🚖</span> TAXI COMMAND CENTER <span>// V3.0 NATIVE SHEETS</span>
         </div>
         <div style="display: flex; align-items: center; gap: 12px;">
-            <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ Volledig Scherm</button>
-            <div class="sync-container">
-                <span style="font-size: 11px; font-weight: 600; color: #0078d7;">☁️ Google Sheet URL:</span>
-                <input type="text" id="sheets-url-input" class="sync-input" placeholder="Plak hier je Apps Script URL..." onblur="bewaarSyncUrlStil()">
-            </div>
+            <button class="fullscreen-btn" onclick="toggleFullscreen()" style="background:#0078d7; border:none; color:#fff; padding:5px 10px; border-radius:3px; font-size:11px; cursor:pointer;">⛶ Volledig Scherm</button>
             <div id="system-clock" style="font-size: 13px; font-weight: 500; color: #666;"></div>
         </div>
     </div>
@@ -206,7 +190,6 @@
                     <span class="draft-badge">Auto-Save</span>
                 </div>
                 
-                <!-- 1. Ophaaltijd -->
                 <div class="form-group">
                     <label>Geplande Ophaaltijd:</label>
                     <input type="datetime-local" id="t-ophalen" oninput="berekenRitTijden(); opslaanConceptVak1();">
@@ -216,7 +199,6 @@
                     <div class="sub-clock-display status-green" id="clock-ophalen">--:--</div>
                 </div>
                 
-                <!-- 2. Daadwerkelijk Vertrek (Groene Rand) -->
                 <div class="form-group">
                     <label>Daadwerkelijk Vertrek:</label>
                     <input type="datetime-local" id="t-vertrek" oninput="opslaanConceptVak1();">
@@ -226,7 +208,6 @@
                     <div class="sub-clock-display status-green" id="clock-vertrek">Klik om in te stellen</div>
                 </div>
 
-                <!-- 3. Verwachte Aankomst (Rode Rand) -->
                 <div class="form-group">
                     <label>Verwachte / Werkelijke Aankomst:</label>
                     <input type="datetime-local" id="t-aankomst" oninput="berekenRitTijden(); opslaanConceptVak1();">
@@ -277,7 +258,7 @@
                 </div>
             </div>
 
-            <!-- VAK 3: ACTIEVE STOPWATCH & STOP KNOP -->
+            <!-- VAK 3: STOPWATCH -->
             <div class="dashboard-card">
                 <div class="card-header">
                     <span>Vak 3: Actieve Rit Stopwatch</span>
@@ -299,10 +280,10 @@
 
         </div>
 
-        <!-- EÉN CENTRALE OPSLAAN KNOP -->
+        <!-- OPSLAAN KNOP -->
         <div class="global-save-bar">
             <button class="btn-global-save" onclick="slaSessieDefinitiefOpOpEenRegel()">
-                <span>💾</span> HELE RIT DEFINITIEF OPSLAAN & SYNC
+                <span>💾</span> HELE RIT DEFINITIEF OPSLAAN & SYNC NAAR SHEET
             </button>
         </div>
     </div>
@@ -356,14 +337,11 @@
 
             <button style="margin-bottom: 20px; padding: 9px; background: var(--win-blue); color:#fff; border:none; border-radius:3px; cursor:pointer; font-weight: bold;" onclick="voegPlanningToe()">+ GENEREREN & TOEVOEGEN AAN PLANNING</button>
 
-            <!-- PDF EXPORT BOX -->
             <div class="pdf-export-box">
                 <div style="display: flex; align-items: center; gap: 10px; font-size: 12px;">
                     <b>📄 Planning Exporteren naar PDF/Afdruk:</b>
-                    <label>Van: <input type="date" id="pdf-van-datum" style="padding: 3px; border: 1px solid #ccc;"></label>
-                    <label>Tot: <input type="date" id="pdf-tot-datum" style="padding: 3px; border: 1px solid #ccc;"></label>
                 </div>
-                <button onclick="exporteerPlanningPdf()" style="padding: 5px 12px; background: #28a745; color:#fff; border:none; border-radius:3px; font-weight:bold; cursor:pointer;">🖨️ PDF / Print</button>
+                <button onclick="window.print()" style="padding: 5px 12px; background: #28a745; color:#fff; border:none; border-radius:3px; font-weight:bold; cursor:pointer;">🖨️ PDF / Print</button>
             </div>
 
             <div class="card-header">
@@ -401,7 +379,7 @@
     </div>
 
     <script>
-        let googleSheetsUrl = localStorage.getItem('taxi_sheets_url') || '';
+        const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbwBnY36DiQmfxRgMieuVlMDRqaXH_sxV6rah3yVIgeqevIvQhN4U9wUnjvpEP05h7l9/exec";
         
         let configLijsten = {
             bedrijven: ['Vervoersbedrijf XYZ', 'Taxi Centrale Noord', 'Zorgvervoer Midden'],
@@ -416,10 +394,9 @@
         let huidigRecordIndex = 0;
 
         window.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('sheets-url-input').value = googleSheetsUrl;
             vulDropdowns();
             laadConcepten();
-            if(googleSheetsUrl) syncFromGoogle();
+            syncFromGoogle();
         });
 
         setInterval(() => {
@@ -445,7 +422,6 @@
             }
         }
 
-        /* --- CONFIG DROPDOWN BEHEER --- */
         function vulDropdowns() {
             laadOptiesInSelect('taxi-bedrijf', configLijsten.bedrijven, '-- Selecteer Bedrijf --');
             laadOptiesInSelect('taxi-chauffeur', configLijsten.chauffeurs, '-- Selecteer Chauffeur --');
@@ -457,20 +433,17 @@
             let sel = document.getElementById(elementId);
             let huidigeWaarde = sel.value;
             sel.innerHTML = `<option value="">${placeholder}</option>`;
-            
             items.forEach(item => {
                 let opt = document.createElement('option');
                 opt.value = item;
                 opt.innerText = item;
                 sel.appendChild(opt);
             });
-
             let extraOpt = document.createElement('option');
             extraOpt.value = "VOEG_NIEUWE_TOE";
             extraOpt.innerText = "+ Voeg nieuwe toe...";
             extraOpt.style.fontWeight = "bold";
             sel.appendChild(extraOpt);
-
             sel.value = huidigeWaarde;
         }
 
@@ -481,7 +454,7 @@
                     nieuweWaarde = nieuweWaarde.trim();
                     if (!configLijsten[categorie].includes(nieuweWaarde)) {
                         configLijsten[categorie].push(nieuweWaarde);
-                        syncToGoogle('taxi_config', configLijsten); // Stil op achtergrond
+                        syncToGoogle('taxi_config', configLijsten);
                     }
                     vulDropdowns();
                     selectElem.value = nieuweWaarde;
@@ -492,7 +465,6 @@
             opslaanConceptVak2();
         }
 
-        /* --- SNELLE TIJD KNOP & STOPWATCH --- */
         function zetHuidigeTijd(elementId) {
             let nu = new Date();
             let formattedLocal = formatDateTimeLocal(nu);
@@ -506,7 +478,6 @@
             if(elementId === 't-aankomst') {
                 opslaanConceptVak1();
             }
-            
             berekenRitTijden();
             updateAllSubClocks();
         }
@@ -514,53 +485,36 @@
         function stopStopwatch() {
             stopwatchGestopt = true;
             let aankVal = document.getElementById('t-aankomst').value;
-            if(!aankVal) {
-                zetHuidigeTijd('t-aankomst');
-            }
+            if(!aankVal) zetHuidigeTijd('t-aankomst');
         }
 
         function updateStopwatch() {
             let timerDisplay = document.getElementById('countdown-display');
             let vertVal = document.getElementById('t-vertrek').value;
-
-            if (!vertVal) {
-                timerDisplay.innerText = "00:00:00";
-                return;
-            }
-
-            if (!stopwatchStartTijd) {
-                stopwatchStartTijd = new Date(vertVal);
-            }
-
+            if (!vertVal) { timerDisplay.innerText = "00:00:00"; return; }
+            if (!stopwatchStartTijd) stopwatchStartTijd = new Date(vertVal);
             if (stopwatchGestopt) return;
 
-            let nu = new Date();
-            let diffMs = nu - stopwatchStartTijd;
+            let diffMs = new Date() - stopwatchStartTijd;
             if(diffMs < 0) diffMs = 0;
-
             let u = Math.floor(diffMs / (1000 * 60 * 60));
             let m = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
             let s = Math.floor((diffMs % (1000 * 60)) / 1000);
-
             timerDisplay.innerText = `${String(u).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
         }
 
-        /* --- SUB-CLOCKS LOGICA (VAK 1) --- */
         function updateAllSubClocks() {
             let nu = new Date();
-
             let ophVal = document.getElementById('t-ophalen').value;
             let clockOphalen = document.getElementById('clock-ophalen');
             if (!ophVal) {
                 clockOphalen.innerText = "--:--";
                 clockOphalen.className = "sub-clock-display status-green";
             } else {
-                let ophTijd = new Date(ophVal);
-                let diffMs = ophTijd - nu;
+                let diffMs = new Date(ophVal) - nu;
                 let diffMin = Math.floor(Math.abs(diffMs) / (1000 * 60));
                 let u = Math.floor(diffMin / 60);
                 let m = diffMin % 60;
-
                 if (diffMs > 0) {
                     clockOphalen.innerText = `Nog ${u > 0 ? u + 'u ' : ''}${m}m (OP TIJD)`;
                     clockOphalen.className = "sub-clock-display status-green";
@@ -605,7 +559,6 @@
             }
         }
 
-        /* --- PLANNING UTILITIES --- */
         function toggleEinddatumVeld() {
             let mode = document.getElementById('plan-herhaling').value;
             document.getElementById('einddatum-box').style.display = (mode === 'geen') ? 'none' : 'block';
@@ -629,7 +582,6 @@
             }
 
             let huidigeDatum = new Date(startDatum);
-
             while (huidigeDatum <= eindDatum) {
                 let dagVanWeek = huidigeDatum.getDay();
                 let toevoegen = false;
@@ -661,7 +613,7 @@
             }
 
             sorterEnRenderPlanning();
-            syncToGoogle('taxi_planning', planningLijst); // Stil op achtergrond
+            syncToGoogle('taxi_planning', planningLijst);
 
             document.getElementById('plan-datum').value = '';
             document.getElementById('plan-note').value = '';
@@ -705,10 +657,6 @@
             openTab('tab-live', 'btn-tab-live');
         }
 
-        function exporteerPlanningPdf() { window.print(); }
-        function printHistorieRapport() { window.print(); }
-
-        /* --- 1 SINGLE SAVE FUNCTIE (Stil op achtergrond) --- */
         function slaSessieDefinitiefOpOpEenRegel() {
             let v1 = localStorage.getItem('taxi_draft_vak1') ? JSON.parse(localStorage.getItem('taxi_draft_vak1')) : {};
             let v2 = localStorage.getItem('taxi_draft_vak2') ? JSON.parse(localStorage.getItem('taxi_draft_vak2')) : {};
@@ -726,7 +674,6 @@
             renderHistorie();
         }
 
-        /* --- HISTORIE RAPPORT --- */
         function renderHistorie() {
             document.getElementById('count-gereed').innerText = historieRecords.length;
             let counter = document.getElementById('record-counter-text');
@@ -749,7 +696,7 @@
                     <div class="history-header-bar">
                         <div class="history-title-date">🚖 Rittencentralerapport van ${new Date(rec.datumSync).toLocaleString()}</div>
                         <div style="display:flex; align-items:center; gap:10px;">
-                            <button class="btn-print-history" onclick="printHistorieRapport()">🖨️ Afdrukken / Opslaan als PDF</button>
+                            <button class="btn-print-history" onclick="window.print()">🖨️ Afdrukken / Opslaan als PDF</button>
                             <div class="history-badge-status">✓ VOLTOOID</div>
                         </div>
                     </div>
@@ -794,7 +741,6 @@
             renderHistorie();
         }
 
-        /* --- AUTO-SAVE CONCEPTEN --- */
         function opslaanConceptVak1() {
             let data = { ophalen: document.getElementById('t-ophalen').value, vertrek: document.getElementById('t-vertrek').value, aankomst: document.getElementById('t-aankomst').value };
             localStorage.setItem('taxi_draft_vak1', JSON.stringify(data));
@@ -849,17 +795,9 @@
 
         function formatDateTimeLocal(date) { return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}T${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`; }
 
-        function bewaarSyncUrlStil() {
-            googleSheetsUrl = document.getElementById('sheets-url-input').value.trim();
-            localStorage.setItem('taxi_sheets_url', googleSheetsUrl);
-            if(googleSheetsUrl) syncFromGoogle();
-        }
-
         async function syncToGoogle(key, valueObj) {
-            if (!googleSheetsUrl) return;
             try {
-                // Draait volledig geruisloos op de achtergrond zonder meldingen
-                await fetch(googleSheetsUrl, { 
+                await fetch(GOOGLE_SHEETS_URL, { 
                     method: 'POST', 
                     mode: 'no-cors', 
                     headers: {'Content-Type': 'application/json'}, 
@@ -869,9 +807,8 @@
         }
 
         async function syncFromGoogle() {
-            if (!googleSheetsUrl) return;
             try {
-                let res = await fetch(googleSheetsUrl); 
+                let res = await fetch(GOOGLE_SHEETS_URL); 
                 let data = await res.json();
                 if(data['taxi_config']) { configLijsten = JSON.parse(data['taxi_config']); vulDropdowns(); }
                 if(data['taxi_planning']) { planningLijst = JSON.parse(data['taxi_planning']); sorterEnRenderPlanning(); }
