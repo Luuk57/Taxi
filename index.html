@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Taxi Command Center - Native Sheet Columns Edition</title>
+    <title>Taxi Command Center - Bulletproof Sheets Edition</title>
     <style>
         :root {
             --win-blue: #0078d7;
@@ -143,7 +143,7 @@
 
     <div class="win-header">
         <div class="win-title">
-            <span>🚖</span> TAXI COMMAND CENTER <span>// V5.0 NATIVE COLUMNS</span>
+            <span>🚖</span> TAXI COMMAND CENTER <span>// V5.1 BULLETPROOF</span>
         </div>
         <div style="display: flex; align-items: center; gap: 12px;">
             <button class="fullscreen-btn" onclick="toggleFullscreen()" style="background:#0078d7; border:none; color:#fff; padding:5px 10px; border-radius:3px; font-size:11px; cursor:pointer;">⛶ Volledig Scherm</button>
@@ -416,7 +416,6 @@
 
         function syncConfigToGoogle() {
             let rows = [];
-            // Zet config om in platte rijen voor de kolommen in Google Sheet
             ['bedrijven', 'chauffeurs', 'adressen'].forEach(cat => {
                 configData[cat].forEach(val => {
                     rows.push({ Categorie: cat, Waarde: val });
@@ -638,15 +637,22 @@
 
         function formatDateTimeLocal(date) { return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}T${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`; }
 
-        // Stuurt platte tabellen naar Google Sheet om echte kolommen te vullen
+        // Onverwoestbare verzending via een verborgen formulier om CORS volledig te omzeilen
         function stuurNaarGoogle(sheetNaam, rijLijst) {
-            let payload = JSON.stringify({ sheet: sheetNaam, rows: rijLijst });
-            fetch(GOOGLE_SHEETS_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: payload
-            }).catch(e => {});
+            let form = document.createElement('form');
+            form.method = 'POST';
+            form.action = GOOGLE_SHEETS_URL;
+            form.target = '_blank'; // opent eventueel op achtergrond of onzichtbaar te maken via iframe
+
+            let input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'payload';
+            input.value = JSON.stringify({ sheet: sheetNaam, rows: rijLijst });
+
+            form.appendChild(input);
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
         }
 
         async function syncFromGoogle() {
@@ -654,7 +660,6 @@
                 let res = await fetch(GOOGLE_SHEETS_URL);
                 let data = await res.json();
                 
-                // Config inlezen
                 if(data['TaxiConfig'] && Array.isArray(data['TaxiConfig'])) {
                     configData.bedrijven = [];
                     configData.chauffeurs = [];
@@ -667,13 +672,11 @@
                 }
                 vulDropdowns();
 
-                // Planning inlezen
                 if(data['TaxiPlanning'] && Array.isArray(data['TaxiPlanning'])) {
                     planningLijst = data['TaxiPlanning'];
                     sorterEnRenderPlanning();
                 }
 
-                // Historie inlezen
                 if(data['TaxiHistorie'] && Array.isArray(data['TaxiHistorie'])) {
                     historieRecords = data['TaxiHistorie'];
                     renderHistorie();
