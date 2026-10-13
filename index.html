@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Taxi Command Center - Interactive Click & Countdown Edition</title>
+    <title>Taxi Command Center - Flexible Status Clock Edition</title>
     <style>
         :root {
             --win-blue: #0078d7;
@@ -169,7 +169,7 @@
 
     <div class="win-header">
         <div class="win-title">
-            <span>🚖</span> TAXI COMMAND CENTER <span>// V1.6</span>
+            <span>🚖</span> TAXI COMMAND CENTER <span>// V1.7</span>
         </div>
         <div style="display: flex; align-items: center; gap: 12px;">
             <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ Volledig Scherm</button>
@@ -206,7 +206,7 @@
                     <input type="datetime-local" id="t-ophalen" oninput="berekenRitTijden(); opslaanConceptVak1();">
                 </div>
                 <div class="sub-clock-box">
-                    <div class="sub-clock-label">Ophaaltijd Status (Marge: 15 min)</div>
+                    <div class="sub-clock-label">Ophaaltijd Countdown / Status</div>
                     <div class="sub-clock-display status-green" id="clock-ophalen">--:--</div>
                 </div>
                 
@@ -333,6 +333,7 @@
 
                 <div class="form-group" id="einddatum-box" style="display: none;">
                     <label>Einddatum Herhaling:</label>
+                    <date" id="plan-einddatum">
                     <input type="date" id="plan-einddatum">
                 </div>
             </div>
@@ -452,11 +453,11 @@
             updateAllSubClocks();
         }
 
-        /* --- TRIPLE SUB-CLOCKS LOGICA (VAK 1) --- */
+        /* --- SUB-CLOCKS LOGICA (VAK 1) --- */
         function updateAllSubClocks() {
             let nu = new Date();
 
-            // 1. Ophaaltijd Klok (Marge 15 min t.o.v. geplande tijd)
+            // 1. Ophaaltijd Klok (Telt af naar geplande tijd, t/m 15 min groen doortellen, daarna rood)
             let ophVal = document.getElementById('t-ophalen').value;
             let clockOphalen = document.getElementById('clock-ophalen');
             if (!ophVal) {
@@ -464,13 +465,24 @@
                 clockOphalen.className = "sub-clock-display status-green";
             } else {
                 let ophTijd = new Date(ophVal);
-                let diffMin = Math.floor((nu - ophTijd) / (1000 * 60));
-                if (diffMin <= 15) {
-                    clockOphalen.innerText = diffMin < 0 ? `OP TIJD` : `+${diffMin}m - OP TIJD`;
+                let diffMs = ophTijd - nu;
+                let diffMin = Math.floor(Math.abs(diffMs) / (1000 * 60));
+                let u = Math.floor(diffMin / 60);
+                let m = diffMin % 60;
+
+                if (diffMs > 0) {
+                    // Nog niet bereikt: telt af in het groen
+                    clockOphalen.innerText = `Nog ${u > 0 ? u + 'u ' : ''}${m}m (OP TIJD)`;
                     clockOphalen.className = "sub-clock-display status-green";
                 } else {
-                    clockOphalen.innerText = `+${diffMin}m - TE LAAT`;
-                    clockOphalen.className = "sub-clock-display status-red";
+                    // Tijd verstreken: telt door in het groen tot 15 min, daarna rood
+                    if (diffMin <= 15) {
+                        clockOphalen.innerText = `+${diffMin}m - OP TIJD`;
+                        clockOphalen.className = "sub-clock-display status-green";
+                    } else {
+                        clockOphalen.innerText = `+${diffMin}m - TE LAAT`;
+                        clockOphalen.className = "sub-clock-display status-red";
+                    }
                 }
             }
 
