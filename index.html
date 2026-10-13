@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Taxi Command Center - Flexible Status Clock Edition</title>
+    <title>Taxi Command Center - Colored Border Clocks Edition</title>
     <style>
         :root {
             --win-blue: #0078d7;
@@ -77,11 +77,17 @@
 
         .calc-box { background: #eef6fc; border-left: 4px solid var(--win-blue); padding: 6px; margin-top: 4px; font-size: 11px; line-height: 1.3; }
 
-        /* Klikbare sub-klokjes */
+        /* Sub-klokjes stijlen */
         .sub-clock-box {
             background: #1b1b1b; border-radius: 3px; padding: 6px 8px; text-align: center; margin-bottom: 8px; border: 1px solid #333; cursor: pointer; transition: 0.2s;
         }
-        .sub-clock-box:hover { background: #2b2b2b; border-color: var(--win-blue); }
+        .sub-clock-box:hover { background: #2b2b2b; }
+        
+        /* Specifieke randkleuren per klok */
+        .border-green { border: 1px solid #28a745 !important; }
+        .border-red { border: 1px solid #dc3545 !important; }
+        .border-blue { border: 1px solid #0078d7 !important; }
+
         .sub-clock-label { font-size: 8px; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; }
         .sub-clock-display { font-size: 12px; font-weight: bold; font-family: monospace; }
         .status-green { color: #28a745; }
@@ -169,7 +175,7 @@
 
     <div class="win-header">
         <div class="win-title">
-            <span>🚖</span> TAXI COMMAND CENTER <span>// V1.7</span>
+            <span>🚖</span> TAXI COMMAND CENTER <span>// V1.8</span>
         </div>
         <div style="display: flex; align-items: center; gap: 12px;">
             <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ Volledig Scherm</button>
@@ -205,29 +211,29 @@
                     <label>Geplande Ophaaltijd:</label>
                     <input type="datetime-local" id="t-ophalen" oninput="berekenRitTijden(); opslaanConceptVak1();">
                 </div>
-                <div class="sub-clock-box">
+                <div class="sub-clock-box border-blue">
                     <div class="sub-clock-label">Ophaaltijd Countdown / Status</div>
                     <div class="sub-clock-display status-green" id="clock-ophalen">--:--</div>
                 </div>
                 
-                <!-- 2. Daadwerkelijk Vertrek (Klikbaar om huidige tijd in te stellen) -->
+                <!-- 2. Daadwerkelijk Vertrek (Groene Rand) -->
                 <div class="form-group">
                     <label>Daadwerkelijk Vertrek:</label>
                     <input type="datetime-local" id="t-vertrek" oninput="opslaanConceptVak1();">
                 </div>
-                <div class="sub-clock-box" onclick="zetHuidigeTijd('t-vertrek')" title="Klik om huidige tijd in te stellen">
+                <div class="sub-clock-box border-green" onclick="zetHuidigeTijd('t-vertrek')" title="Klik om huidige tijd in te stellen">
                     <div class="sub-clock-label">⚡ Klik hier voor Huidige Tijd (Vertrek)</div>
-                    <div class="sub-clock-display status-blue" id="clock-vertrek">Klik om in te stellen</div>
+                    <div class="sub-clock-display status-green" id="clock-vertrek">Klik om in te stellen</div>
                 </div>
 
-                <!-- 3. Verwachte Aankomst (Klikbaar om huidige tijd in te stellen) -->
+                <!-- 3. Verwachte Aankomst (Rode Rand) -->
                 <div class="form-group">
                     <label>Verwachte / Werkelijke Aankomst:</label>
                     <input type="datetime-local" id="t-aankomst" oninput="berekenRitTijden(); opslaanConceptVak1();">
                 </div>
-                <div class="sub-clock-box" onclick="zetHuidigeTijd('t-aankomst')" title="Klik om huidige tijd in te stellen">
+                <div class="sub-clock-box border-red" onclick="zetHuidigeTijd('t-aankomst')" title="Klik om huidige tijd in te stellen">
                     <div class="sub-clock-label">⚡ Klik hier voor Huidige Tijd (Aankomst)</div>
-                    <div class="sub-clock-display status-blue" id="clock-aankomst">Klik om in te stellen</div>
+                    <div class="sub-clock-display status-red" id="clock-aankomst">Klik om in te stellen</div>
                 </div>
 
                 <div class="calc-box" id="resultaten-tijden" style="margin-top: 4px;">
@@ -333,7 +339,6 @@
 
                 <div class="form-group" id="einddatum-box" style="display: none;">
                     <label>Einddatum Herhaling:</label>
-                    <date" id="plan-einddatum">
                     <input type="date" id="plan-einddatum">
                 </div>
             </div>
@@ -471,11 +476,9 @@
                 let m = diffMin % 60;
 
                 if (diffMs > 0) {
-                    // Nog niet bereikt: telt af in het groen
                     clockOphalen.innerText = `Nog ${u > 0 ? u + 'u ' : ''}${m}m (OP TIJD)`;
                     clockOphalen.className = "sub-clock-display status-green";
                 } else {
-                    // Tijd verstreken: telt door in het groen tot 15 min, daarna rood
                     if (diffMin <= 15) {
                         clockOphalen.innerText = `+${diffMin}m - OP TIJD`;
                         clockOphalen.className = "sub-clock-display status-green";
@@ -491,12 +494,12 @@
             let clockVertrek = document.getElementById('clock-vertrek');
             if (!vertVal) {
                 clockVertrek.innerText = "Klik om tijd te zetten";
-                clockVertrek.className = "sub-clock-display status-blue";
+                clockVertrek.className = "sub-clock-display status-green";
             } else {
                 let vertTijd = new Date(vertVal);
                 let diffVert = Math.floor((nu - vertTijd) / (1000 * 60));
                 clockVertrek.innerText = diffVert < 0 ? `Over ${Math.abs(diffVert)} min` : `Vertrokken (${diffVert}m geleden)`;
-                clockVertrek.className = "sub-clock-display status-blue";
+                clockVertrek.className = "sub-clock-display status-green";
             }
 
             // 3. Aankomst Klok
@@ -504,16 +507,16 @@
             let clockAankomst = document.getElementById('clock-aankomst');
             if (!aankVal) {
                 clockAankomst.innerText = "Klik om tijd te zetten";
-                clockAankomst.className = "sub-clock-display status-blue";
+                clockAankomst.className = "sub-clock-display status-red";
             } else {
                 let aankTijd = new Date(aankVal);
                 let diffAank = Math.floor((aankTijd - nu) / (1000 * 60));
                 if (diffAank > 0) {
                     clockAankomst.innerText = `Nog ca. ${diffAank} min`;
-                    clockAankomst.className = "sub-clock-display status-blue";
+                    clockAankomst.className = "sub-clock-display status-red";
                 } else {
                     clockAankomst.innerText = `Aangekomen (${Math.abs(diffAank)}m geleden)`;
-                    clockAankomst.className = "sub-clock-display status-green";
+                    clockAankomst.className = "sub-clock-display status-red";
                 }
             }
         }
