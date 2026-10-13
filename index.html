@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Taxi Command Center - No Tariff Edition</title>
+    <title>Taxi Command Center - Silent Background Sync Edition</title>
     <style>
         :root {
             --win-blue: #0078d7;
@@ -176,14 +176,13 @@
 
     <div class="win-header">
         <div class="win-title">
-            <span>🚖</span> TAXI COMMAND CENTER <span>// V2.1</span>
+            <span>🚖</span> TAXI COMMAND CENTER <span>// V2.2</span>
         </div>
         <div style="display: flex; align-items: center; gap: 12px;">
             <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ Volledig Scherm</button>
             <div class="sync-container">
                 <span style="font-size: 11px; font-weight: 600; color: #0078d7;">☁️ Google Sheet URL:</span>
-                <input type="text" id="sheets-url-input" class="sync-input" placeholder="Plak hier je Apps Script URL...">
-                <button class="sync-btn" onclick="bewaarSyncUrl()">Opslaan</button>
+                <input type="text" id="sheets-url-input" class="sync-input" placeholder="Plak hier je Apps Script URL..." onblur="bewaarSyncUrlStil()">
             </div>
             <div id="system-clock" style="font-size: 13px; font-weight: 500; color: #666;"></div>
         </div>
@@ -482,7 +481,7 @@
                     nieuweWaarde = nieuweWaarde.trim();
                     if (!configLijsten[categorie].includes(nieuweWaarde)) {
                         configLijsten[categorie].push(nieuweWaarde);
-                        syncToGoogle('taxi_config', configLijsten);
+                        syncToGoogle('taxi_config', configLijsten); // Stil op achtergrond
                     }
                     vulDropdowns();
                     selectElem.value = nieuweWaarde;
@@ -518,7 +517,6 @@
             if(!aankVal) {
                 zetHuidigeTijd('t-aankomst');
             }
-            alert("Stopwatch gestopt!");
         }
 
         function updateStopwatch() {
@@ -663,7 +661,7 @@
             }
 
             sorterEnRenderPlanning();
-            syncToGoogle('taxi_planning', planningLijst);
+            syncToGoogle('taxi_planning', planningLijst); // Stil op achtergrond
 
             document.getElementById('plan-datum').value = '';
             document.getElementById('plan-note').value = '';
@@ -705,13 +703,12 @@
             document.getElementById('plan-note').value = note;
             opslaanConceptVak1();
             openTab('tab-live', 'btn-tab-live');
-            alert("Rit ingeladen in 'Live Rit'!");
         }
 
         function exporteerPlanningPdf() { window.print(); }
         function printHistorieRapport() { window.print(); }
 
-        /* --- 1 SINGLE SAVE FUNCTIE --- */
+        /* --- 1 SINGLE SAVE FUNCTIE (Stil op achtergrond) --- */
         function slaSessieDefinitiefOpOpEenRegel() {
             let v1 = localStorage.getItem('taxi_draft_vak1') ? JSON.parse(localStorage.getItem('taxi_draft_vak1')) : {};
             let v2 = localStorage.getItem('taxi_draft_vak2') ? JSON.parse(localStorage.getItem('taxi_draft_vak2')) : {};
@@ -727,8 +724,6 @@
             historieRecords.unshift(completeRit);
             syncToGoogle('taxi_historie', historieRecords);
             renderHistorie();
-
-            alert("De rit is succesvol opgeslagen & gesynchroniseerd naar Google Sheets!");
         }
 
         /* --- HISTORIE RAPPORT --- */
@@ -854,17 +849,30 @@
 
         function formatDateTimeLocal(date) { return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}T${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`; }
 
-        function bewaarSyncUrl() { googleSheetsUrl = document.getElementById('sheets-url-input').value.trim(); localStorage.setItem('taxi_sheets_url', googleSheetsUrl); alert("Google Sheets URL opgeslagen!"); if(googleSheetsUrl) syncFromGoogle(); }
+        function bewaarSyncUrlStil() {
+            googleSheetsUrl = document.getElementById('sheets-url-input').value.trim();
+            localStorage.setItem('taxi_sheets_url', googleSheetsUrl);
+            if(googleSheetsUrl) syncFromGoogle();
+        }
 
         async function syncToGoogle(key, valueObj) {
             if (!googleSheetsUrl) return;
-            try { await fetch(googleSheetsUrl, { method: 'POST', mode: 'no-cors', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ key: key, value: JSON.stringify(valueObj) }) }); } catch(e){}
+            try {
+                // Draait volledig geruisloos op de achtergrond zonder meldingen
+                await fetch(googleSheetsUrl, { 
+                    method: 'POST', 
+                    mode: 'no-cors', 
+                    headers: {'Content-Type': 'application/json'}, 
+                    body: JSON.stringify({ key: key, value: JSON.stringify(valueObj) }) 
+                });
+            } catch(e){}
         }
 
         async function syncFromGoogle() {
             if (!googleSheetsUrl) return;
             try {
-                let res = await fetch(googleSheetsUrl); let data = await res.json();
+                let res = await fetch(googleSheetsUrl); 
+                let data = await res.json();
                 if(data['taxi_config']) { configLijsten = JSON.parse(data['taxi_config']); vulDropdowns(); }
                 if(data['taxi_planning']) { planningLijst = JSON.parse(data['taxi_planning']); sorterEnRenderPlanning(); }
                 if(data['taxi_historie']) { historieRecords = JSON.parse(data['taxi_historie']); renderHistorie(); }
