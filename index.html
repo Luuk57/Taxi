@@ -53,6 +53,12 @@
         .btn-stop { background: #d13438; }
         .btn-save { background: var(--win-blue); width: 100%; padding: 12px; font-size: 14px; margin-top: 10px; }
 
+        /* BANNER STYLING */
+        .banner-box { background: #e8f4fd; border-left: 4px solid var(--win-blue); padding: 8px 12px; margin-bottom: 8px; font-size: 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border-radius: 4px; }
+        .banner-box:hover { background: #d8ecfb; }
+        .banner-close { background: none; border: none; font-size: 14px; font-weight: bold; color: #666; cursor: pointer; padding: 0 4px; }
+        .banner-close:hover { color: #d13438; }
+
         /* DROPDOWN STYLING */
         .dropdown-container { position: relative; width: 100%; }
         .dropdown-select-btn { width: 100%; padding: 8px 12px; background: #fff; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; text-align: left; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
@@ -102,15 +108,18 @@
 
     <!-- TAB 1: RIT INVOER -->
     <div id="invoerTab" class="tab-content active">
-        <div class="card" id="actieveSessieBanner" style="background: #e8f4fd; border-left: 4px solid var(--win-blue); padding: 8px 12px; margin-bottom: 8px; font-size: 12px;">
-            <b>📌 Afspraak Tijd & Datum:</b> <span id="bannerAfspraakTxt">-</span>
+        <div class="banner-box" id="actieveSessieBanner" style="display: none;">
+            <div id="bannerClickArea" style="flex: 1;" title="Klik om deze rit in te laden">
+                <b>📌 Actieve rit vandaag:</b> <span id="bannerAfspraakTxt">-</span>
+            </div>
+            <button type="button" class="banner-close" id="sluitBannerBtn" title="Verberg melding">✕</button>
         </div>
 
         <div class="card">
             <div class="section-title">⏱️ Afspraak & Stopwatch Tijd</div>
             <div class="form-group" style="margin-bottom: 8px;">
                 <label><b>Afgesproken Tijd & Datum</b></label>
-                <input type="datetime-local" id="afspraakTijd" oninput="updateBannerAfspraak()">
+                <input type="datetime-local" id="afspraakTijd">
             </div>
             <div class="grid-2">
                 <div class="form-group">
@@ -280,6 +289,7 @@
 
         let timerInterval = null;
         let stopwatchStart = null;
+        let actueelVandaagIndex = null;
         let centraleData = { 
             planning: [], 
             historie: [], 
@@ -293,7 +303,6 @@
             let defaultIso = new Date(nu.getTime() - offsetMs).toISOString().slice(0, 16);
             document.getElementById('planStart').value = nu.toISOString().split('T')[0];
             document.getElementById('afspraakTijd').value = defaultIso;
-            updateBannerAfspraak();
 
             setupDropdown('ophaalToggleBtn', 'ophaalContentBox');
             setupDropdown('brengToggleBtn', 'brengContentBox');
@@ -308,6 +317,17 @@
             document.getElementById('startKlokBtn').addEventListener('click', startKlok);
             document.getElementById('stopKlokBtn').addEventListener('click', stopKlok);
 
+            // Banner klik & sluit acties
+            document.getElementById('bannerClickArea').addEventListener('click', () => {
+                if (actueelVandaagIndex !== null) {
+                    laadPlanningNaarInvoer(actueelVandaagIndex);
+                }
+            });
+            document.getElementById('sluitBannerBtn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                document.getElementById('actieveSessieBanner').style.display = 'none';
+            });
+
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => wisselTab(e.target.dataset.target, e.target.id));
             });
@@ -317,11 +337,6 @@
 
             laadDataVanBin();
         });
-
-        function updateBannerAfspraak() {
-            let val = document.getElementById('afspraakTijd').value;
-            document.getElementById('bannerAfspraakTxt').innerText = val ? val.replace('T', ' ') : '-';
-        }
 
         function startKlok() {
             let nu = new Date();
@@ -553,18 +568,13 @@
             let p = centraleData.planning[index];
             if (!p) return;
 
-            // Vul afspraaktijd
             let formattedVal = p.DatumTijd ? p.DatumTijd.replace(' ', 'T') : '';
             document.getElementById('afspraakTijd').value = formattedVal;
-            updateBannerAfspraak();
 
-            // Selecteer ophaal & breng adres
             if (p.Ophaal) selecteerAdresRadio(p.Ophaal, 'ophaal');
             if (p.Breng) selecteerAdresRadio(p.Breng, 'breng');
 
-            // Schakel over naar Rit Invoer tab
             wisselTab('invoerTab', 'tabInvoerBtn');
-            alert('Gegevens uit planning geladen naar Rit Invoer!');
         }
 
         function genereerEnSlaPlanning() {
@@ -668,20 +678,20 @@
         function controleerEnVulHuidigeSessie(planning) {
             if (!planning || planning.length === 0) return;
             let nu = new Date();
-            let gesorteerd = [...planning].sort((a, b) => new Date(a.DatumTijd) - new Date(b.DatumTijd));
-            let actueel = gesorteerd.find(p => new Date(p.DatumTijd) >= new Date(nu.toDateString()));
-            if (!actueel && gesorteerd.length > 0) actueel = gesorteerd[0];
+            let vandaagStr = nu.toISOString().split('T')[0];
 
-            if (actueel) {
-                let afspraakInput = document.getElementById('afspraakTijd');
-                let dtClean = actueel.DatumTijd.replace(' ', 'T');
-                afspraakInput.value = dtClean;
-                updateBannerAfspraak();
-                if (actueel.Ophaal) selecteerAdresRadio(actueel.Ophaal, 'ophaal');
-                if (actueel.Breng) selecteerAdresRadio(actueel.Breng, 'breng');
+            // Zoek of er een planning is voor vandaag
+            let indexVandaag = planning.findIndex(p => p.DatumTijd && p.DatumTijd.startsWith(vandaagStr));
+            
+            if (indexVandaag !== -1) {
+                actueelVandaagIndex = indexVandaag;
+                let p = planning[indexVandaag];
 
-                document.getElementById('actieveSessieBanner').style.display = 'block';
-                document.getElementById('bannerAfspraakTxt').innerText = `${actueel.DatumTijd.replace('T', ' ')} (${actueel.Ophaal || 'Thuis'} ➔ ${actueel.Breng || 'UMCG'})`;
+                document.getElementById('actieveSessieBanner').style.display = 'flex';
+                document.getElementById('bannerAfspraakTxt').innerText = `${p.DatumTijd.replace('T', ' ')} (${p.Ophaal || 'Thuis'} ➔ ${p.Breng || 'UMCG'})`;
+            } else {
+                document.getElementById('actieveSessieBanner').style.display = 'none';
+                actueelVandaagIndex = null;
             }
         }
 
