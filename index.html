@@ -233,16 +233,26 @@
                     </select>
                 </div>
             </div>
+            
             <div class="grid-2" style="margin-top: 6px;">
                 <div class="form-group">
-                    <label>Standaard Ophaaladres</label>
+                    <label>Ophaaladres</label>
                     <select id="planOphaal" style="padding:8px; border:1px solid #ccc; border-radius:4px; background:#fff; font-size:14px;"></select>
+                    <div style="display: flex; gap: 4px; margin-top: 4px;">
+                        <input type="text" id="planNieuwOphaal" placeholder="Nieuw ophaaladres..." style="flex:1; padding:4px; font-size:11px; border:1px solid #ccc; border-radius:3px;">
+                        <button type="button" class="btn-small btn-edit" id="planVoegOphaalToeBtn">+ Toevoegen</button>
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label>Standaard Brengadres</label>
+                    <label>Brengadres</label>
                     <select id="planBreng" style="padding:8px; border:1px solid #ccc; border-radius:4px; background:#fff; font-size:14px;"></select>
+                    <div style="display: flex; gap: 4px; margin-top: 4px;">
+                        <input type="text" id="planNieuwBreng" placeholder="Nieuw brengadres..." style="flex:1; padding:4px; font-size:11px; border:1px solid #ccc; border-radius:3px;">
+                        <button type="button" class="btn-small btn-edit" id="planVoegBrengToeBtn">+ Toevoegen</button>
+                    </div>
                 </div>
             </div>
+
             <button type="button" class="action-btn btn-save" id="genereerPlanBtn" style="margin-top: 10px;">📅 Genereer Planning</button>
         </div>
 
@@ -314,10 +324,12 @@
             document.getElementById('voegOphaalToeBtn').addEventListener('click', voegOphaalAdresToe);
             document.getElementById('voegBrengToeBtn').addEventListener('click', voegBrengAdresToe);
 
+            document.getElementById('planVoegOphaalToeBtn').addEventListener('click', planVoegOphaalAdresToe);
+            document.getElementById('planVoegBrengToeBtn').addEventListener('click', planVoegBrengAdresToe);
+
             document.getElementById('startKlokBtn').addEventListener('click', startKlok);
             document.getElementById('stopKlokBtn').addEventListener('click', stopKlok);
 
-            // Banner klik & sluit acties
             document.getElementById('bannerClickArea').addEventListener('click', () => {
                 if (actueelVandaagIndex !== null) {
                     laadPlanningNaarInvoer(actueelVandaagIndex);
@@ -445,6 +457,10 @@
             let selOphaal = document.getElementById('planOphaal');
             let selBreng = document.getElementById('planBreng');
             if(!selOphaal || !selBreng) return;
+            
+            let geselecteerdOphaal = selOphaal.value;
+            let geselecteerdBreng = selBreng.value;
+
             selOphaal.innerHTML = '';
             selBreng.innerHTML = '';
 
@@ -454,6 +470,7 @@
                 opt.innerText = adr;
                 selOphaal.appendChild(opt);
             });
+            if (geselecteerdOphaal) selOphaal.value = geselecteerdOphaal;
 
             centraleData.brengAdres.forEach(adr => {
                 let opt = document.createElement('option');
@@ -461,6 +478,7 @@
                 opt.innerText = adr;
                 selBreng.appendChild(opt);
             });
+            if (geselecteerdBreng) selBreng.value = geselecteerdBreng;
         }
 
         function updateOphaalLabel(val) {
@@ -499,6 +517,17 @@
             vulAdressenLijsten();
         }
 
+        function planVoegOphaalAdresToe() {
+            let input = document.getElementById('planNieuwOphaal');
+            let adr = input.value.trim();
+            if (!adr) return;
+            centraleData.ophaalAdressen.push(adr);
+            input.value = '';
+            slaGeheleDataNaarBin();
+            vulAdressenLijsten();
+            document.getElementById('planOphaal').value = adr;
+        }
+
         window.verwijderOphaal = function(index) {
             centraleData.ophaalAdressen.splice(index, 1);
             slaGeheleDataNaarBin();
@@ -513,6 +542,17 @@
             input.value = '';
             slaGeheleDataNaarBin();
             vulAdressenLijsten();
+        }
+
+        function planVoegBrengAdresToe() {
+            let input = document.getElementById('planNieuwBreng');
+            let adr = input.value.trim();
+            if (!adr) return;
+            centraleData.brengAdres.push(adr);
+            input.value = '';
+            slaGeheleDataNaarBin();
+            vulAdressenLijsten();
+            document.getElementById('planBreng').value = adr;
         }
 
         window.verwijderBreng = function(index) {
@@ -680,7 +720,6 @@
             let nu = new Date();
             let vandaagStr = nu.toISOString().split('T')[0];
 
-            // Zoek of er een planning is voor vandaag
             let indexVandaag = planning.findIndex(p => p.DatumTijd && p.DatumTijd.startsWith(vandaagStr));
             
             if (indexVandaag !== -1) {
