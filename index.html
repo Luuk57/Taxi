@@ -604,8 +604,9 @@
             document.getElementById(btnId).classList.add('active');
         }
 
-        function laadPlanningNaarInvoer(index) {
-            let p = centraleData.planning[index];
+        function laadPlanningNaarInvoer(indexInGesorteerd) {
+            let gesorteerd = getGesorteerdePlanning();
+            let p = gesorteerd[indexInGesorteerd];
             if (!p) return;
 
             let formattedVal = p.DatumTijd ? p.DatumTijd.replace(' ', 'T') : '';
@@ -615,6 +616,21 @@
             if (p.Breng) selecteerAdresRadio(p.Breng, 'breng');
 
             wisselTab('invoerTab', 'tabInvoerBtn');
+        }
+
+        function getGesorteerdePlanning() {
+            if (!centraleData.planning) return [];
+            let nu = new Date();
+            let vandaagStr = nu.toISOString().split('T')[0];
+
+            // Sorteer chronologisch op datum/tijd
+            let gesorteerd = [...centraleData.planning].sort((a, b) => new Date(a.DatumTijd) - new Date(b.DatumTijd));
+
+            // Haal de rit(ten) van vandaag naar voren
+            let vandaagRitten = gesorteerd.filter(p => p.DatumTijd && p.DatumTijd.startsWith(vandaagStr));
+            let overigeRitten = gesorteerd.filter(p => !p.DatumTijd || !p.DatumTijd.startsWith(vandaagStr));
+
+            return [...vandaagRitten, ...overigeRitten];
         }
 
         function genereerEnSlaPlanning() {
@@ -673,8 +689,8 @@
 
             centraleData.planning = lijst;
             slaGeheleDataNaarBin();
-            vulPlanningTabel(lijst);
-            controleerEnVulHuidigeSessie(lijst);
+            vulPlanningTabel(centraleData.planning);
+            controleerEnVulHuidigeSessie(centraleData.planning);
             alert('Planning opgeslagen in JSONBin!');
         }
 
@@ -683,22 +699,32 @@
         };
 
         window.verwijderPlanning = function(index) {
+            let gesorteerd = getGesorteerdePlanning();
+            let doel = gesorteerd[index];
+            
             if (confirm('Weet je zeker dat je deze afspraak wilt verwijderen?')) {
-                centraleData.planning.splice(index, 1);
-                slaGeheleDataNaarBin();
-                vulPlanningTabel(centraleData.planning);
-                controleerEnVulHuidigeSessie(centraleData.planning);
+                // Zoek de echte index in de originele centraleData.planning array
+                let origineleIndex = centraleData.planning.findIndex(p => p.DatumTijd === doel.DatumTijd && p.Ophaal === doel.Ophaal && p.Breng === doel.Breng);
+                if (origineleIndex !== -1) {
+                    centraleData.planning.splice(origineleIndex, 1);
+                    slaGeheleDataNaarBin();
+                    vulPlanningTabel(centraleData.planning);
+                    controleerEnVulHuidigeSessie(centraleData.planning);
+                }
             }
         };
 
         function vulPlanningTabel(planning) {
             let tbody = document.getElementById('planningTabelBody');
             tbody.innerHTML = '';
-            if (!planning || planning.length === 0) {
+            let gesorteerd = getGesorteerdePlanning();
+
+            if (!gesorteerd || gesorteerd.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="3" style="color: #888;">Geen planning gevonden.</td></tr>';
                 return;
             }
-            planning.forEach((p, index) => {
+            
+            gesorteerd.forEach((p, index) => {
                 let tr = document.createElement('tr');
                 let formattedVal = p.DatumTijd ? p.DatumTijd.replace(' ', 'T') : '';
                 let oph = p.Ophaal || 'Thuis';
