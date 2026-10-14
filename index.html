@@ -229,7 +229,7 @@
                 <thead>
                     <tr>
                         <th>Datum & Tijd</th>
-                        <th>Type</th>
+                        <th>Ophaal ➔ Brengadres</th>
                         <th style="width: 110px;">Acties</th>
                     </tr>
                 </thead>
@@ -494,6 +494,8 @@
             let eindStr = document.getElementById('planEind').value;
             let tijdStr = document.getElementById('planTijd').value || '08:00';
             let herhaling = document.getElementById('planHerhaling').value;
+            let ophaal = getGeselecteerdOphaal() || 'Thuis';
+            let breng = getGeselecteerdBreng() || 'UMCG';
 
             if (!startStr || !eindStr) { alert('Vul datums in.'); return; }
 
@@ -502,7 +504,7 @@
             let lijst = centraleData.planning || [];
 
             while (d <= eindD) {
-                let dagVanDeWeek = d.getDay(); // 1 = Ma, 3 = Wo, 5 = Vr
+                let dagVanDeWeek = d.getDay(); 
                 let toevoegen = false;
 
                 if (herhaling === 'geen') {
@@ -512,7 +514,6 @@
                 } else if (herhaling === 'omdedag') {
                     toevoegen = true;
                 } else if (herhaling === 'mawovrij') {
-                    // Maandag (1), Woensdag (3), Vrijdag (5)
                     if (dagVanDeWeek === 1 || dagVanDeWeek === 3 || dagVanDeWeek === 5) {
                         toevoegen = true;
                     }
@@ -527,7 +528,8 @@
 
                     lijst.push({
                         DatumTijd: `${y}-${m}-${dt}T${hh}:${mm}`,
-                        Type: 'Taxi Rit',
+                        Ophaal: ophaal,
+                        Breng: breng,
                         Herhaling: herhaling
                     });
                 }
@@ -575,10 +577,12 @@
             }
             planning.forEach((p, index) => {
                 let tr = document.createElement('tr');
-                let formattedVal = p.DatumTijd.replace(' ', 'T');
+                let formattedVal = p.DatumTijd ? p.DatumTijd.replace(' ', 'T') : '';
+                let oph = p.Ophaal || 'Thuis';
+                let brg = p.Breng || 'UMCG';
                 tr.innerHTML = `
-                    <td><input type="datetime-local" id="plan_dt_${index}" value="${formattedVal}" style="padding:4px; font-size:12px; width:100%;"></td>
-                    <td>${p.Type}</td>
+                    <td><input type="datetime-local" id="plan_dt_${index}" value="${formattedVal}" style="padding:4px; font-size:11px; width:100%;"></td>
+                    <td><b>${oph}</b> ➔ <b>${brg}</b></td>
                     <td>
                         <button type="button" class="btn-small btn-edit" onclick="bewerkPlanning(${index})">Bewerk</button>
                         <button type="button" class="btn-small btn-del" onclick="verwijderPlanning(${index})">Wis</button>
@@ -601,7 +605,7 @@
                 startInput.value = dtClean;
 
                 document.getElementById('actieveSessieBanner').style.display = 'block';
-                document.getElementById('actieveSessieBanner').innerHTML = `<b>📌 Actieve rit geladen:</b> ${actueel.DatumTijd.replace('T', ' ')}`;
+                document.getElementById('actieveSessieBanner').innerHTML = `<b>📌 Actieve rit geladen:</b> ${actueel.DatumTijd.replace('T', ' ')} (${actueel.Ophaal || 'Thuis'} ➔ ${actueel.Breng || 'UMCG'})`;
             }
         }
 
