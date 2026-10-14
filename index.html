@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Taxi Monitor Pro - Maps</title>
+    <title>Taxi Monitor & Maps</title>
     <style>
         :root {
             --win-blue: #0078d7;
@@ -106,7 +106,7 @@
             </div>
         </div>
 
-        <!-- OPHAAL & BRENG ADRUP-DOWN -->
+        <!-- OPHAAL & BRENG DROPDOWN -->
         <div class="card">
             <div class="section-title">📍 Ophaaladres</div>
             <div class="dropdown-container">
@@ -235,7 +235,8 @@
     </div>
 
     <script>
-        const JSONBIN_ID = "6acf500fac6210605a3048c1";
+        // Jouw nieuwe JSONBin ID voor de Taxi app:
+        const JSONBIN_ID = "6acf6373ac6210605a30758d";
         const API_KEY = "$2a$10$AAsaI9LebId4BAj60iBn3.V/Y3ayfLpT5qI5vhouztfHHUpgmuQdG";
 
         let centraleData = { 
@@ -251,7 +252,6 @@
             document.getElementById('planStart').value = nu.toISOString().split('T')[0];
             document.getElementById('afspraakTijd').value = new Date(nu.getTime() - offsetMs).toISOString().slice(0, 16);
 
-            // Dropdown open/sluit logica
             setupDropdown('ophaalToggleBtn', 'ophaalContentBox');
             setupDropdown('brengToggleBtn', 'brengContentBox');
 
@@ -317,7 +317,6 @@
         }
 
         function vulAdressenLijsten() {
-            // Ophaaladres radio/lijst
             let ophContainer = document.getElementById('ophaalCheckboxes');
             ophContainer.innerHTML = '';
             centraleData.ophaalAdressen.forEach((adr, index) => {
@@ -330,7 +329,6 @@
                 ophContainer.appendChild(div);
             });
 
-            // Brengadres radio/lijst
             let brengContainer = document.getElementById('brengCheckboxes');
             brengContainer.innerHTML = '';
             centraleData.brengAdres.forEach((adr, index) => {
@@ -405,7 +403,6 @@
             let navLink = document.getElementById('navigeerLink');
 
             if (ophaal && breng) {
-                // Routeweergave via Google Maps Embed API
                 mapFrame.src = `https://www.google.com/maps/embed/v1/directions?key=&origin=${encodeURIComponent(ophaal)}&destination=${encodeURIComponent(breng)}&mode=driving`;
                 navLink.href = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(ophaal)}&destination=${encodeURIComponent(breng)}&travelmode=driving`;
             } else if (breng) {
