@@ -189,8 +189,11 @@
                 <div class="form-group">
                     <label>Herhaling</label>
                     <select id="planHerhaling">
+                        <option value="geen">Geen (enkele afspraak)</option>
                         <option value="elkedag">Elke dag</option>
                         <option value="omdedag">Om de dag</option>
+                        <option value="madvrij">ma di vrij (Maandag, Dinsdag, Vrijdag)</option>
+                        <option value="didoza">di do za (Dinsdag, Donderdag, Zaterdag)</option>
                     </select>
                 </div>
             </div>
@@ -228,7 +231,7 @@
                     </tr>
                 </thead>
                 <tbody id="historieTabelBody">
-                    <tr><td colspan="4" style="color: #888;">Gegevens laden...</td></tr>
+                    <tr><td colspan="4" style="color: #888;">Geen ritten aanwezig.</td></tr>
                 </tbody>
             </table>
         </div>
@@ -402,7 +405,6 @@
             let navLink = document.getElementById('navigeerLink');
 
             if (ophaal && breng) {
-                // Gratis Google Maps embed URL zonder betaalde API sleutel vereiste
                 mapFrame.src = `https://maps.google.com/maps?saddr=${encodeURIComponent(ophaal)}&daddr=${encodeURIComponent(breng)}&output=embed`;
                 navLink.href = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(ophaal)}&destination=${encodeURIComponent(breng)}&travelmode=driving`;
             } else if (breng) {
@@ -442,20 +444,48 @@
             let lijst = centraleData.planning || [];
 
             while (d <= eindD) {
-                let y = d.getFullYear();
-                let m = String(d.getMonth() + 1).padStart(2, '0');
-                let dt = String(d.getDate()).padStart(2, '0');
-                let hh = String(d.getHours()).padStart(2, '0');
-                let mm = String(d.getMinutes()).padStart(2, '0');
+                let dagVanDeWeek = d.getDay(); // 0 = Zondag, 1 = Maandag, ..., 6 = Zaterdag
+                let toevoegen = false;
 
-                lijst.push({
-                    DatumTijd: `${y}-${m}-${dt}T${hh}:${mm}`,
-                    Type: 'Taxi Rit',
-                    Herhaling: herhaling
-                });
+                if (herhaling === 'geen') {
+                    toevoegen = true;
+                } else if (herhaling === 'elkedag') {
+                    toevoegen = true;
+                } else if (herhaling === 'omdedag') {
+                    toevoegen = true; // Handelt de stap-een-dag-over logica hieronder af
+                } else if (herhaling === 'madvrij') {
+                    // Maandag (1), Dinsdag (2), Vrijdag (5)
+                    if (dagVanDeWeek === 1 || dagVanDeWeek === 2 || dagVanDeWeek === 5) {
+                        toevoegen = true;
+                    }
+                } else if (herhaling === 'didoza') {
+                    // Dinsdag (2), Donderdag (4), Zaterdag (6)
+                    if (dagVanDeWeek === 2 || dagVanDeWeek === 4 || dagVanDeWeek === 6) {
+                        toevoegen = true;
+                    }
+                }
 
-                if (herhaling === 'omdedag') d.setDate(d.getDate() + 2);
-                else d.setDate(d.getDate() + 1);
+                if (toevoegen) {
+                    let y = d.getFullYear();
+                    let m = String(d.getMonth() + 1).padStart(2, '0');
+                    let dt = String(d.getDate()).padStart(2, '0');
+                    let hh = String(d.getHours()).padStart(2, '0');
+                    let mm = String(d.getMinutes()).padStart(2, '0');
+
+                    lijst.push({
+                        DatumTijd: `${y}-${m}-${dt}T${hh}:${mm}`,
+                        Type: 'Taxi Rit',
+                        Herhaling: herhaling
+                    });
+                }
+
+                if (herhaling === 'omdedag') {
+                    d.setDate(d.getDate() + 2);
+                } else {
+                    d.setDate(d.getDate() + 1);
+                }
+
+                if (herhaling === 'geen') break; // Bij 'geen' slechts 1 datum toevoegen
             }
 
             centraleData.planning = lijst;
