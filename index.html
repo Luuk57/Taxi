@@ -244,7 +244,7 @@
                     <tr>
                         <th>Datum & Tijd</th>
                         <th>Ophaal ➔ Brengadres</th>
-                        <th style="width: 110px;">Acties</th>
+                        <th style="width: 125px;">Acties</th>
                     </tr>
                 </thead>
                 <tbody id="planningTabelBody">
@@ -429,6 +429,7 @@
         function vulPlanningSelects() {
             let selOphaal = document.getElementById('planOphaal');
             let selBreng = document.getElementById('planBreng');
+            if(!selOphaal || !selBreng) return;
             selOphaal.innerHTML = '';
             selBreng.innerHTML = '';
 
@@ -457,6 +458,20 @@
             document.getElementById('brengSelectedText').innerText = val;
             document.getElementById('brengContentBox').classList.remove('show');
             updateKaartEnRoute();
+        }
+
+        function selecteerAdresRadio(naam, type) {
+            let radios = document.querySelectorAll(`input[name="${type}Radio"]`);
+            radios.forEach(r => {
+                if (r.value === naam) {
+                    r.checked = true;
+                }
+            });
+            if (type === 'ophaal') {
+                updateOphaalLabel(naam);
+            } else {
+                updateBrengLabel(naam);
+            }
         }
 
         function voegOphaalAdresToe() {
@@ -534,6 +549,24 @@
             document.getElementById(btnId).classList.add('active');
         }
 
+        function laadPlanningNaarInvoer(index) {
+            let p = centraleData.planning[index];
+            if (!p) return;
+
+            // Vul afspraaktijd
+            let formattedVal = p.DatumTijd ? p.DatumTijd.replace(' ', 'T') : '';
+            document.getElementById('afspraakTijd').value = formattedVal;
+            updateBannerAfspraak();
+
+            // Selecteer ophaal & breng adres
+            if (p.Ophaal) selecteerAdresRadio(p.Ophaal, 'ophaal');
+            if (p.Breng) selecteerAdresRadio(p.Breng, 'breng');
+
+            // Schakel over naar Rit Invoer tab
+            wisselTab('invoerTab', 'tabInvoerBtn');
+            alert('Gegevens uit planning geladen naar Rit Invoer!');
+        }
+
         function genereerEnSlaPlanning() {
             let startStr = document.getElementById('planStart').value;
             let eindStr = document.getElementById('planEind').value;
@@ -596,12 +629,7 @@
         }
 
         window.bewerkPlanning = function(index) {
-            let nieuweVal = document.getElementById(`plan_dt_${index}`).value;
-            if (!nieuweVal) return;
-            centraleData.planning[index].DatumTijd = nieuweVal;
-            slaGeheleDataNaarBin();
-            controleerEnVulHuidigeSessie(centraleData.planning);
-            alert('Planning bijgewerkt!');
+            laadPlanningNaarInvoer(index);
         };
 
         window.verwijderPlanning = function(index) {
@@ -629,7 +657,7 @@
                     <td><input type="datetime-local" id="plan_dt_${index}" value="${formattedVal}" style="padding:4px; font-size:11px; width:100%;"></td>
                     <td><b>${oph}</b> ➔ <b>${brg}</b></td>
                     <td>
-                        <button type="button" class="btn-small btn-edit" onclick="bewerkPlanning(${index})">Bewerk</button>
+                        <button type="button" class="btn-small btn-edit" onclick="bewerkPlanning(${index})">Laad</button>
                         <button type="button" class="btn-small btn-del" onclick="verwijderPlanning(${index})">Wis</button>
                     </td>
                 `;
@@ -649,6 +677,8 @@
                 let dtClean = actueel.DatumTijd.replace(' ', 'T');
                 afspraakInput.value = dtClean;
                 updateBannerAfspraak();
+                if (actueel.Ophaal) selecteerAdresRadio(actueel.Ophaal, 'ophaal');
+                if (actueel.Breng) selecteerAdresRadio(actueel.Breng, 'breng');
 
                 document.getElementById('actieveSessieBanner').style.display = 'block';
                 document.getElementById('bannerAfspraakTxt').innerText = `${actueel.DatumTijd.replace('T', ' ')} (${actueel.Ophaal || 'Thuis'} ➔ ${actueel.Breng || 'UMCG'})`;
