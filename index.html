@@ -141,11 +141,11 @@
 
         <!-- GOOGLE MAPS ROUTE INTEGRATIE -->
         <div class="card">
-            <div class="section-title">🗺️ Live Route & Navigatie</div>
+            <div class="section-title">🗺️ Live Kaart & Navigatie</div>
             <div class="map-container">
-                <iframe id="googleMapFrame" src="https://www.google.com/maps/embed/v1/place?key=&q=Stadskanaal" allowfullscreen></iframe>
+                <iframe id="googleMapFrame" src="https://maps.google.com/maps?q=Stadskanaal&t=&z=13&ie=UTF8&iwloc=&output=embed" allowfullscreen></iframe>
             </div>
-            <a id="navigeerLink" href="#" target="_blank" class="action-btn btn-save" style="display: block; text-decoration: none; text-align: center; margin-top: 8px;">🧭 Start Live Navigatie in Google Maps</a>
+            <a id="navigeerLink" href="https://www.google.com/maps" target="_blank" class="action-btn btn-save" style="display: block; text-decoration: none; text-align: center; margin-top: 8px;">🧭 Start Live Navigatie in Google Maps App</a>
         </div>
 
         <div class="card">
@@ -235,7 +235,6 @@
     </div>
 
     <script>
-        // Jouw nieuwe JSONBin ID voor de Taxi app:
         const JSONBIN_ID = "6acf6373ac6210605a30758d";
         const API_KEY = "$2a$10$AAsaI9LebId4BAj60iBn3.V/Y3ayfLpT5qI5vhouztfHHUpgmuQdG";
 
@@ -403,13 +402,14 @@
             let navLink = document.getElementById('navigeerLink');
 
             if (ophaal && breng) {
-                mapFrame.src = `https://www.google.com/maps/embed/v1/directions?key=&origin=${encodeURIComponent(ophaal)}&destination=${encodeURIComponent(breng)}&mode=driving`;
+                // Gratis Google Maps embed URL zonder betaalde API sleutel vereiste
+                mapFrame.src = `https://maps.google.com/maps?saddr=${encodeURIComponent(ophaal)}&daddr=${encodeURIComponent(breng)}&output=embed`;
                 navLink.href = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(ophaal)}&destination=${encodeURIComponent(breng)}&travelmode=driving`;
             } else if (breng) {
-                mapFrame.src = `https://www.google.com/maps/embed/v1/place?key=&q=${encodeURIComponent(breng)}`;
+                mapFrame.src = `https://maps.google.com/maps?q=${encodeURIComponent(breng)}&output=embed`;
                 navLink.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(breng)}`;
             } else {
-                mapFrame.src = `https://www.google.com/maps/embed/v1/place?key=&q=Stadskanaal`;
+                mapFrame.src = `https://maps.google.com/maps?q=Stadskanaal&output=embed`;
                 navLink.href = `https://www.google.com/maps`;
             }
         }
