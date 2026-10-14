@@ -102,12 +102,16 @@
 
     <!-- TAB 1: RIT INVOER -->
     <div id="invoerTab" class="tab-content active">
-        <div class="card" id="actieveSessieBanner" style="background: #e8f4fd; border-left: 4px solid var(--win-blue); display: none; padding: 8px 12px; margin-bottom: 8px; font-size: 12px;">
-            <b>📌 Actieve planning van vandaag geladen!</b>
+        <div class="card" id="actieveSessieBanner" style="background: #e8f4fd; border-left: 4px solid var(--win-blue); padding: 8px 12px; margin-bottom: 8px; font-size: 12px;">
+            <b>📌 Afspraak Tijd & Datum:</b> <span id="bannerAfspraakTxt">-</span>
         </div>
 
         <div class="card">
-            <div class="section-title">⏱️ Tijd & Stopwatch</div>
+            <div class="section-title">⏱️ Afspraak & Stopwatch Tijd</div>
+            <div class="form-group" style="margin-bottom: 8px;">
+                <label><b>Afgesproken Tijd & Datum</b></label>
+                <input type="datetime-local" id="afspraakTijd" oninput="updateBannerAfspraak()">
+            </div>
             <div class="grid-2">
                 <div class="form-group">
                     <label>Start Tijd</label>
@@ -220,7 +224,17 @@
                     </select>
                 </div>
             </div>
-            <button type="button" class="action-btn btn-save" id="genereerPlanBtn">📅 Genereer Planning</button>
+            <div class="grid-2" style="margin-top: 6px;">
+                <div class="form-group">
+                    <label>Standaard Ophaaladres</label>
+                    <select id="planOphaal" style="padding:8px; border:1px solid #ccc; border-radius:4px; background:#fff; font-size:14px;"></select>
+                </div>
+                <div class="form-group">
+                    <label>Standaard Brengadres</label>
+                    <select id="planBreng" style="padding:8px; border:1px solid #ccc; border-radius:4px; background:#fff; font-size:14px;"></select>
+                </div>
+            </div>
+            <button type="button" class="action-btn btn-save" id="genereerPlanBtn" style="margin-top: 10px;">📅 Genereer Planning</button>
         </div>
 
         <div class="card">
@@ -276,7 +290,10 @@
         window.addEventListener('DOMContentLoaded', () => {
             let nu = new Date();
             let offsetMs = nu.getTimezoneOffset() * 60000;
+            let defaultIso = new Date(nu.getTime() - offsetMs).toISOString().slice(0, 16);
             document.getElementById('planStart').value = nu.toISOString().split('T')[0];
+            document.getElementById('afspraakTijd').value = defaultIso;
+            updateBannerAfspraak();
 
             setupDropdown('ophaalToggleBtn', 'ophaalContentBox');
             setupDropdown('brengToggleBtn', 'brengContentBox');
@@ -300,6 +317,11 @@
 
             laadDataVanBin();
         });
+
+        function updateBannerAfspraak() {
+            let val = document.getElementById('afspraakTijd').value;
+            document.getElementById('bannerAfspraakTxt').innerText = val ? val.replace('T', ' ') : '-';
+        }
 
         function startKlok() {
             let nu = new Date();
@@ -355,6 +377,7 @@
                 if (!centraleData.brengAdres) centraleData.brengAdres = ["UMCG", "DKE"];
 
                 vulAdressenLijsten();
+                vulPlanningSelects();
                 vulPlanningTabel(centraleData.planning);
                 vulHistorieTabel(centraleData.historie);
                 controleerEnVulHuidigeSessie(centraleData.planning);
@@ -399,6 +422,28 @@
                     <button type="button" class="btn-small btn-del" onclick="verwijderBreng(${index})" style="padding:2px 5px; font-size:10px;">Wis</button>
                 `;
                 brengContainer.appendChild(div);
+            });
+            vulPlanningSelects();
+        }
+
+        function vulPlanningSelects() {
+            let selOphaal = document.getElementById('planOphaal');
+            let selBreng = document.getElementById('planBreng');
+            selOphaal.innerHTML = '';
+            selBreng.innerHTML = '';
+
+            centraleData.ophaalAdressen.forEach(adr => {
+                let opt = document.createElement('option');
+                opt.value = adr;
+                opt.innerText = adr;
+                selOphaal.appendChild(opt);
+            });
+
+            centraleData.brengAdres.forEach(adr => {
+                let opt = document.createElement('option');
+                opt.value = adr;
+                opt.innerText = adr;
+                selBreng.appendChild(opt);
             });
         }
 
@@ -494,8 +539,8 @@
             let eindStr = document.getElementById('planEind').value;
             let tijdStr = document.getElementById('planTijd').value || '08:00';
             let herhaling = document.getElementById('planHerhaling').value;
-            let ophaal = getGeselecteerdOphaal() || 'Thuis';
-            let breng = getGeselecteerdBreng() || 'UMCG';
+            let ophaal = document.getElementById('planOphaal').value || 'Thuis';
+            let breng = document.getElementById('planBreng').value || 'UMCG';
 
             if (!startStr || !eindStr) { alert('Vul datums in.'); return; }
 
@@ -600,18 +645,20 @@
             if (!actueel && gesorteerd.length > 0) actueel = gesorteerd[0];
 
             if (actueel) {
-                let startInput = document.getElementById('startTijd');
+                let afspraakInput = document.getElementById('afspraakTijd');
                 let dtClean = actueel.DatumTijd.replace(' ', 'T');
-                startInput.value = dtClean;
+                afspraakInput.value = dtClean;
+                updateBannerAfspraak();
 
                 document.getElementById('actieveSessieBanner').style.display = 'block';
-                document.getElementById('actieveSessieBanner').innerHTML = `<b>📌 Actieve rit geladen:</b> ${actueel.DatumTijd.replace('T', ' ')} (${actueel.Ophaal || 'Thuis'} ➔ ${actueel.Breng || 'UMCG'})`;
+                document.getElementById('bannerAfspraakTxt').innerText = `${actueel.DatumTijd.replace('T', ' ')} (${actueel.Ophaal || 'Thuis'} ➔ ${actueel.Breng || 'UMCG'})`;
             }
         }
 
         function slaRitNaarBin() {
             let rit = {
                 Datum: new Date().toLocaleString(),
+                Afspraak: document.getElementById('afspraakTijd').value || '-',
                 Start: document.getElementById('startTijd').value || '-',
                 Eind: document.getElementById('eindTijd').value || '-',
                 Ophaal: getGeselecteerdOphaal() || '-',
@@ -643,11 +690,11 @@
                 return;
             }
             historie.forEach((h, index) => {
-                let startT = h.Start ? h.Start.replace('T', ' ') : '-';
-                let eindT = h.Eind ? h.Eind.replace('T', ' ') : '-';
+                let startT = h.Start && h.Start !== '-' ? h.Start.replace('T', ' ') : '-';
+                let eindT = h.Eind && h.Eind !== '-' ? h.Eind.replace('T', ' ') : '-';
                 let tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td><b>Start:</b> ${startT}<br><b>Eind:</b> ${eindT}</td>
+                    <td><b>Afspraak:</b> ${h.Afspraak ? h.Afspraak.replace('T', ' ') : '-'}<br><b>Start:</b> ${startT}<br><b>Eind:</b> ${eindT}</td>
                     <td><b>${h.Ophaal}</b> ➔ <b>${h.Breng}</b><br><span style="color:#666;">${h.Notitie}</span></td>
                     <td><b>${h.Status}</b></td>
                     <td>
